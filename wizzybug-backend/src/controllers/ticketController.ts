@@ -282,7 +282,7 @@ export const assignTicket = async (
           to: assigneeDoc.email,
           subject: `Bug assigned to you: ${ticket.title}`,
           text: `Hi ${assigneeDoc.name},\n\n${req.user?.name || "An admin"} assigned the bug "${ticket.title}" to you on WizzyTrack.\n\nPriority: ${ticket.priority}\n\nLog in to WizzyBug to view the details and start working on it.`,
-          html: `<p>Hi ${assigneeDoc.name},</p><p><b>${req.user?.name || "An admin"}</b> assigned the bug <b>${ticket.title}</b> to you on WizzyTrack.</p><p>Priority: <b>${ticket.priority}</b></p><p>Log in to WizzyBug to view the details and start working on it.</p>`,
+          html: `<p>Hi ${assigneeDoc.name},</p><p><b>${req.user?.name || "An admin"}</b> assigned the bug <b>${ticket.title}</b> to you on WizzyTrack.</p><p>Priority: <b>${ticket.priority}</b></p><p>Log in to WizzyBug to view the details and start working on it</p>`,
         }).catch((err) => console.error("[assignTicket] email failed:", err));
       }
     }
