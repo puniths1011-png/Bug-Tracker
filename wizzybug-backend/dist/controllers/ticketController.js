@@ -1,22 +1,22 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
     if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
+        desc = { enumerable: true, get: function () { return m[k]; } };
     }
     Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
+}) : (function (o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
 }));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function (o, v) {
     Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
+}) : function (o, v) {
     o["default"] = v;
 });
 var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
+    var ownKeys = function (o) {
         ownKeys = Object.getOwnPropertyNames || function (o) {
             var ar = [];
             for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
@@ -117,12 +117,12 @@ const createTicket = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             environment, moduleFeatureName, buildAppVersion, releaseVersion, reproductionRate,
             expectedResult, actualResult, typeOfApplication, browser, browserVersion,
             history: [{
-                    type: 'created',
-                    message: normalizedAssignees.length ? `Bug reported and assigned to ${normalizedAssignees.length} developer${normalizedAssignees.length > 1 ? 's' : ''}` : 'Bug reported',
-                    actor: creatorId,
-                    actorName: (creatorDoc === null || creatorDoc === void 0 ? void 0 : creatorDoc.name) || 'Unknown user',
-                    createdAt: new Date()
-                }]
+                type: 'created',
+                message: normalizedAssignees.length ? `Bug reported and assigned to ${normalizedAssignees.length} developer${normalizedAssignees.length > 1 ? 's' : ''}` : 'Bug reported',
+                actor: creatorId,
+                actorName: (creatorDoc === null || creatorDoc === void 0 ? void 0 : creatorDoc.name) || 'Unknown user',
+                createdAt: new Date()
+            }]
         });
         // Notify each assignee by email if the reporter assigned it right away.
         if (normalizedAssignees.length) {
@@ -132,8 +132,8 @@ const createTicket = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     (0, mailer_1.sendMail)({
                         to: assigneeDoc.email,
                         subject: `New bug assigned to you: ${title}`,
-                        text: `Hi ${assigneeDoc.name},\n\nA new bug "${title}" has been assigned to you on WizzyTrack.\n\nPriority: ${ticket.priority}\n\nLog in to WizzyTrack to view the details.`,
-                        html: `<p>Hi ${assigneeDoc.name},</p><p>A new bug <b>${title}</b> has been assigned to you on WizzyTrack.</p><p>Priority: <b>${ticket.priority}</b></p><p>Log in to WizzyTrack to view the full details.</p>`
+                        text: `Hi ${assigneeDoc.name},\n\nA new bug "${title}" has been assigned to you on WizzyBug.\n\nPriority: ${ticket.priority}\n\nLog in to WizzyBug to view the details.`,
+                        html: `<p>Hi ${assigneeDoc.name},</p><p>A new bug <b>${title}</b> has been assigned to you on WizzyBug.</p><p>Priority: <b>${ticket.priority}</b></p><p>Log in to WizzyBug to view the full details.</p>`
                     }).catch(err => console.error('[createTicket] assignment email failed:', err));
                 }
             }
@@ -247,8 +247,8 @@ const assignTicket = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 (0, mailer_1.sendMail)({
                     to: assigneeDoc.email,
                     subject: `Bug assigned to you: ${ticket.title}`,
-                    text: `Hi ${assigneeDoc.name},\n\n${((_c = req.user) === null || _c === void 0 ? void 0 : _c.name) || 'An admin'} assigned the bug "${ticket.title}" to you on WizzyTrack.\n\nPriority: ${ticket.priority}\n\nLog in to WizzyTrack to view the details and start working on it.`,
-                    html: `<p>Hi ${assigneeDoc.name},</p><p><b>${((_d = req.user) === null || _d === void 0 ? void 0 : _d.name) || 'An admin'}</b> assigned the bug <b>${ticket.title}</b> to you on WizzyTrack.</p><p>Priority: <b>${ticket.priority}</b></p><p>Log in to WizzyTrack to view the details and start working on it.</p>`
+                    text: `Hi ${assigneeDoc.name},\n\n${((_c = req.user) === null || _c === void 0 ? void 0 : _c.name) || 'An admin'} assigned the bug "${ticket.title}" to you on WizzyBug.\n\nPriority: ${ticket.priority}\n\nLog in to WizzyBug to view the details and start working on it.`,
+                    html: `<p>Hi ${assigneeDoc.name},</p><p><b>${((_d = req.user) === null || _d === void 0 ? void 0 : _d.name) || 'An admin'}</b> assigned the bug <b>${ticket.title}</b> to you on WizzyBug.</p><p>Priority: <b>${ticket.priority}</b></p><p>Log in to WizzyBug to view the details and start working on it.</p>`
                 }).catch(err => console.error('[assignTicket] email failed:', err));
             }
         }

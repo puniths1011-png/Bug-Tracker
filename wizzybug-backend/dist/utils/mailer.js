@@ -70,7 +70,7 @@ const getTransporter = () => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.getTransporter = getTransporter;
 const getFromAddress = () => {
-    return process.env.MAIL_FROM || process.env.GMAIL_USER || '"WizzyTrack" <no-reply@wizzytrack.com>';
+    return process.env.MAIL_FROM || process.env.GMAIL_USER || '"WizzyBug" <no-reply@wizzyBug.com>';
 };
 exports.getFromAddress = getFromAddress;
 const isRealMailerConfigured = () => __awaiter(void 0, void 0, void 0, function* () {
