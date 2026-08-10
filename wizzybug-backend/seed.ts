@@ -6,6 +6,16 @@ import Project from "./src/models/Project";
 
 dotenv.config();
 
+const getDatabaseUri = () => {
+  const uri = process.env.MONGO_URI || process.env.DATABASE_URL;
+
+  if (!uri) {
+    throw new Error("Missing database connection string. Set MONGO_URI or DATABASE_URL in your .env file.");
+  }
+
+  return uri;
+};
+
 const hash = async (plain: string) => {
   const salt = await bcrypt.genSalt(10);
   return bcrypt.hash(plain, salt);
@@ -13,7 +23,7 @@ const hash = async (plain: string) => {
 
 const seed = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI as string);
+    await mongoose.connect(getDatabaseUri());
     console.log("Connected to MongoDB");
 
     const demoUsers = [
