@@ -10,7 +10,7 @@ import userRoutes from './routes/userRoutes';
 dotenv.config();
 
 const app: Express = express();
-const port = process.env.PORT;
+const port = parseInt(process.env.PORT || '5000', 10);
 
 // Connect to database
 connectDB();
@@ -31,6 +31,6 @@ app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'OK', message: 'Wizzybox Bug Tracker API is running' });
 });
 
-app.listen(port, () => {
-  console.log(`Server is running at ${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server is running at http://0.0.0.0:${port}`);
 });

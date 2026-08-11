@@ -2,11 +2,12 @@
   "name": "wizzyboxbugtraker_backend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev src/index.ts",
-    "build": "tsc && echo 'Build complete! Output in ./dist'",
+    "build": "tsc",
+    "start": "node dist/index.js",
     "seed": "ts-node-dev seed.ts",
     "reset:dev": "ts-node-dev reset-dev-data.ts"
   },

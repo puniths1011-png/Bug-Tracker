@@ -13,7 +13,7 @@ const ticketRoutes_1 = __importDefault(require("./routes/ticketRoutes"));
 const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
-const port = process.env.PORT;
+const port = parseInt(process.env.PORT || '5000', 10);
 // Connect to database
 (0, db_1.connectDB)();
 // Middleware
@@ -29,6 +29,6 @@ app.use('/api/tickets', ticketRoutes_1.default);
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', message: 'Wizzybox Bug Tracker API is running' });
 });
-app.listen(port, () => {
-    console.log(`Server is running at ${port}`);
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Server is running at http://0.0.0.0:${port}`);
 });
