@@ -69,10 +69,13 @@ const clearStoredAuth = () => {
 // / expects JSON, and throws a readable Error on non-2xx responses so callers
 // can just try/catch instead of re-checking res.ok everywhere.
 async function apiFetch(path, options = {}) {
-  const headers = {
-    "Content-Type": "application/json",
-    ...(options.headers || {}),
-  };
+  const isFormData = options.body instanceof FormData;
+  const headers = isFormData
+    ? { ...(options.headers || {}) }
+    : {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      };
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 
@@ -236,7 +239,8 @@ function formatBug(t) {
     comments: (t.comments || []).length,
     commentList: t.comments || [],
     history: t.history || [],
-    hasScreenshot: !!t.screenshot,
+    hasScreenshot: !!t.screenshot || !!t.imageUrl,
+    imageUrl: t.imageUrl || null,
     fixDescription: t.fixDescription || "",
     environment: t.environment,
     moduleFeatureName: t.moduleFeatureName,
@@ -1086,18 +1090,22 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
       return;
     }
 
-    let screenshotBase64 = null;
-    let screenshotMimeType = null;
-
     setSubmitting(true);
     try {
+      let imageFile = file;
       if (file) {
         const compressed = await compressImageUpload(file);
         if (compressed) {
-          screenshotBase64 = compressed.base64;
-          screenshotMimeType = compressed.mimeType;
+          const byteCharacters = atob(compressed.base64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i += 1) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          imageFile = new File([byteArray], file.name, { type: compressed.mimeType });
         }
       }
+
       await addBug({
         title: form.defectSummary,
         desc: form.stepsToReproduce,
@@ -1105,8 +1113,7 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
         project: form.project,
         assignee: form.assignee || undefined,
         assignees: form.assignees.length ? form.assignees : undefined,
-        screenshotBase64,
-        screenshotMimeType,
+        file: imageFile,
         environment: form.environment,
         moduleFeatureName: form.moduleFeatureName,
         buildAppVersion: form.buildAppVersion,
@@ -1718,7 +1725,21 @@ function Detail({
                 )}
               </div>
             )}
-            {bug.hasScreenshot && (
+            {bug.imageUrl ? (
+              <div className="attachment">
+                <div>Image</div>
+                <span>
+                  <b>Uploaded screenshot</b>
+                  <small>View attachment</small>
+                </span>
+                <button
+                  className="iconBtn"
+                  onClick={() => window.open(bug.imageUrl, "_blank")}
+                >
+                  <Download size={17} />
+                </button>
+              </div>
+            ) : bug.hasScreenshot ? (
               <div className="attachment">
                 <div>PNG</div>
                 <span>
@@ -1737,7 +1758,7 @@ function Detail({
                   <Download size={17} />
                 </button>
               </div>
-            )}
+            ) : null}
           </article>
           <article className="panel comments">
             <h3>
@@ -2030,14 +2051,12 @@ function UsersPage({ users, bugs = [], currentUser, refreshUsers }) {
   }, [users]);
 
   const sourceUsers = localUsers.length ? localUsers : users;
-  const withStats = (sourceUsers || [])
-    .filter((u) => u.email !== currentUser?.email)
-    .map((u) => ({
-      ...u,
-      bugCount: bugs.filter(
-        (b) => (b.assigneeIds || []).includes(u._id) || b.assignee === u.name,
-      ).length,
-    }));
+  const withStats = (sourceUsers || []).map((u) => ({
+    ...u,
+    bugCount: bugs.filter(
+      (b) => (b.assigneeIds || []).includes(u._id) || b.assignee === u.name,
+    ).length,
+  }));
 
   const rows = withStats.filter(
     (u) =>
@@ -2960,29 +2979,36 @@ function App({ isAdminPage = false }) {
 
   const addBug = async (b) => {
     const mappedPriority = SEVERITY_TO_PRIORITY[b.severity] || "medium";
-    const payload = {
-      title: b.title,
-      description: b.desc,
-      priority: mappedPriority,
-      project: b.project,
-      assignee: b.assignee,
-      assignees: b.assignees,
-      screenshotBase64: b.screenshotBase64,
-      screenshotMimeType: b.screenshotMimeType,
-      environment: b.environment,
-      moduleFeatureName: b.moduleFeatureName,
-      buildAppVersion: b.buildAppVersion,
-      releaseVersion: b.releaseVersion,
-      reproductionRate: b.reproductionRate,
-      expectedResult: b.expectedResult,
-      actualResult: b.actualResult,
-      typeOfApplication: b.typeOfApplication,
-      browser: b.browser,
-      browserVersion: b.browserVersion,
-    };
+    const formData = new FormData();
+    formData.append("title", b.title);
+    formData.append("description", b.desc);
+    formData.append("priority", mappedPriority);
+    formData.append("project", b.project);
+    if (b.assignee) formData.append("assignee", b.assignee);
+    if (b.assignees) {
+      if (Array.isArray(b.assignees)) {
+        b.assignees.forEach((assignee) => formData.append("assignees", assignee));
+      } else {
+        formData.append("assignees", b.assignees);
+      }
+    }
+    if (b.file) {
+      formData.append("image", b.file);
+    }
+    formData.append("environment", b.environment || "");
+    formData.append("moduleFeatureName", b.moduleFeatureName || "");
+    formData.append("buildAppVersion", b.buildAppVersion || "");
+    formData.append("releaseVersion", b.releaseVersion || "");
+    formData.append("reproductionRate", b.reproductionRate || "");
+    formData.append("expectedResult", b.expectedResult || "");
+    formData.append("actualResult", b.actualResult || "");
+    formData.append("typeOfApplication", b.typeOfApplication || "");
+    formData.append("browser", b.browser || "");
+    formData.append("browserVersion", b.browserVersion || "");
+
     const data = await apiFetch("/tickets", {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: formData,
     });
     setBugs((x) => [formatBug(data), ...x]);
     if (b.assignee) refreshUsers();

@@ -3,19 +3,19 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const getDatabaseUri = () => {
-  const uri = process.env.MONGO_URI || process.env.DATABASE_URL;
+export const connectDB = async () => {
+  const mongoUri = process.env.MONGO_URI;
+  const mongoDbName = process.env.MONGO_DB_NAME;
 
-  if (!uri) {
-    throw new Error("Missing database connection string. Set MONGO_URI or DATABASE_URL in your .env file.");
+  if (!mongoUri) {
+    console.error('Missing MONGO_URI in .env');
+    process.exit(1);
   }
 
-  return uri;
-};
-
-export const connectDB = async () => {
   try {
-    await mongoose.connect(getDatabaseUri());
+    await mongoose.connect(mongoUri, {
+      dbName: mongoDbName,
+    });
     console.log("MongoDB Connected");
   } catch (error: any) {
     console.error(`Error connecting to MongoDB: ${error.message}`);

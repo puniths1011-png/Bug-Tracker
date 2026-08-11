@@ -1,20 +1,22 @@
 import express from 'express';
 import {
-  getTickets, createTicket, getTicketById, updateTicketStatus,
+  getTickets, createTicket, getTicketById, updateTicket, updateTicketStatus,
   getTicketScreenshot, assignTicket, addTicketComment, updateFixNotes
 } from '../controllers/ticketController';
 import { protect, adminOnly } from '../middleware/authMiddleware';
+import { optionalUpload } from '../middleware/uploadMiddleware';
 
 const router = express.Router();
 
 router.route('/')
   .get(protect, getTickets)
-  .post(protect, createTicket);
+  .post(protect, optionalUpload, createTicket);
 
 router.route('/:id')
-  .get(protect, getTicketById);
+  .get(protect, getTicketById)
+  .put(protect, optionalUpload, updateTicket);
 
-// No auth on the raw screenshot bytes -- it's rendered directly as <img src="...">
+// No auth on the raw screenshot bytes -- it's rendered directly as <img src="..." )
 // and doesn't carry an Authorization header, same as any static image URL.
 router.route('/:id/screenshot')
   .get(getTicketScreenshot);

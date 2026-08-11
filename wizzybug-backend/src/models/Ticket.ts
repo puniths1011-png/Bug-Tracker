@@ -25,6 +25,8 @@ export interface ITicket extends Document {
   assignees?: mongoose.Types.ObjectId[];
   assignee?: mongoose.Types.ObjectId;
   screenshot?: { data: Buffer, contentType: String };
+  imageUrl?: string;
+  imagePublicId?: string;
   fixDescription?: string;
   environment?: string;
   moduleFeatureName?: string;
@@ -65,6 +67,8 @@ const TicketSchema: Schema = new Schema({
   assignees: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   assignee: { type: Schema.Types.ObjectId, ref: 'User' },
   screenshot: { data: Buffer, contentType: String },
+  imageUrl: { type: String },
+  imagePublicId: { type: String },
   fixDescription: { type: String },
   environment: { type: String },
   moduleFeatureName: { type: String },
