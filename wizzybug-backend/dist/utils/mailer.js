@@ -32,11 +32,11 @@ const getTransporter = () => __awaiter(void 0, void 0, void 0, function* () {
     const gmailPass = process.env.GMAIL_APP_PASSWORD;
     if (gmailUser && gmailPass) {
         cachedTransporter = nodemailer_1.default.createTransport({
-            service: 'gmail',
+            service: "gmail",
             auth: {
                 user: gmailUser,
-                pass: gmailPass
-            }
+                pass: gmailPass,
+            },
         });
         cachedIsRealSmtp = true;
         return { transporter: cachedTransporter, isReal: true };
@@ -46,31 +46,33 @@ const getTransporter = () => __awaiter(void 0, void 0, void 0, function* () {
         cachedTransporter = nodemailer_1.default.createTransport({
             host: process.env.SMTP_HOST,
             port: Number(process.env.SMTP_PORT) || 587,
-            secure: process.env.SMTP_SECURE === 'true',
+            secure: process.env.SMTP_SECURE === "true",
             auth: {
                 user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS
-            }
+                pass: process.env.SMTP_PASS,
+            },
         });
         cachedIsRealSmtp = true;
         return { transporter: cachedTransporter, isReal: true };
     }
-    console.warn('[mailer] No GMAIL_USER/GMAIL_APP_PASSWORD or SMTP_* env vars set. ' +
-        'Falling back to an Ethereal test inbox -- emails will NOT reach real addresses. ' +
-        'Set GMAIL_USER and GMAIL_APP_PASSWORD in your .env to send real emails.');
+    console.warn("[mailer] No GMAIL_USER/GMAIL_APP_PASSWORD or SMTP_* env vars set. " +
+        "Falling back to an Ethereal test inbox -- emails will NOT reach real addresses. " +
+        "Set GMAIL_USER and GMAIL_APP_PASSWORD in your .env to send real emails.");
     const testAccount = yield nodemailer_1.default.createTestAccount();
     cachedTransporter = nodemailer_1.default.createTransport({
-        host: 'smtp.ethereal.email',
+        host: "smtp.ethereal.email",
         port: 587,
         secure: false,
-        auth: { user: testAccount.user, pass: testAccount.pass }
+        auth: { user: testAccount.user, pass: testAccount.pass },
     });
     cachedIsRealSmtp = false;
     return { transporter: cachedTransporter, isReal: false };
 });
 exports.getTransporter = getTransporter;
 const getFromAddress = () => {
-    return process.env.MAIL_FROM || process.env.GMAIL_USER || '"WizzyBug" <no-reply@wizzyBug.com>';
+    return (process.env.MAIL_FROM ||
+        process.env.GMAIL_USER ||
+        '"WizzyBug" <no-reply@wizzyBug.com>');
 };
 exports.getFromAddress = getFromAddress;
 const isRealMailerConfigured = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -85,10 +87,10 @@ const sendMail = (opts) => __awaiter(void 0, void 0, void 0, function* () {
         to: opts.to,
         subject: opts.subject,
         text: opts.text,
-        html: opts.html
+        html: opts.html,
     });
     if (!isReal) {
-        console.log('[mailer] Preview URL (Ethereal, not a real inbox):', nodemailer_1.default.getTestMessageUrl(info));
+        console.log("[mailer] Preview URL (Ethereal, not a real inbox):", nodemailer_1.default.getTestMessageUrl(info));
     }
     else {
         console.log(`[mailer] Email sent to ${opts.to}: ${info.messageId}`);

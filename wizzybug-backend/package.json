@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev src/index.ts",
-    "build": "tsc",
+    "build": "tsc && echo 'Build complete! Output in ./dist'",
     "seed": "ts-node-dev seed.ts",
     "reset:dev": "ts-node-dev reset-dev-data.ts"
   },

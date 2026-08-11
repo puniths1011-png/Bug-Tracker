@@ -6,13 +6,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const ticketController_1 = require("../controllers/ticketController");
 const authMiddleware_1 = require("../middleware/authMiddleware");
+const uploadMiddleware_1 = require("../middleware/uploadMiddleware");
 const router = express_1.default.Router();
 router.route('/')
     .get(authMiddleware_1.protect, ticketController_1.getTickets)
-    .post(authMiddleware_1.protect, ticketController_1.createTicket);
+    .post(authMiddleware_1.protect, uploadMiddleware_1.optionalUpload, ticketController_1.createTicket);
 router.route('/:id')
-    .get(authMiddleware_1.protect, ticketController_1.getTicketById);
-// No auth on the raw screenshot bytes -- it's rendered directly as <img src="...">
+    .get(authMiddleware_1.protect, ticketController_1.getTicketById)
+    .put(authMiddleware_1.protect, uploadMiddleware_1.optionalUpload, ticketController_1.updateTicket);
+// No auth on the raw screenshot bytes -- it's rendered directly as <img src="..." )
 // and doesn't carry an Authorization header, same as any static image URL.
 router.route('/:id/screenshot')
     .get(ticketController_1.getTicketScreenshot);

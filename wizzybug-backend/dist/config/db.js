@@ -17,8 +17,16 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const connectDB = () => __awaiter(void 0, void 0, void 0, function* () {
+    const mongoUri = process.env.MONGO_URI;
+    const mongoDbName = process.env.MONGO_DB_NAME;
+    if (!mongoUri) {
+        console.error('Missing MONGO_URI in .env');
+        process.exit(1);
+    }
     try {
-        yield mongoose_1.default.connect(process.env.MONGO_URI);
+        yield mongoose_1.default.connect(mongoUri, {
+            dbName: mongoDbName,
+        });
         console.log("MongoDB Connected");
     }
     catch (error) {
