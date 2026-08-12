@@ -67,32 +67,13 @@ export const getTransporter = async (): Promise<{
     return { transporter: cachedTransporter, isReal: true };
   }
 
-  console.warn(
-    "[mailer] No GMAIL_USER/GMAIL_APP_PASSWORD or SMTP_* env vars set. " +
-      "Falling back to an Ethereal test inbox -- emails will NOT reach real addresses. " +
-      "Set GMAIL_USER and GMAIL_APP_PASSWORD in your .env to send real emails.",
+  // If no real mailer is configured, fail loudly — do not use a mock inbox.
+  throw new Error(
+    'No real mailer configured. Set SENDGRID_API_KEY or GMAIL_USER+GMAIL_APP_PASSWORD or SMTP_* env vars.',
   );
-  const testAccount = await nodemailer.createTestAccount();
-  cachedTransporter = nodemailer.createTransport({
-    host: "smtp.ethereal.email",
-    port: 587,
-    secure: false,
-    auth: { user: testAccount.user, pass: testAccount.pass },
-  });
-  cachedIsRealSmtp = false;
-  return { transporter: cachedTransporter, isReal: false };
 };
 
-const createEtherealTransporter = async () => {
-  const testAccount = await nodemailer.createTestAccount();
-  const transporter = nodemailer.createTransport({
-    host: "smtp.ethereal.email",
-    port: 587,
-    secure: false,
-    auth: { user: testAccount.user, pass: testAccount.pass },
-  });
-  return { transporter, testAccount };
-};
+// Note: Ethereal/mock transport intentionally removed — require real mailer credentials.
 
 const normalizeFromAddress = (value?: string): string | undefined => {
   if (!value) return undefined;

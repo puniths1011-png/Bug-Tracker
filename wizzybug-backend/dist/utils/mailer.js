@@ -30,8 +30,10 @@ const getTransporter = () => __awaiter(void 0, void 0, void 0, function* () {
     }
     const gmailUser = process.env.GMAIL_USER;
     const gmailPass = process.env.GMAIL_APP_PASSWORD;
+    // Prefer SendGrid if an API key is provided (works well on hosted platforms).
     const sendgridKey = process.env.SENDGRID_API_KEY;
     if (sendgridKey) {
+        // Use SendGrid's SMTP relay with the 'apikey' user.
         cachedTransporter = nodemailer_1.default.createTransport({
             host: 'smtp.sendgrid.net',
             port: 587,
@@ -70,18 +72,7 @@ const getTransporter = () => __awaiter(void 0, void 0, void 0, function* () {
         cachedIsRealSmtp = true;
         return { transporter: cachedTransporter, isReal: true };
     }
-    console.warn("[mailer] No GMAIL_USER/GMAIL_APP_PASSWORD or SMTP_* env vars set. " +
-        "Falling back to an Ethereal test inbox -- emails will NOT reach real addresses. " +
-        "Set GMAIL_USER and GMAIL_APP_PASSWORD in your .env to send real emails.");
-    const testAccount = yield nodemailer_1.default.createTestAccount();
-    cachedTransporter = nodemailer_1.default.createTransport({
-        host: "smtp.ethereal.email",
-        port: 587,
-        secure: false,
-        auth: { user: testAccount.user, pass: testAccount.pass },
-    });
-    cachedIsRealSmtp = false;
-    return { transporter: cachedTransporter, isReal: false };
+    throw new Error('No real mailer configured. Set SENDGRID_API_KEY or GMAIL_USER+GMAIL_APP_PASSWORD or SMTP_* env vars.');
 });
 exports.getTransporter = getTransporter;
 const createEtherealTransporter = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -117,6 +108,14 @@ const isRealMailerConfigured = () => __awaiter(void 0, void 0, void 0, function*
 exports.isRealMailerConfigured = isRealMailerConfigured;
 const sendMail = (opts) => __awaiter(void 0, void 0, void 0, function* () {
     const { transporter, isReal } = yield (0, exports.getTransporter)();
+    const provider = process.env.SENDGRID_API_KEY
+        ? 'sendgrid'
+        : process.env.GMAIL_USER
+            ? 'gmail'
+            : process.env.SMTP_HOST
+                ? 'smtp'
+                : 'ethereal';
+    console.log(`[mailer] sendMail start provider=${provider} isReal=${isReal} to=${opts.to}`);
     try {
         const info = yield transporter.sendMail({
             from: (0, exports.getFromAddress)(),
@@ -131,6 +130,7 @@ const sendMail = (opts) => __awaiter(void 0, void 0, void 0, function* () {
         else {
             console.log(`[mailer] Email sent to ${opts.to}: ${info.messageId}`);
         }
+        console.log('[mailer] sendMail result info:', info);
         return info;
     }
     catch (mailErr) {

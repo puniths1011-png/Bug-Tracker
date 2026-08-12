@@ -16,6 +16,11 @@ const seed = async () => {
     await mongoose.connect(process.env.MONGO_URI as string);
     console.log('Connected to MongoDB');
 
+    if (process.env.ENABLE_DEMO_SEED !== 'true') {
+      console.log('Demo seeding is disabled (set ENABLE_DEMO_SEED=true to enable).');
+      process.exit(0);
+    }
+
     const demoUsers = [
       { name: 'Olivia Stone', email: 'olivia@wizzytrack.io', role: 'admin' as const },
       { name: 'Ethan Cole', email: 'ethan@wizzytrack.io', role: 'developer' as const },
