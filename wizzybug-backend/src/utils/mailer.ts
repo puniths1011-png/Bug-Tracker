@@ -24,11 +24,14 @@ export const getTransporter = async (): Promise<{
 
   if (gmailUser && gmailPass) {
     cachedTransporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
       auth: {
         user: gmailUser,
         pass: gmailPass,
       },
+      family: 4,
     });
     cachedIsRealSmtp = true;
     return { transporter: cachedTransporter, isReal: true };
@@ -65,10 +68,22 @@ export const getTransporter = async (): Promise<{
   return { transporter: cachedTransporter, isReal: false };
 };
 
+const normalizeFromAddress = (value?: string): string | undefined => {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+  return trimmed;
+};
+
 export const getFromAddress = (): string => {
   return (
-    process.env.MAIL_FROM ||
-    process.env.GMAIL_USER ||
+    normalizeFromAddress(process.env.MAIL_FROM) ||
+    normalizeFromAddress(process.env.GMAIL_USER) ||
     '"WizzyBug" <no-reply@wizzyBug.com>'
   );
 };

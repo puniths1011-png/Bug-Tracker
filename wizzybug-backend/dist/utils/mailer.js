@@ -32,11 +32,14 @@ const getTransporter = () => __awaiter(void 0, void 0, void 0, function* () {
     const gmailPass = process.env.GMAIL_APP_PASSWORD;
     if (gmailUser && gmailPass) {
         cachedTransporter = nodemailer_1.default.createTransport({
-            service: "gmail",
+            host: "smtp.gmail.com",
+            port: 465,
+            secure: true,
             auth: {
                 user: gmailUser,
                 pass: gmailPass,
             },
+            family: 4,
         });
         cachedIsRealSmtp = true;
         return { transporter: cachedTransporter, isReal: true };
@@ -69,9 +72,19 @@ const getTransporter = () => __awaiter(void 0, void 0, void 0, function* () {
     return { transporter: cachedTransporter, isReal: false };
 });
 exports.getTransporter = getTransporter;
+const normalizeFromAddress = (value) => {
+    if (!value)
+        return undefined;
+    const trimmed = value.trim();
+    if ((trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+        (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+        return trimmed.slice(1, -1).trim();
+    }
+    return trimmed;
+};
 const getFromAddress = () => {
-    return (process.env.MAIL_FROM ||
-        process.env.GMAIL_USER ||
+    return (normalizeFromAddress(process.env.MAIL_FROM) ||
+        normalizeFromAddress(process.env.GMAIL_USER) ||
         '"WizzyBug" <no-reply@wizzyBug.com>');
 };
 exports.getFromAddress = getFromAddress;
