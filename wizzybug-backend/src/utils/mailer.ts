@@ -3,6 +3,8 @@ import nodemailer from "nodemailer";
 let cachedTransporter: any = null;
 let cachedIsRealSmtp = false;
 
+const hasResendConfig = (): boolean => Boolean(process.env.RESEND_API_KEY);
+
 /**
  * Returns a nodemailer transporter.
  *
@@ -88,14 +90,27 @@ const normalizeFromAddress = (value?: string): string | undefined => {
 };
 
 export const getFromAddress = (): string => {
+  // Gmail only permits messages to be sent from the authenticated mailbox (or
+  // from an alias configured in that mailbox). A generic MAIL_FROM value such
+  // as no-reply@... causes Gmail to reject the message, which surfaced as a
+  // 502 from the invite endpoint. Keep the product name as the display name
+  // but use the Gmail account itself as the actual sender.
+  const gmailUser = normalizeFromAddress(process.env.GMAIL_USER);
+  if (gmailUser && process.env.GMAIL_APP_PASSWORD && !hasResendConfig()) {
+    return `"WizzyBug" <${gmailUser}>`;
+  }
+
   return (
     normalizeFromAddress(process.env.MAIL_FROM) ||
-    normalizeFromAddress(process.env.GMAIL_USER) ||
-    '"WizzyBug" <no-reply@wizzyBug.com>'
+    '"WizzyBug" <no-reply@wizzybug.app>'
   );
 };
 
 export const isRealMailerConfigured = async (): Promise<boolean> => {
+  // Resend's HTTPS API works on hosts that block outbound SMTP connections,
+  // including Render's free web services.
+  if (hasResendConfig()) return true;
+
   const { isReal } = await getTransporter();
   return isReal;
 };
@@ -106,6 +121,35 @@ export const sendMail = async (opts: {
   text: string;
   html: string;
 }) => {
+  // Prefer an HTTPS email API when configured. This avoids SMTP ports 465 and
+  // 587, which Render blocks for free web services and which otherwise cause
+  // the invitation request to time out with a 502.
+  if (hasResendConfig()) {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: getFromAddress(),
+        to: [opts.to],
+        subject: opts.subject,
+        text: opts.text,
+        html: opts.html,
+      }),
+    });
+
+    if (!response.ok) {
+      const detail = await response.text();
+      throw new Error(`Resend API error (${response.status}): ${detail}`);
+    }
+
+    const info = await response.json();
+    console.log(`[mailer] Email sent through Resend to ${opts.to}: ${info.id}`);
+    return info;
+  }
+
   const { transporter, isReal } = await getTransporter();
   const provider = process.env.SENDGRID_API_KEY
     ? 'sendgrid'

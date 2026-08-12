@@ -393,11 +393,11 @@ function Sidebar({
         >
           <Avatar text={initialsOf(user?.name)} />
           <div>
-            <b>{user?.name || "Olivia Stone"}</b>
+            <b>{user?.name || ""}</b>
             <small>
               {user?.role
                 ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
-                : "Developer"}
+                : ""}
             </small>
           </div>
         </div>
@@ -2050,7 +2050,7 @@ function UsersPage({ users, bugs = [], currentUser, refreshUsers }) {
     }
   }, [users]);
 
-  const sourceUsers = localUsers.length ? localUsers : users;
+  const sourceUsers = Array.isArray(users) && users.length ? users : localUsers;
   const withStats = (sourceUsers || []).map((u) => ({
     ...u,
     bugCount: bugs.filter(

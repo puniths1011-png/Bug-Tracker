@@ -112,9 +112,9 @@ const inviteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         try {
             yield (0, mailer_1.sendMail)({
                 to: normalizedEmail,
-                subject: 'You have been invited to WizzyTrack',
-                text: `Hello ${name},\n\nYou have been invited to join WizzyTrack as a ${role || 'developer'}.\nUse the link below to accept your invitation and set your password for ${normalizedEmail}:\n\n${inviteUrl}\n\nThanks,\nWizzyTrack Team`,
-                html: `<p>Hello ${name},</p><p>You have been invited to join <b>WizzyTrack</b> as a <b>${role || 'developer'}</b>.</p><p>Invitation email: <b>${normalizedEmail}</b></p><p><a href="${inviteUrl}">Click here to accept your invitation and set your password</a></p><p>If the button doesn't work, copy this link into your browser:<br/>${inviteUrl}</p>`
+                subject: 'You have been invited to WizzyBug',
+                text: `Hello ${name},\n\nYou have been invited to join WizzyBug as a ${role || 'developer'}.\nUse the link below to accept your invitation and set your password for ${normalizedEmail}:\n\n${inviteUrl}\n\nThanks,\nWizzyBug Team`,
+                html: `<p>Hello ${name},</p><p>You have been invited to join <b>WizzyBug</b> as a <b>${role || 'developer'}</b>.</p><p>Invitation email: <b>${normalizedEmail}</b></p><p><a href="${inviteUrl}">Click here to accept your invitation and set your password</a></p><p>If the button doesn't work, copy this link into your browser:<br/>${inviteUrl}</p>`
             });
         }
         catch (mailErr) {
@@ -126,7 +126,7 @@ const inviteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             res.status(502).json({
                 message: 'Invite could not be emailed.',
                 reason,
-                hint: 'Set valid GMAIL_USER/GMAIL_APP_PASSWORD or SMTP_* values in the backend .env. For Gmail, use an App Password instead of your normal password.'
+                hint: 'On Render free instances, configure RESEND_API_KEY and a verified MAIL_FROM address. Otherwise use valid GMAIL_USER/GMAIL_APP_PASSWORD or SMTP_* values on a plan that permits outbound SMTP.'
             });
             return;
         }

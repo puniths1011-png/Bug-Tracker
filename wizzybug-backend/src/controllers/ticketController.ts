@@ -45,15 +45,17 @@ export const createTicket = async (req: AuthRequest, res: Response): Promise<voi
       expectedResult, actualResult, typeOfApplication, browser, browserVersion
     } = req.body;
 
-    // Mock project and user for frontend integration testing
-    let projectId = project;
-    let creatorId = req.user?._id;
+    const projectId = project;
+    const creatorId = req.user?._id;
 
-    if (!projectId || !creatorId) {
-      const defaultUser = await import('../models/User').then(m => m.default.findOne());
-      const defaultProject = await import('../models/Project').then(m => m.default.findOne());
-      if (defaultUser) creatorId = creatorId || defaultUser._id;
-      if (defaultProject) projectId = projectId || defaultProject._id;
+    if (!projectId) {
+      res.status(400).json({ message: 'Project is required' });
+      return;
+    }
+
+    if (!creatorId) {
+      res.status(400).json({ message: 'Creator is required' });
+      return;
     }
 
     const creatorDoc = req.user || (creatorId ? await User.findById(creatorId) : null);
@@ -104,8 +106,8 @@ export const createTicket = async (req: AuthRequest, res: Response): Promise<voi
           sendMail({
             to: assigneeDoc.email,
             subject: `New bug assigned to you: ${title}`,
-            text: `Hi ${assigneeDoc.name},\n\nA new bug "${title}" has been assigned to you on WizzyTrack.\n\nPriority: ${ticket.priority}\n\nLog in to WizzyTrack to view the details.`,
-            html: `<p>Hi ${assigneeDoc.name},</p><p>A new bug <b>${title}</b> has been assigned to you on WizzyTrack.</p><p>Priority: <b>${ticket.priority}</b></p><p>Log in to WizzyTrack to view the full details.</p>`
+            text: `Hi ${assigneeDoc.name},\n\nA new bug "${title}" has been assigned to you on WizzyBug.\n\nPriority: ${ticket.priority}\n\nLog in to WizzyBug to view the details.`,
+            html: `<p>Hi ${assigneeDoc.name},</p><p>A new bug <b>${title}</b> has been assigned to you on WizzyBug.</p><p>Priority: <b>${ticket.priority}</b></p><p>Log in to WizzyBug to view the full details.</p>`
           }).catch(err => console.error('[createTicket] assignment email failed:', err));
         }
       }
@@ -296,8 +298,8 @@ export const assignTicket = async (req: AuthRequest, res: Response): Promise<voi
         sendMail({
           to: assigneeDoc.email,
           subject: `Bug assigned to you: ${ticket.title}`,
-          text: `Hi ${assigneeDoc.name},\n\n${req.user?.name || 'An admin'} assigned the bug "${ticket.title}" to you on WizzyTrack.\n\nPriority: ${ticket.priority}\n\nLog in to WizzyTrack to view the details and start working on it.`,
-          html: `<p>Hi ${assigneeDoc.name},</p><p><b>${req.user?.name || 'An admin'}</b> assigned the bug <b>${ticket.title}</b> to you on WizzyTrack.</p><p>Priority: <b>${ticket.priority}</b></p><p>Log in to WizzyTrack to view the details and start working on it.</p>`
+          text: `Hi ${assigneeDoc.name},\n\n${req.user?.name || 'An admin'} assigned the bug "${ticket.title}" to you on WizzyBug.\n\nPriority: ${ticket.priority}\n\nLog in to WizzyBug to view the details and start working on it.`,
+          html: `<p>Hi ${assigneeDoc.name},</p><p><b>${req.user?.name || 'An admin'}</b> assigned the bug <b>${ticket.title}</b> to you on WizzyBug.</p><p>Priority: <b>${ticket.priority}</b></p><p>Log in to WizzyBug to view the details and start working on it.</p>`
         }).catch(err => console.error('[assignTicket] email failed:', err));
       }
     }
