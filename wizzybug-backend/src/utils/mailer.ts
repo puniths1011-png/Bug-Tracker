@@ -32,7 +32,7 @@ export const getTransporter = async (): Promise<{
         pass: gmailPass,
       },
       family: 4,
-    });
+    } as any);
     cachedIsRealSmtp = true;
     return { transporter: cachedTransporter, isReal: true };
   }
@@ -47,7 +47,7 @@ export const getTransporter = async (): Promise<{
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
-    });
+    } as any);
     cachedIsRealSmtp = true;
     return { transporter: cachedTransporter, isReal: true };
   }
