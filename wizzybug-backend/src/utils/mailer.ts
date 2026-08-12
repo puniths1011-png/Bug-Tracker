@@ -126,6 +126,15 @@ export const sendMail = async (opts: {
   html: string;
 }) => {
   const { transporter, isReal } = await getTransporter();
+  const provider = process.env.SENDGRID_API_KEY
+    ? 'sendgrid'
+    : process.env.GMAIL_USER
+    ? 'gmail'
+    : process.env.SMTP_HOST
+    ? 'smtp'
+    : 'ethereal';
+
+  console.log(`[mailer] sendMail start provider=${provider} isReal=${isReal} to=${opts.to}`);
 
   try {
     const info = await transporter.sendMail({
@@ -144,6 +153,8 @@ export const sendMail = async (opts: {
     } else {
       console.log(`[mailer] Email sent to ${opts.to}: ${info.messageId}`);
     }
+
+    console.log('[mailer] sendMail result info:', info);
 
     return info;
   } catch (mailErr) {
