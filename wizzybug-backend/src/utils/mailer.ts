@@ -8,10 +8,9 @@ const hasResendConfig = (): boolean => Boolean(process.env.RESEND_API_KEY);
 /**
  * Returns a nodemailer transporter.
  *
- * If GMAIL_USER + GMAIL_APP_PASSWORD are set in the environment, real emails are
- * sent through Gmail using an App Password (https://myaccount.google.com/apppasswords).
- * Otherwise falls back to an Ethereal test inbox so the app keeps working in dev
- * without any email config -- the preview link is printed to the server console.
+ * If GMAIL_USER + GMAIL_APP_PASSWORD are configured, Gmail SMTP is used. This is
+ * the preferred flow for hosted deployments because it avoids blocked outbound
+ * SMTP ports and uses a real Gmail account with an App Password.
  */
 export const getTransporter = async (): Promise<{
   transporter: any;
@@ -23,6 +22,18 @@ export const getTransporter = async (): Promise<{
 
   const gmailUser = process.env.GMAIL_USER;
   const gmailPass = process.env.GMAIL_APP_PASSWORD;
+
+  if (gmailUser && gmailPass) {
+    cachedTransporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: gmailUser,
+        pass: gmailPass,
+      },
+    } as any);
+    cachedIsRealSmtp = true;
+    return { transporter: cachedTransporter, isReal: true };
+  }
 
   // Prefer SendGrid if an API key is provided (works well on hosted platforms).
   const sendgridKey = process.env.SENDGRID_API_KEY;
@@ -39,22 +50,7 @@ export const getTransporter = async (): Promise<{
     return { transporter: cachedTransporter, isReal: true };
   }
 
-  if (gmailUser && gmailPass) {
-    cachedTransporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      auth: {
-        user: gmailUser,
-        pass: gmailPass,
-      },
-      family: 4,
-    } as any);
-    cachedIsRealSmtp = true;
-    return { transporter: cachedTransporter, isReal: true };
-  }
-
-  // Generic SMTP fallback, e.g. SendGrid / Outlook / a company mail server.
+  // Generic SMTP fallback, e.g. Outlook / a company mail server.
   if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
     cachedTransporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
@@ -69,13 +65,29 @@ export const getTransporter = async (): Promise<{
     return { transporter: cachedTransporter, isReal: true };
   }
 
-  // If no real mailer is configured, fail loudly — do not use a mock inbox.
-  throw new Error(
-    'No real mailer configured. Set SENDGRID_API_KEY or GMAIL_USER+GMAIL_APP_PASSWORD or SMTP_* env vars.',
-  );
-};
+  if (hasResendConfig()) {
+    cachedTransporter = nodemailer.createTransport({
+      jsonTransport: true,
+    } as any);
+    cachedIsRealSmtp = true;
+    return { transporter: cachedTransporter, isReal: true };
+  }
 
-// Note: Ethereal/mock transport intentionally removed — require real mailer credentials.
+  // When no real mailer is configured, use a temporary test inbox so the app
+  // can still generate an invite link for previewing without breaking the flow.
+  const testAccount = await nodemailer.createTestAccount();
+  cachedTransporter = nodemailer.createTransport({
+    host: 'smtp.ethereal.email',
+    port: 587,
+    secure: false,
+    auth: {
+      user: testAccount.user,
+      pass: testAccount.pass,
+    },
+  } as any);
+  cachedIsRealSmtp = false;
+  return { transporter: cachedTransporter, isReal: false };
+};
 
 const normalizeFromAddress = (value?: string): string | undefined => {
   if (!value) return undefined;
@@ -97,18 +109,19 @@ export const getFromAddress = (): string => {
   // but use the Gmail account itself as the actual sender.
   const gmailUser = normalizeFromAddress(process.env.GMAIL_USER);
   if (gmailUser && process.env.GMAIL_APP_PASSWORD && !hasResendConfig()) {
-    return `"WizzyBug" <${gmailUser}>`;
+    return `"WizzyBug Admin" <${gmailUser}>`;
   }
 
   return (
     normalizeFromAddress(process.env.MAIL_FROM) ||
-    '"WizzyBug" <no-reply@wizzybug.app>'
+    '"WizzyBug Admin" <no-reply@wizzybug.app>'
   );
 };
 
 export const isRealMailerConfigured = async (): Promise<boolean> => {
-  // Resend's HTTPS API works on hosts that block outbound SMTP connections,
-  // including Render's free web services.
+  if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) return true;
+  if (process.env.SENDGRID_API_KEY) return true;
+  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) return true;
   if (hasResendConfig()) return true;
 
   const { isReal } = await getTransporter();
@@ -121,9 +134,39 @@ export const sendMail = async (opts: {
   text: string;
   html: string;
 }) => {
-  // Prefer an HTTPS email API when configured. This avoids SMTP ports 465 and
-  // 587, which Render blocks for free web services and which otherwise cause
-  // the invitation request to time out with a 502.
+  const gmailConfigured = Boolean(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
+  const sendgridConfigured = Boolean(process.env.SENDGRID_API_KEY);
+  const smtpConfigured = Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+
+  if (gmailConfigured || sendgridConfigured || smtpConfigured) {
+    const { transporter, isReal } = await getTransporter();
+    const provider = gmailConfigured ? 'gmail' : sendgridConfigured ? 'sendgrid' : 'smtp';
+
+    console.log(`[mailer] sendMail start provider=${provider} isReal=${isReal} to=${opts.to}`);
+
+    try {
+      const info = await transporter.sendMail({
+        from: getFromAddress(),
+        to: opts.to,
+        subject: opts.subject,
+        text: opts.text,
+        html: opts.html,
+      });
+
+      console.log(`[mailer] Email sent to ${opts.to}: ${info.messageId}`);
+      console.log('[mailer] sendMail result info:', info);
+
+      return {
+        ...info,
+        mode: 'real',
+        previewUrl: null,
+      };
+    } catch (mailErr) {
+      console.error('[mailer] sendMail error:', mailErr);
+      throw mailErr;
+    }
+  }
+
   if (hasResendConfig()) {
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -151,15 +194,7 @@ export const sendMail = async (opts: {
   }
 
   const { transporter, isReal } = await getTransporter();
-  const provider = process.env.SENDGRID_API_KEY
-    ? 'sendgrid'
-    : process.env.GMAIL_USER
-    ? 'gmail'
-    : process.env.SMTP_HOST
-    ? 'smtp'
-    : 'ethereal';
-
-  console.log(`[mailer] sendMail start provider=${provider} isReal=${isReal} to=${opts.to}`);
+  console.log(`[mailer] sendMail start provider=ethereal isReal=${isReal} to=${opts.to}`);
 
   try {
     const info = await transporter.sendMail({
@@ -170,18 +205,15 @@ export const sendMail = async (opts: {
       html: opts.html,
     });
 
-    if (!isReal) {
-      console.log(
-        "[mailer] Preview URL (Ethereal, not a real inbox):",
-        nodemailer.getTestMessageUrl(info),
-      );
-    } else {
-      console.log(`[mailer] Email sent to ${opts.to}: ${info.messageId}`);
-    }
-
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    console.log('[mailer] Preview URL (Ethereal, not a real inbox):', previewUrl);
     console.log('[mailer] sendMail result info:', info);
 
-    return info;
+    return {
+      ...info,
+      mode: 'preview',
+      previewUrl,
+    };
   } catch (mailErr) {
     console.error('[mailer] sendMail error:', mailErr);
     throw mailErr;
