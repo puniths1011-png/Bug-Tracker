@@ -22,6 +22,21 @@ export const getTransporter = async (): Promise<{
   const gmailUser = process.env.GMAIL_USER;
   const gmailPass = process.env.GMAIL_APP_PASSWORD;
 
+  // Prefer SendGrid if an API key is provided (works well on hosted platforms).
+  const sendgridKey = process.env.SENDGRID_API_KEY;
+  if (sendgridKey) {
+    // Use SendGrid's SMTP relay with the 'apikey' user.
+    cachedTransporter = nodemailer.createTransport({
+      host: 'smtp.sendgrid.net',
+      port: 587,
+      secure: false,
+      auth: { user: 'apikey', pass: sendgridKey },
+      family: 4,
+    } as any);
+    cachedIsRealSmtp = true;
+    return { transporter: cachedTransporter, isReal: true };
+  }
+
   if (gmailUser && gmailPass) {
     cachedTransporter = nodemailer.createTransport({
       host: "smtp.gmail.com",

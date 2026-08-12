@@ -30,6 +30,18 @@ const getTransporter = () => __awaiter(void 0, void 0, void 0, function* () {
     }
     const gmailUser = process.env.GMAIL_USER;
     const gmailPass = process.env.GMAIL_APP_PASSWORD;
+    const sendgridKey = process.env.SENDGRID_API_KEY;
+    if (sendgridKey) {
+        cachedTransporter = nodemailer_1.default.createTransport({
+            host: 'smtp.sendgrid.net',
+            port: 587,
+            secure: false,
+            auth: { user: 'apikey', pass: sendgridKey },
+            family: 4,
+        });
+        cachedIsRealSmtp = true;
+        return { transporter: cachedTransporter, isReal: true };
+    }
     if (gmailUser && gmailPass) {
         cachedTransporter = nodemailer_1.default.createTransport({
             host: "smtp.gmail.com",
