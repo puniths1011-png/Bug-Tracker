@@ -139,29 +139,7 @@ export const sendMail = async (opts: {
 
     return info;
   } catch (mailErr) {
-    if (isReal) {
-      console.error(
-        '[mailer] Real mailer failed, falling back to Ethereal preview:',
-        mailErr,
-      );
-      cachedTransporter = null;
-
-      const { transporter: fallbackTransporter } = await createEtherealTransporter();
-      const fallbackInfo = await fallbackTransporter.sendMail({
-        from: getFromAddress(),
-        to: opts.to,
-        subject: opts.subject,
-        text: opts.text,
-        html: opts.html,
-      });
-
-      console.log(
-        "[mailer] Fallback preview URL (Ethereal, invitation not sent to real inbox):",
-        nodemailer.getTestMessageUrl(fallbackInfo),
-      );
-      return fallbackInfo;
-    }
-
+    console.error('[mailer] sendMail error:', mailErr);
     throw mailErr;
   }
 };

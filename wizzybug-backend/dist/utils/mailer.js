@@ -72,19 +72,11 @@ const getTransporter = () => __awaiter(void 0, void 0, void 0, function* () {
         cachedIsRealSmtp = true;
         return { transporter: cachedTransporter, isReal: true };
     }
+    // If no real mailer is configured, fail loudly — do not use a mock inbox.
     throw new Error('No real mailer configured. Set SENDGRID_API_KEY or GMAIL_USER+GMAIL_APP_PASSWORD or SMTP_* env vars.');
 });
 exports.getTransporter = getTransporter;
-const createEtherealTransporter = () => __awaiter(void 0, void 0, void 0, function* () {
-    const testAccount = yield nodemailer_1.default.createTestAccount();
-    const transporter = nodemailer_1.default.createTransport({
-        host: "smtp.ethereal.email",
-        port: 587,
-        secure: false,
-        auth: { user: testAccount.user, pass: testAccount.pass },
-    });
-    return { transporter, testAccount };
-});
+// Note: Ethereal/mock transport intentionally removed — require real mailer credentials.
 const normalizeFromAddress = (value) => {
     if (!value)
         return undefined;
@@ -134,20 +126,7 @@ const sendMail = (opts) => __awaiter(void 0, void 0, void 0, function* () {
         return info;
     }
     catch (mailErr) {
-        if (isReal) {
-            console.error('[mailer] Real mailer failed, falling back to Ethereal preview:', mailErr);
-            cachedTransporter = null;
-            const { transporter: fallbackTransporter } = yield createEtherealTransporter();
-            const fallbackInfo = yield fallbackTransporter.sendMail({
-                from: (0, exports.getFromAddress)(),
-                to: opts.to,
-                subject: opts.subject,
-                text: opts.text,
-                html: opts.html,
-            });
-            console.log("[mailer] Fallback preview URL (Ethereal, invitation not sent to real inbox):", nodemailer_1.default.getTestMessageUrl(fallbackInfo));
-            return fallbackInfo;
-        }
+        console.error('[mailer] sendMail error:', mailErr);
         throw mailErr;
     }
 });
