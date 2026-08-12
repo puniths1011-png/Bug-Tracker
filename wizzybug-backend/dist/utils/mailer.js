@@ -72,6 +72,16 @@ const getTransporter = () => __awaiter(void 0, void 0, void 0, function* () {
     return { transporter: cachedTransporter, isReal: false };
 });
 exports.getTransporter = getTransporter;
+const createEtherealTransporter = () => __awaiter(void 0, void 0, void 0, function* () {
+    const testAccount = yield nodemailer_1.default.createTestAccount();
+    const transporter = nodemailer_1.default.createTransport({
+        host: "smtp.ethereal.email",
+        port: 587,
+        secure: false,
+        auth: { user: testAccount.user, pass: testAccount.pass },
+    });
+    return { transporter, testAccount };
+});
 const normalizeFromAddress = (value) => {
     if (!value)
         return undefined;
@@ -95,19 +105,38 @@ const isRealMailerConfigured = () => __awaiter(void 0, void 0, void 0, function*
 exports.isRealMailerConfigured = isRealMailerConfigured;
 const sendMail = (opts) => __awaiter(void 0, void 0, void 0, function* () {
     const { transporter, isReal } = yield (0, exports.getTransporter)();
-    const info = yield transporter.sendMail({
-        from: (0, exports.getFromAddress)(),
-        to: opts.to,
-        subject: opts.subject,
-        text: opts.text,
-        html: opts.html,
-    });
-    if (!isReal) {
-        console.log("[mailer] Preview URL (Ethereal, not a real inbox):", nodemailer_1.default.getTestMessageUrl(info));
+    try {
+        const info = yield transporter.sendMail({
+            from: (0, exports.getFromAddress)(),
+            to: opts.to,
+            subject: opts.subject,
+            text: opts.text,
+            html: opts.html,
+        });
+        if (!isReal) {
+            console.log("[mailer] Preview URL (Ethereal, not a real inbox):", nodemailer_1.default.getTestMessageUrl(info));
+        }
+        else {
+            console.log(`[mailer] Email sent to ${opts.to}: ${info.messageId}`);
+        }
+        return info;
     }
-    else {
-        console.log(`[mailer] Email sent to ${opts.to}: ${info.messageId}`);
+    catch (mailErr) {
+        if (isReal) {
+            console.error('[mailer] Real mailer failed, falling back to Ethereal preview:', mailErr);
+            cachedTransporter = null;
+            const { transporter: fallbackTransporter } = yield createEtherealTransporter();
+            const fallbackInfo = yield fallbackTransporter.sendMail({
+                from: (0, exports.getFromAddress)(),
+                to: opts.to,
+                subject: opts.subject,
+                text: opts.text,
+                html: opts.html,
+            });
+            console.log("[mailer] Fallback preview URL (Ethereal, invitation not sent to real inbox):", nodemailer_1.default.getTestMessageUrl(fallbackInfo));
+            return fallbackInfo;
+        }
+        throw mailErr;
     }
-    return info;
 });
 exports.sendMail = sendMail;

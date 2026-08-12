@@ -68,6 +68,17 @@ export const getTransporter = async (): Promise<{
   return { transporter: cachedTransporter, isReal: false };
 };
 
+const createEtherealTransporter = async () => {
+  const testAccount = await nodemailer.createTestAccount();
+  const transporter = nodemailer.createTransport({
+    host: "smtp.ethereal.email",
+    port: 587,
+    secure: false,
+    auth: { user: testAccount.user, pass: testAccount.pass },
+  });
+  return { transporter, testAccount };
+};
+
 const normalizeFromAddress = (value?: string): string | undefined => {
   if (!value) return undefined;
   const trimmed = value.trim();
@@ -100,22 +111,50 @@ export const sendMail = async (opts: {
   html: string;
 }) => {
   const { transporter, isReal } = await getTransporter();
-  const info = await transporter.sendMail({
-    from: getFromAddress(),
-    to: opts.to,
-    subject: opts.subject,
-    text: opts.text,
-    html: opts.html,
-  });
 
-  if (!isReal) {
-    console.log(
-      "[mailer] Preview URL (Ethereal, not a real inbox):",
-      nodemailer.getTestMessageUrl(info),
-    );
-  } else {
-    console.log(`[mailer] Email sent to ${opts.to}: ${info.messageId}`);
+  try {
+    const info = await transporter.sendMail({
+      from: getFromAddress(),
+      to: opts.to,
+      subject: opts.subject,
+      text: opts.text,
+      html: opts.html,
+    });
+
+    if (!isReal) {
+      console.log(
+        "[mailer] Preview URL (Ethereal, not a real inbox):",
+        nodemailer.getTestMessageUrl(info),
+      );
+    } else {
+      console.log(`[mailer] Email sent to ${opts.to}: ${info.messageId}`);
+    }
+
+    return info;
+  } catch (mailErr) {
+    if (isReal) {
+      console.error(
+        '[mailer] Real mailer failed, falling back to Ethereal preview:',
+        mailErr,
+      );
+      cachedTransporter = null;
+
+      const { transporter: fallbackTransporter } = await createEtherealTransporter();
+      const fallbackInfo = await fallbackTransporter.sendMail({
+        from: getFromAddress(),
+        to: opts.to,
+        subject: opts.subject,
+        text: opts.text,
+        html: opts.html,
+      });
+
+      console.log(
+        "[mailer] Fallback preview URL (Ethereal, invitation not sent to real inbox):",
+        nodemailer.getTestMessageUrl(fallbackInfo),
+      );
+      return fallbackInfo;
+    }
+
+    throw mailErr;
   }
-
-  return info;
 };
