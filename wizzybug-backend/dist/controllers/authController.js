@@ -126,11 +126,11 @@ const inviteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             res.status(502).json({
                 message: 'Invite could not be emailed.',
                 reason,
-                hint: 'On Render free instances, configure RESEND_API_KEY and a verified MAIL_FROM address. Otherwise use valid GMAIL_USER/GMAIL_APP_PASSWORD or SMTP_* values on a plan that permits outbound SMTP.'
+                hint: 'On Render, configure RESEND_API_KEY and MAIL_FROM. For Resend testing without a custom domain, use "WizzyBug Admin" <onboarding@resend.dev>.'
             });
             return;
         }
-        const mailerReady = yield (0, mailer_1.isRealMailerConfigured)();
+        const mailerReady = (0, mailer_1.isRealMailerConfigured)();
         res.status(201).json({
             message: mailerReady ? 'Invite sent' : 'Invite created, but no real mailer is configured. Email preview details are in the backend console.',
             mailMode: mailerReady ? 'real' : 'preview',
