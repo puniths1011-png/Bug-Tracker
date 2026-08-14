@@ -40,7 +40,6 @@ export const sendInviteViaMail = async (opts: {
         name: opts.name,
         inviteLink: opts.inviteLink,
       }),
-      timeout: 10000, // 10 second timeout
     });
 
     console.log(`[mailer] Mail Service responded with status: ${response.status}`);
