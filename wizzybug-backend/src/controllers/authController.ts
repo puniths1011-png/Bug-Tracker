@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import User from '../models/User';
-import { isRealMailerConfigured, sendMail } from '../utils/mailer';
+import { isRealMailerConfigured, sendInviteViaMail } from '../utils/mailer';
 
 const ALLOWED_ROLES = ['admin', 'developer', 'tester'];
 
@@ -106,33 +106,32 @@ export const inviteUser = async (req: Request, res: Response): Promise<void> => 
     });
 
     const frontendUrl = getFrontendUrl();
-    const inviteUrl = `${frontendUrl}/accept-invite?token=${inviteToken}`;
+    const inviteLink = `${frontendUrl}/accept-invite?token=${inviteToken}`;
 
     try {
-      await sendMail({
-        to: normalizedEmail,
-        subject: 'You have been invited to WizzyBug',
-        text: `Hello ${name},\n\nYou have been invited to join WizzyBug as a ${role || 'developer'}.\nUse the link below to accept your invitation and set your password for ${normalizedEmail}:\n\n${inviteUrl}\n\nThanks,\nWizzyBug Team`,
-        html: `<p>Hello ${name},</p><p>You have been invited to join <b>WizzyBug</b> as a <b>${role || 'developer'}</b>.</p><p>Invitation email: <b>${normalizedEmail}</b></p><p><a href="${inviteUrl}">Click here to accept your invitation and set your password</a></p><p>If the button doesn't work, copy this link into your browser:<br/>${inviteUrl}</p>`
+      await sendInviteViaMail({
+        email: normalizedEmail,
+        name: name,
+        inviteLink: inviteLink
       });
     } catch (mailErr) {
       // Roll back the pending user if the email genuinely could not be sent,
       // so an admin doesn't end up with a "ghost" invite the person never received.
-      const reason = mailErr instanceof Error ? mailErr.message : 'Unknown mail error';
-      console.error('[inviteUser] Failed to send invite email:', mailErr);
+      const reason = mailErr instanceof Error ? mailErr.message : 'Unknown mail service error';
+      console.error('[inviteUser] Failed to send invite via Mail Service:', mailErr);
       await User.deleteOne({ _id: user._id });
       res.status(502).json({
-        message: 'Invite could not be emailed.',
+        message: 'Invite could not be sent to Mail Service.',
         reason,
-        hint: 'On Render, configure RESEND_API_KEY and MAIL_FROM. For Resend testing without a custom domain, use "WizzyBug Admin" <onboarding@resend.dev>.'
+        hint: 'Ensure MAIL_SERVICE_URL is configured and the Mail Service is running and accessible.'
       });
       return;
     }
 
     const mailerReady = isRealMailerConfigured();
     res.status(201).json({
-      message: mailerReady ? 'Invite sent' : 'Invite created, but no real mailer is configured. Email preview details are in the backend console.',
-      mailMode: mailerReady ? 'real' : 'preview',
+      message: mailerReady ? 'Invite sent' : 'Invite created, but Mail Service is not configured.',
+      mailMode: mailerReady ? 'mail-service' : 'unconfigured',
       user: { name: user.name, email: user.email, role: user.role, status: user.status }
     });
   } catch (error) {
