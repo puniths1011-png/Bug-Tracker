@@ -118,12 +118,21 @@ export const inviteUser = async (req: Request, res: Response): Promise<void> => 
       // Roll back the pending user if the email genuinely could not be sent,
       // so an admin doesn't end up with a "ghost" invite the person never received.
       const reason = mailErr instanceof Error ? mailErr.message : 'Unknown mail service error';
-      console.error('[inviteUser] Failed to send invite via Mail Service:', mailErr);
+      console.error('[inviteUser] ❌ Failed to send invite via Mail Service:', {
+        reason,
+        email: normalizedEmail,
+        mailServiceUrl: process.env.MAIL_SERVICE_URL,
+        error: mailErr
+      });
       await User.deleteOne({ _id: user._id });
       res.status(502).json({
         message: 'Invite could not be sent to Mail Service.',
         reason,
-        hint: 'Ensure MAIL_SERVICE_URL is configured and the Mail Service is running and accessible.'
+        debugging: {
+          mailServiceUrl: process.env.MAIL_SERVICE_URL || 'NOT SET',
+          mailServiceConfigured: Boolean(process.env.MAIL_SERVICE_URL),
+        },
+        hint: 'Check that MAIL_SERVICE_URL is configured in Render environment variables and the Mail Service is running.'
       });
       return;
     }
