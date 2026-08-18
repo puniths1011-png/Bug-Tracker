@@ -1,4 +1,8 @@
 "use strict";
+/**
+ * Mail Service Integration
+ * Sends invitations through a separate Mail Service instead of Resend/Gmail
+ */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -9,53 +13,95 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendMail = exports.isRealMailerConfigured = void 0;
-const resend_1 = require("resend");
-const DEFAULT_FROM = '"WizzyBug Admin" <onboarding@resend.dev>';
-const getFromAddress = () => { var _a; return ((_a = process.env.MAIL_FROM) === null || _a === void 0 ? void 0 : _a.trim()) || DEFAULT_FROM; };
-const getResendClient = () => {
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey)
-        throw new Error('RESEND_API_KEY is not configured.');
-    return new resend_1.Resend(apiKey);
-};
-const isRealMailerConfigured = () => Boolean(process.env.RESEND_API_KEY);
+exports.sendMail = exports.sendInviteViaMail = exports.isRealMailerConfigured = void 0;
+const isRealMailerConfigured = () => Boolean(process.env.MAIL_SERVICE_URL);
 exports.isRealMailerConfigured = isRealMailerConfigured;
-const sendMail = (opts) => __awaiter(void 0, void 0, void 0, function* () {
-    const resend = getResendClient();
-    const from = getFromAddress();
-    console.log(`[mailer] Sending Resend email to=${opts.to} from=${from}`);
+const sendInviteViaMail = (opts) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const mailServiceUrl = (_a = process.env.MAIL_SERVICE_URL) === null || _a === void 0 ? void 0 : _a.trim();
+    if (!mailServiceUrl) {
+        const msg = 'MAIL_SERVICE_URL is not configured. Set it in your environment variables.';
+        console.error('[mailer] Error:', msg);
+        throw new Error(msg);
+    }
+    const subject = 'You are invited to WizzyBug';
+    const body = `Hello ${opts.name},
+
+You have been invited to join WizzyBug.
+
+Please accept your invitation using the link below:
+
+${opts.inviteLink}
+
+Thank you,
+WizzyBug Team`;
+    const html = `
+    <h2>Hello ${opts.name},</h2>
+    <p>You have been invited to join <strong>WizzyBug</strong>.</p>
+    <p>Please click the link below to accept your invitation:</p>
+    <p>
+      <a href="${opts.inviteLink}">
+        Accept Invitation
+      </a>
+    </p>
+    <p>Thank you,<br>WizzyBug Team</p>
+  `;
+    console.log('[mailer] Configuration check:');
+    console.log(`  - MAIL_SERVICE_URL: ${mailServiceUrl}`);
+    console.log(`  - Email: ${opts.email}`);
+    console.log(`  - Subject: ${subject}`);
     try {
-        const { data, error } = yield resend.emails.send({
-            from,
-            to: [opts.to],
-            subject: opts.subject,
-            text: opts.text,
-            html: opts.html,
+        const response = yield fetch(mailServiceUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                to: opts.email,
+                subject,
+                body,
+                html,
+            }),
         });
-        if (error) {
-            console.error('[mailer] Resend API rejected email:', {
-                name: error.name,
-                message: error.message,
-                statusCode: error.statusCode,
+        console.log(`[mailer] Mail Service responded with status: ${response.status}`);
+        if (!response.ok) {
+            let errorData = 'Unable to read response';
+            try {
+                errorData = yield response.text();
+            }
+            catch (e) {
+                console.error('[mailer] Failed to read error response:', e);
+            }
+            console.error('[mailer] Mail Service rejected invitation:', {
+                status: response.status,
+                statusText: response.statusText,
+                responseBody: errorData,
             });
-            throw new Error(`Resend API error: ${error.message}`);
+            throw new Error(`Mail Service returned ${response.status}: ${response.statusText} - ${errorData}`);
         }
-        if (!(data === null || data === void 0 ? void 0 : data.id)) {
-            console.error('[mailer] Resend API returned no email id:', data);
-            throw new Error('Resend API did not return an email id.');
-        }
-        console.log(`[mailer] Resend email accepted id=${data.id} to=${opts.to}`);
-        return { id: data.id };
+        const data = yield response.json();
+        console.log('[mailer] ✅ Mail Service invitation sent successfully:', data);
+        return {
+            success: true,
+            message: 'Invite sent successfully',
+        };
     }
     catch (error) {
-        if (error instanceof Error && error.message.startsWith('Resend API error:'))
-            throw error;
-        console.error('[mailer] Resend email send failed:', {
-            name: error instanceof Error ? error.name : 'UnknownError',
-            message: error instanceof Error ? error.message : String(error),
+        console.error('[mailer] ❌ Mail Service invitation send failed:');
+        console.error({
+            errorName: error instanceof Error ? error.name : 'UnknownError',
+            errorMessage: error instanceof Error ? error.message : String(error),
+            mailServiceUrl,
         });
         throw error;
     }
+});
+exports.sendInviteViaMail = sendInviteViaMail;
+/**
+ * Legacy sendMail function (kept for backwards compatibility)
+ * Use sendInviteViaMail for sending invitations instead
+ */
+const sendMail = (opts) => __awaiter(void 0, void 0, void 0, function* () {
+    throw new Error('sendMail is no longer supported. Use sendInviteViaMail with the Mail Service instead.');
 });
 exports.sendMail = sendMail;

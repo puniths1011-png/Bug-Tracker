@@ -11,34 +11,53 @@ export const sendInviteViaMail = async (opts: {
   inviteLink: string;
 }): Promise<{ success: boolean; message: string }> => {
   const mailServiceUrl = process.env.MAIL_SERVICE_URL?.trim();
-  
+
   if (!mailServiceUrl) {
     const msg = 'MAIL_SERVICE_URL is not configured. Set it in your environment variables.';
     console.error('[mailer] Error:', msg);
     throw new Error(msg);
   }
 
-  // Ensure URL doesn't have trailing slash for endpoint construction
-  const baseUrl = mailServiceUrl.endsWith('/') ? mailServiceUrl.slice(0, -1) : mailServiceUrl;
-  const endpoint = `${baseUrl}/send-invite`;
-  
+  const subject = 'You are invited to WizzyBug';
+  const body = `Hello ${opts.name},
+
+You have been invited to join WizzyBug.
+
+Please accept your invitation using the link below:
+
+${opts.inviteLink}
+
+Thank you,
+WizzyBug Team`;
+
+  const html = `
+    <h2>Hello ${opts.name},</h2>
+    <p>You have been invited to join <strong>WizzyBug</strong>.</p>
+    <p>Please click the link below to accept your invitation:</p>
+    <p>
+      <a href="${opts.inviteLink}">
+        Accept Invitation
+      </a>
+    </p>
+    <p>Thank you,<br>WizzyBug Team</p>
+  `;
+
   console.log('[mailer] Configuration check:');
   console.log(`  - MAIL_SERVICE_URL: ${mailServiceUrl}`);
-  console.log(`  - Endpoint: ${endpoint}`);
   console.log(`  - Email: ${opts.email}`);
-  console.log(`  - Name: ${opts.name}`);
+  console.log(`  - Subject: ${subject}`);
 
   try {
-    console.log('[mailer] Making request to Mail Service...');
-    const response = await fetch(endpoint, {
+    const response = await fetch(mailServiceUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        email: opts.email,
-        name: opts.name,
-        inviteLink: opts.inviteLink,
+        to: opts.email,
+        subject,
+        body,
+        html,
       }),
     });
 
@@ -51,17 +70,18 @@ export const sendInviteViaMail = async (opts: {
       } catch (e) {
         console.error('[mailer] Failed to read error response:', e);
       }
-      
+
       console.error('[mailer] Mail Service rejected invitation:', {
         status: response.status,
         statusText: response.statusText,
         responseBody: errorData,
       });
+
       throw new Error(`Mail Service returned ${response.status}: ${response.statusText} - ${errorData}`);
     }
 
     const data = await response.json();
-    console.log(`[mailer] ✅ Mail Service invitation sent successfully:`, data);
+    console.log('[mailer] ✅ Mail Service invitation sent successfully:', data);
 
     return {
       success: true,
@@ -72,7 +92,6 @@ export const sendInviteViaMail = async (opts: {
     console.error({
       errorName: error instanceof Error ? error.name : 'UnknownError',
       errorMessage: error instanceof Error ? error.message : String(error),
-      endpoint,
       mailServiceUrl,
     });
     throw error;
