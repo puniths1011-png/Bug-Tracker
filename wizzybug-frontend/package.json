@@ -3,8 +3,8 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm:client\" \"npm:server\"",
-    "client": "vite",
-    "server": "node --watch server/src/index.js",
+    "client": "vite --host 0.0.0.0",
+    "server": "npm --prefix ../wizzybug-backend run dev",
     "build": "vite build"
   },
   "dependencies": {
