@@ -20,8 +20,14 @@ exports.sendMail = exports.sendInviteViaMail = exports.isRealMailerConfigured = 
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const resolveMailServiceUrl = () => {
     var _a;
-    const configuredUrl = (_a = process.env.MAIL_SERVICE_URL) === null || _a === void 0 ? void 0 : _a.trim();
-    return configuredUrl || '';
+    const configuredUrl = (_a = process.env.MAIL_SERVICE_URL) === null || _a === void 0 ? void 0 : _a.trim().replace(/\/+$/, '');
+    if (!configuredUrl)
+        return '';
+    // The deployed mail service exposes its handler at /api/index. Accepting
+    // the shorter /api value avoids silently posting to the Vercel directory.
+    if (configuredUrl.endsWith('/api'))
+        return `${configuredUrl}/index`;
+    return configuredUrl;
 };
 exports.resolveMailServiceUrl = resolveMailServiceUrl;
 const getSmtpTransport = () => {

@@ -13,6 +13,13 @@ test('uses the configured mail service endpoint without rewriting its path', asy
   assert.equal(resolveMailServiceUrl(), 'https://mail-services-ver.vercel.app/api/index');
 });
 
+test('normalizes the mail service API directory to its deployed handler', async () => {
+  process.env.MAIL_SERVICE_URL = 'https://mail-services-ver.vercel.app/api/';
+
+  const { resolveMailServiceUrl } = loadMailer();
+  assert.equal(resolveMailServiceUrl(), 'https://mail-services-ver.vercel.app/api/index');
+});
+
 test.after(() => {
   if (originalMailServiceUrl === undefined) {
     delete process.env.MAIL_SERVICE_URL;
