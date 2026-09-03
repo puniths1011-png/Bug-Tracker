@@ -32,7 +32,7 @@ function Header({
       <div>
         <h1>{title}</h1>
         <p>
-          {formatISTLong(now)} Â·{" "}
+          {formatISTLong(now)} -{" "}
           {now.toLocaleTimeString("en-IN", {
             timeZone: IST_TZ,
             hour: "2-digit",

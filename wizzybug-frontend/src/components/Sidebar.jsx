@@ -35,7 +35,7 @@ function Sidebar({
   items.push(["profile", User, "My Profile"]);
 
   return (
-    <aside className={open ? "open" : ""}>
+    <aside className={`sidebar ${open ? "open" : ""}`}>
       <div className="sideTop">
         <Logo />
         <button className="closeMobile" onClick={() => setOpen(false)}>

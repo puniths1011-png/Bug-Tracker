@@ -7,7 +7,7 @@ import { API, apiFetch, setToken } from '../config/api';
 import { formatIST, formatISTLong, timeAgoIST, IST_TZ } from '../utils/date';
 import { STATUS_LABELS, STATUS_VALUES, PRIORITY_LABELS, SEVERITY_TO_PRIORITY } from '../utils/constants';
 import { Avatar, Logo, RoleBadge, Status } from '../components/Ui';
-import { initialsOf, isAssignedToUser, priorityLabel, statusLabel, buildTimeline } from '../utils/formatters';
+import { initialsOf, isAssignedToUser, priorityLabel, statusLabel, buildTimeline, pdfText } from '../utils/formatters';
 import BugTable from '../components/BugTable';
 import Stats from '../components/Stats';
 
@@ -141,10 +141,10 @@ function Distribution({ bugs = [] }) {
 function Dashboard({ bugs, setSelected, setPage, user }) {
   const exportToPDF = () => {
     const doc = new jsPDF();
-    doc.text("WizzyBug - Bug Report", 14, 15);
+    doc.text(pdfText("WizzyBug - Bug Report"), 14, 15);
     doc.setFontSize(9);
     doc.setTextColor(120);
-    doc.text(`Generated ${formatIST(new Date())} IST`, 14, 21);
+    doc.text(pdfText(`Generated ${formatIST(new Date())} IST`), 14, 21);
 
     const tableColumn = [
       "BUG ID",
@@ -156,19 +156,30 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
       "CREATED (IST)",
     ];
     const tableRows = bugs.map((b) => [
-      b.id,
-      b.title,
-      b.severity,
-      statusLabel(b.status),
-      b.project,
-      b.assignee,
-      formatIST(b.createdAt),
+      pdfText(b.id),
+      pdfText(b.title),
+      pdfText(b.severity),
+      pdfText(statusLabel(b.status)),
+      pdfText(b.project),
+      pdfText(b.assignee),
+      pdfText(formatIST(b.createdAt)),
     ]);
 
     autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
       startY: 26,
+      margin: { left: 14, right: 14 },
+      styles: { fontSize: 8, cellPadding: 3, overflow: "linebreak" },
+      columnStyles: {
+        0: { cellWidth: 22 },
+        1: { cellWidth: 42 },
+        2: { cellWidth: 23 },
+        3: { cellWidth: 23 },
+        4: { cellWidth: 28 },
+        5: { cellWidth: 30 },
+        6: { cellWidth: 28 },
+      },
     });
 
     doc.save("wizzybug_bugs_report.pdf");
@@ -181,7 +192,7 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
       <div className="welcome">
         <div>
           <h2>Hi, {user?.name || "there"}</h2>
-          <p>Hereâ€™s whatâ€™s happening with your projects today.</p>
+          <p>Here's what's happening with your projects today.</p>
         </div>
         <button className="outline" onClick={exportToPDF}>
           <Download size={17} />

@@ -19,6 +19,15 @@ export const priorityLabel = (priority) =>
     ? priority.charAt(0).toUpperCase() + priority.slice(1)
     : "Medium");
 
+export const pdfText = (value) =>
+  String(value ?? "")
+    .replace(/â€™/g, "'")
+    .replace(/â€“|â€”/g, "-")
+    .replace(/â€¦/g, "...")
+    .replace(/Â·/g, "-")
+    .replace(/[^\x20-\x7E\n]/g, "")
+    .trim();
+
 export function formatBug(ticket) {
   const priority = (ticket.priority || "medium").toLowerCase();
   const status = (ticket.status || "open").toLowerCase();

@@ -77,8 +77,8 @@ const initialUsers = [];
 
 function App({ isAdminPage = false }) {
   const [theme, setTheme] = useState(() => {
-    if (typeof window === "undefined") return "dark";
-    return localStorage.getItem("theme") || "dark";
+    if (typeof window === "undefined") return "light";
+    return localStorage.getItem("theme") || "light";
   });
   const [logged, setLogged] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -385,7 +385,7 @@ function App({ isAdminPage = false }) {
         <div className="content">
           {loadingData && bugs.length === 0 ? (
             <div className="muted" style={{ padding: 40, textAlign: "center" }}>
-              Loading your workspaceâ€¦
+              Loading your workspace...
             </div>
           ) : (
             content

@@ -119,7 +119,7 @@ function BugsPage({
         <BugTable bugs={rows} setSelected={setSelected} />
         <div className="pagination">
           <span>
-            Showing 1â€“{rows.length} of {scoped.length} bugs
+            Showing 1-{rows.length} of {scoped.length} bugs
           </span>
         </div>
       </article>

@@ -33,7 +33,7 @@ function BugTable({ bugs, setSelected, compact = false }) {
               <td>
                 <b>{b.title}</b>
                 <small>
-                  {b.id} Â· {b.project}
+                  {b.id} - {b.project}
                 </small>
               </td>
               <td>

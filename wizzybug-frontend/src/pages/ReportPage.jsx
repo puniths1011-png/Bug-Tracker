@@ -189,7 +189,7 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
           Project Name <b>*</b>
           {projects.length === 0 ? (
             <div className="muted" style={{ padding: "10px 0" }}>
-              No projects yet â€”{" "}
+              No projects yet -{" "}
               {isAdmin ? (
                 <>
                   create one from the{" "}
@@ -465,7 +465,7 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
               </>
             )}
           </strong>
-          <small>PNG, JPG, GIF or MP4 Â· Max 10MB</small>
+          <small>PNG, JPG, GIF or MP4 - Max 10MB</small>
           <input type="file" onChange={(e) => setFile(e.target.files[0])} />
         </label>
 

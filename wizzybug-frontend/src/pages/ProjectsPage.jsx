@@ -116,7 +116,7 @@ function ProjectsPage({
                 disabled={saving}
                 style={{ width: "100%" }}
               >
-                {saving ? "Creatingâ€¦" : "Create project"}
+                {saving ? "Creating..." : "Create project"}
               </button>
             </div>
           </form>

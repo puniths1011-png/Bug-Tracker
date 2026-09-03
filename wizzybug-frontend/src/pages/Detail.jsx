@@ -7,7 +7,7 @@ import { API, apiFetch, setToken } from '../config/api';
 import { formatIST, formatISTLong, timeAgoIST, IST_TZ } from '../utils/date';
 import { STATUS_LABELS, STATUS_VALUES, PRIORITY_LABELS, SEVERITY_TO_PRIORITY } from '../utils/constants';
 import { Avatar, Logo, RoleBadge, Status } from '../components/Ui';
-import { initialsOf, isAssignedToUser, priorityLabel, statusLabel } from '../utils/formatters';
+import { initialsOf, isAssignedToUser, priorityLabel, statusLabel, pdfText } from '../utils/formatters';
 
 function buildTimeline(bug) {
   const historyItems = (bug.history || []).map((h) => ({
@@ -106,28 +106,30 @@ function Detail({
   const exportBugPDF = () => {
     const doc = new jsPDF();
     doc.setFontSize(16);
-    doc.text(`WizzyBug Â· ${bug.id}`, 14, 16);
+    doc.text(pdfText(`WizzyBug - ${bug.id}`), 14, 16);
     doc.setFontSize(11);
     doc.setTextColor(80);
-    doc.text(bug.title, 14, 24);
+    doc.text(pdfText(bug.title), 14, 24);
 
     autoTable(doc, {
       startY: 30,
       theme: "plain",
-      styles: { fontSize: 10 },
+      margin: { left: 14, right: 14 },
+      styles: { fontSize: 9, cellPadding: 3, overflow: "linebreak" },
+      columnStyles: { 0: { cellWidth: 42 }, 1: { cellWidth: 138 } },
       body: [
-        ["Status", statusLabel(bug.status)],
-        ["Severity", bug.severity],
-        ["Project", bug.project],
-        ["Reporter", bug.reporter],
-        ["Assignee", bug.assignee],
-        ["Reported (IST)", formatIST(bug.createdAt)],
-        ["Last updated (IST)", formatIST(bug.updatedAt)],
-        ["Environment", bug.environment || "â€”"],
-        ["Module / Feature", bug.moduleFeatureName || "â€”"],
+        ["Status", pdfText(statusLabel(bug.status))],
+        ["Severity", pdfText(bug.severity)],
+        ["Project", pdfText(bug.project)],
+        ["Reporter", pdfText(bug.reporter)],
+        ["Assignee", pdfText(bug.assignee)],
+        ["Reported (IST)", pdfText(formatIST(bug.createdAt))],
+        ["Last updated (IST)", pdfText(formatIST(bug.updatedAt))],
+        ["Environment", pdfText(bug.environment || "-")],
+        ["Module / Feature", pdfText(bug.moduleFeatureName || "-")],
         [
           "Browser",
-          [bug.browser, bug.browserVersion].filter(Boolean).join(" ") || "â€”",
+          pdfText([bug.browser, bug.browserVersion].filter(Boolean).join(" ") || "-"),
         ],
       ],
     });
@@ -137,11 +139,21 @@ function Detail({
       if (!text) return;
       doc.setFontSize(11);
       doc.setTextColor(20);
-      doc.text(label, 14, y);
+      doc.text(pdfText(label), 14, y);
       y += 5;
       doc.setFontSize(9);
       doc.setTextColor(90);
-      const lines = doc.splitTextToSize(text, 180);
+      const lines = doc.splitTextToSize(pdfText(text), 180);
+      if (y + lines.length * 4.5 + 8 > 280) {
+        doc.addPage();
+        y = 18;
+        doc.setFontSize(11);
+        doc.setTextColor(20);
+        doc.text(pdfText(label), 14, y);
+        y += 5;
+        doc.setFontSize(9);
+        doc.setTextColor(90);
+      }
       doc.text(lines, 14, y);
       y += lines.length * 4.5 + 5;
     };
@@ -153,16 +165,21 @@ function Detail({
     if (timeline.length) {
       doc.setFontSize(11);
       doc.setTextColor(20);
+      if (y > 270) {
+        doc.addPage();
+        y = 18;
+      }
       doc.text("Activity log", 14, y);
       y += 3;
       autoTable(doc, {
         startY: y + 3,
         head: [["When (IST)", "Who", "Update"]],
-        styles: { fontSize: 8 },
+        margin: { left: 14, right: 14 },
+        styles: { fontSize: 8, cellPadding: 3, overflow: "linebreak" },
         body: timeline.map((t) => [
-          formatIST(t.createdAt),
-          t.actorName,
-          t.message,
+          pdfText(formatIST(t.createdAt)),
+          pdfText(t.actorName),
+          pdfText(t.message),
         ]),
       });
     }
@@ -173,7 +190,8 @@ function Detail({
   return (
     <>
       <button className="back" onClick={() => setSelected(null)}>
-        â† Back to All Bugs
+        <ArrowLeft size={16} />
+        Back to All Bugs
       </button>
       <div className="detailHead">
         <div>
@@ -332,7 +350,7 @@ function Detail({
                 style={{ marginTop: 6 }}
                 onClick={() => setReassignOpen((o) => !o)}
               >
-                {bug.assignee === "Unassigned" ? "Assignâ€¦" : "Reassignâ€¦"}
+                {bug.assignee === "Unassigned" ? "Assign..." : "Reassign..."}
               </button>
             )}
             {reassignOpen && (
@@ -392,7 +410,7 @@ function Detail({
             onClick={handleSaveFix}
             disabled={savingFix}
           >
-            {savingFix ? "Saving..." : savedFix ? "âœ“ Saved!" : "Save Changes"}
+            {savingFix ? "Saving..." : savedFix ? "Saved" : "Save Changes"}
           </button>
         </aside>
       </div>

@@ -115,16 +115,30 @@ button {
   display: flex;
 }
 
-aside {
+.sidebar {
   position: fixed;
   inset: 0 auto 0 0;
   width: 245px;
+  height: 100vh;
   background: var(--panel);
   border-right: 1px solid var(--border);
   padding: 25px 17px 18px;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   z-index: 20;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 7px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 8px;
 }
 
 .logo {
@@ -133,6 +147,13 @@ aside {
   gap: 10px;
   font-family: Manrope;
   font-size: 19px;
+}
+
+[data-theme="light"] .logo,
+[data-theme="light"] .logoMark,
+[data-theme="light"] .logo strong span,
+[data-theme="light"] nav em {
+  color: #000;
 }
 
 .logoMark {
@@ -188,8 +209,13 @@ aside {
   color: var(--muted);
 }
 
-nav {
-  flex: 1;
+.sidebar nav {
+  flex: 0 0 auto;
+  min-height: auto;
+}
+
+.sidebar .sideFoot {
+  flex-shrink: 0;
 }
 
 nav p {
@@ -238,6 +264,10 @@ nav em {
   padding: 1px 7px;
   border-radius: 8px;
   font-size: 10px;
+}
+
+[data-theme="light"] nav em {
+  background: #e9e2dc;
 }
 
 .sideFoot {
@@ -927,7 +957,7 @@ td:first-child small,
 
 .bugList,
 .userTable {
-  overflow: hidden;
+  overflow-x: auto;
 }
 
 .tableTools {
@@ -1130,11 +1160,49 @@ select {
 }
 
 .back {
-  border: 0;
-  background: none;
-  color: #96939f;
-  padding: 0;
+  border: 1px solid var(--border);
+  background: var(--panel2);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 7px;
   margin-bottom: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.back:hover {
+  border-color: var(--purple);
+  color: var(--purple2);
+}
+
+.detailsSide .person {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  align-items: flex-start;
+}
+
+.detailsSide .person .avatar {
+  margin-top: 2px;
+}
+
+.assignBugList td:nth-child(4) {
+  vertical-align: top;
+  min-width: 170px;
+}
+
+.assignBugList td:nth-child(4) .person {
+  min-width: 0;
+  max-width: 190px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  align-items: flex-start;
+}
+
+.assignBugList td:nth-child(4) .person .avatar {
+  margin-top: 2px;
 }
 
 .detailHead {
@@ -1565,11 +1633,12 @@ select {
 }
 
 .authRight h2 {
-  font: 700 27px Manrope;
+  font: 700 30px Manrope;
   margin: 20px 0 5px;
 }
 .authRight form > p {
   color: var(--muted);
+  font-size: 14px;
   margin: 0 0 30px;
 }
 
@@ -1577,19 +1646,43 @@ select {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   margin: 17px 0;
 }
 
+.authRight form > label > b,
+.reportForm label > b {
+  margin-left: 4px;
+}
+
+.reportForm > label:not(.drop),
+.reportForm .twoCol > label {
+  display: block;
+}
+
+.reportForm > label:not(.drop) > input,
+.reportForm > label:not(.drop) > select,
+.reportForm .twoCol > label > input,
+.reportForm .twoCol > label > select {
+  display: block;
+  width: 100%;
+}
+
 .authRight input {
-  height: 43px;
+  height: 48px;
   background: var(--field-bg);
   border: 1px solid var(--field-border);
   border-radius: 7px;
   padding: 0 12px;
+  font-size: 14px;
   color: var(--field-text);
   outline: 0;
+}
+
+.authRight select {
+  height: 48px;
+  font-size: 14px;
 }
 
 .password {
@@ -1646,6 +1739,44 @@ select {
   font-size: 11px;
 }
 
+.content > .welcome + .stats article {
+  padding: 27px;
+}
+
+[data-theme="light"] .recent th,
+[data-theme="light"] .recent td {
+  background: #fffdfb;
+}
+
+[data-theme="light"] .status.open,
+[data-theme="light"] .severity.critical {
+  color: #b52f3d;
+  background: #ffe8ea;
+}
+
+[data-theme="light"] .status.in-progress,
+[data-theme="light"] .severity.high {
+  color: #a85b13;
+  background: #fff0dc;
+}
+
+[data-theme="light"] .status.fixed,
+[data-theme="light"] .severity.medium {
+  color: #285cae;
+  background: #e7f0ff;
+}
+
+[data-theme="light"] .status.closed,
+[data-theme="light"] .status.active,
+[data-theme="light"] .status.resolved,
+[data-theme="light"] .status.rejected,
+[data-theme="light"] .status.deferred,
+[data-theme="light"] .status.not-reproducible,
+[data-theme="light"] .severity.low {
+  color: #167054;
+  background: #e2f6ed;
+}
+
 .signup b {
   color: #9f8bff;
 }
@@ -1696,7 +1827,7 @@ select {
 }
 
 @media (max-width: 760px) {
-  aside {
+  .sidebar {
     transform: translateX(-100%);
     transition: 0.25s;
   }
@@ -1708,7 +1839,7 @@ select {
     color: white;
   }
 
-  aside.open {
+  .sidebar.open {
     transform: translateX(0);
   }
 

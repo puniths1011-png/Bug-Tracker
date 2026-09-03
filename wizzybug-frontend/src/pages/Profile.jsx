@@ -28,6 +28,14 @@ function Profile({ user, setUser, bugs = [] }) {
     const firstName = e.target.firstName.value;
     const lastName = e.target.lastName.value;
     const email = e.target.email.value;
+    const namePattern = /^[A-Za-z]+$/;
+
+    if (!namePattern.test(firstName) || !namePattern.test(lastName)) {
+      e.target.firstName.reportValidity();
+      e.target.lastName.reportValidity();
+      return;
+    }
+
     const updatedName = `${firstName} ${lastName}`.trim();
 
     if (setUser) {
@@ -75,11 +83,35 @@ function Profile({ user, setUser, bugs = [] }) {
           <div className="twoCol">
             <label>
               First name
-              <input name="firstName" defaultValue={firstName} required />
+              <input
+                name="firstName"
+                defaultValue={firstName}
+                pattern="[A-Za-z]+"
+                title="Use letters only"
+                onInput={(e) => {
+                  e.currentTarget.value = e.currentTarget.value.replace(
+                    /[^A-Za-z]/g,
+                    "",
+                  );
+                }}
+                required
+              />
             </label>
             <label>
               Last name
-              <input name="lastName" defaultValue={lastName} required />
+              <input
+                name="lastName"
+                defaultValue={lastName}
+                pattern="[A-Za-z]+"
+                title="Use letters only"
+                onInput={(e) => {
+                  e.currentTarget.value = e.currentTarget.value.replace(
+                    /[^A-Za-z]/g,
+                    "",
+                  );
+                }}
+                required
+              />
             </label>
           </div>
           <label>
@@ -104,7 +136,7 @@ function Profile({ user, setUser, bugs = [] }) {
           </label>
           <div className="formActions">
             <button className="primary" type="submit" disabled={saving}>
-              {saving ? "Saving..." : saved ? "âœ“ Saved!" : "Save Changes"}
+              {saving ? "Saving..." : saved ? "Saved" : "Save Changes"}
             </button>
           </div>
         </form>

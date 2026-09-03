@@ -32,6 +32,11 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
     setBusyId(bug.rawId);
     try {
       await assignBug(bug.rawId, userIds);
+      const assignedNames = userIds
+        .map((userId) => developers.find((developer) => developer._id === userId)?.name)
+        .filter(Boolean)
+        .join(", ");
+      alert(`Bug "${bug.title}" has been assigned to ${assignedNames}.`);
     } catch (e) {
       alert(e.message || "Could not assign bug");
     }
@@ -80,7 +85,7 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
           <strong>{developers.length}</strong>
         </article>
       </div>
-      <article className="panel bugList">
+      <article className="panel bugList assignBugList">
         <div className="tableTools">
           <select
             value={projectFilter}
@@ -130,7 +135,7 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
                   >
                     <b>{b.title}</b>
                     <small>
-                      {b.id} Â· {b.project}
+                      {b.id} - {b.project}
                     </small>
                   </td>
                   <td>
@@ -197,7 +202,7 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
                     className="muted"
                     style={{ textAlign: "center", padding: "10px 0" }}
                   >
-                    No developers yet â€” invite one from User Management.
+                    No developers yet - invite one from User Management.
                   </td>
                 </tr>
               )}

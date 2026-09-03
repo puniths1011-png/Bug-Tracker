@@ -75,7 +75,7 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
           </p>
         </div>
         <small className="copyright">
-          Â© 2026 WizzyBug. Built for teams who care.
+          (c) 2026 WizzyBug. Built for teams who care.
         </small>
       </div>
       <div className="authRight">
@@ -101,7 +101,7 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
           </h2>
           <p>
             {isRegister
-              ? "Sign up to get started â€” choose your role below."
+              ? "Sign up to get started - choose your role below."
               : isAdminPage
                 ? "Enter your details to access the admin dashboard."
                 : "Enter your details to access your workspace."}
