@@ -14,7 +14,9 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
   const [onlyUnassigned, setOnlyUnassigned] = useState(false);
   const [busyId, setBusyId] = useState(null);
 
-  const developers = users.filter((u) => u.role === "developer");
+  const assignableUsers = users.filter(
+    (u) => u.role === "developer" || u.role === "tester",
+  );
   const projectNames = [
     "All",
     ...Array.from(new Set(bugs.map((b) => b.project))),
@@ -33,7 +35,7 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
     try {
       await assignBug(bug.rawId, userIds);
       const assignedNames = userIds
-        .map((userId) => developers.find((developer) => developer._id === userId)?.name)
+        .map((userId) => assignableUsers.find((assignee) => assignee._id === userId)?.name)
         .filter(Boolean)
         .join(", ");
       alert(`Bug "${bug.title}" has been assigned to ${assignedNames}.`);
@@ -51,7 +53,7 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
             <b>Assign Bugs</b>
           </h2>
           <p>
-            Route open bugs to the right developer. Assignees are notified by
+            Route open bugs to the right team member. Assignees are notified by
             email.
           </p>
         </div>
@@ -81,8 +83,8 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
           <div className="statIcon blue">
             <Users />
           </div>
-          <span>Developers Available</span>
-          <strong>{developers.length}</strong>
+          <span>Assignees Available</span>
+          <strong>{assignableUsers.length}</strong>
         </article>
       </div>
       <article className="panel bugList assignBugList">
@@ -175,7 +177,7 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
                       }}
                       style={{ minHeight: "90px" }}
                     >
-                      {developers.map((d) => (
+                      {assignableUsers.map((d) => (
                         <option key={d._id} value={d._id}>
                           {d.name}
                         </option>
@@ -195,14 +197,14 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
                   </td>
                 </tr>
               )}
-              {developers.length === 0 && (
+              {assignableUsers.length === 0 && (
                 <tr>
                   <td
                     colSpan={5}
                     className="muted"
                     style={{ textAlign: "center", padding: "10px 0" }}
                   >
-                    No developers yet - invite one from User Management.
+                    No developers or testers yet - invite one from User Management.
                   </td>
                 </tr>
               )}

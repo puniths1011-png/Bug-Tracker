@@ -132,7 +132,6 @@ function ProjectsPage({
               key={p._id}
               className="panel projectCard"
               onClick={() => {
-                setPage("bugs");
                 setProjectFilter(p._id);
               }}
             >

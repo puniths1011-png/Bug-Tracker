@@ -22,6 +22,7 @@ function Sidebar({
   setProjectFilter,
   theme,
   toggleTheme,
+  onDashboard,
 }) {
   const isAdmin = user?.role === "admin";
   const [projectsExpanded, setProjectsExpanded] = useState(true);
@@ -37,7 +38,7 @@ function Sidebar({
   return (
     <aside className={`sidebar ${open ? "open" : ""}`}>
       <div className="sideTop">
-        <Logo />
+        <Logo onClick={onDashboard} />
         <button className="closeMobile" onClick={() => setOpen(false)}>
           <X />
         </button>
@@ -50,7 +51,6 @@ function Sidebar({
             className={page === id && !projectFilter ? "active" : ""}
             onClick={() => {
               setPage(id);
-              setProjectFilter && setProjectFilter(null);
               setOpen(false);
             }}
           >
@@ -90,7 +90,6 @@ function Sidebar({
                   "projectSubBtn " + (projectFilter === p._id ? "active" : "")
                 }
                 onClick={() => {
-                  setPage("bugs");
                   setProjectFilter && setProjectFilter(p._id);
                   setOpen(false);
                 }}

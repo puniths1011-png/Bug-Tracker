@@ -1,6 +1,6 @@
 ﻿import React, { useMemo, useState, useEffect } from 'react';
 import * as Icons from 'lucide-react';
-const {LayoutDashboard,Bug,Plus,Users,User,Settings,LogOut,Search,Bell,ChevronDown,ArrowUpRight,Clock3,CircleCheck,TriangleAlert,Filter,Download,Menu,X,ChevronRight,Paperclip,Send,CalendarDays,BarChart3,FolderKanban,Activity,ShieldCheck,Eye,EyeOff,Moon,Sun,UserCog,Mail,ClipboardList,RefreshCcw,FolderPlus,ArrowLeft} = Icons;
+const {LayoutDashboard,Bug,Plus,Users,User,Settings,LogOut,Search,Bell,ChevronDown,ArrowUpRight,Clock3,CircleCheck,TriangleAlert,Filter,Download,Menu,X,ChevronRight,Paperclip,Send,CalendarDays,BarChart3,FolderKanban,Activity,ShieldCheck,Eye,EyeOff,Moon,Sun,UserCog,Mail,ClipboardList,RefreshCcw,FolderPlus,ArrowLeft,Pencil} = Icons;
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { API, apiFetch, setToken } from '../config/api';
@@ -33,6 +33,7 @@ function Detail({
   setSelected,
   updateStatus,
   addComment,
+  updateBug,
   saveFixNotes,
   assignBug,
   users = [],
@@ -47,10 +48,23 @@ function Detail({
   const [savedFix, setSavedFix] = useState(false);
   const [reassignOpen, setReassignOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: bug.title || "",
+    desc: bug.desc || "",
+    expectedResult: bug.expectedResult || "",
+    actualResult: bug.actualResult || "",
+  });
 
   useEffect(() => {
     setNext(bug.status);
     setFixDescription(bug.fixDescription || "");
+    setEditForm({
+      title: bug.title || "",
+      desc: bug.desc || "",
+      expectedResult: bug.expectedResult || "",
+      actualResult: bug.actualResult || "",
+    });
   }, [bug.rawId, bug.status, bug.fixDescription]);
 
   const isAdmin = user?.role === "admin";
@@ -90,6 +104,19 @@ function Detail({
       alert(e.message || "Could not save fix description");
     }
     setSavingFix(false);
+  };
+
+  const handleSaveEdit = async (event) => {
+    event.preventDefault();
+    if (!editForm.title.trim()) return;
+    setBusy(true);
+    try {
+      await updateBug(bug.rawId, editForm);
+      setEditing(false);
+    } catch (e) {
+      alert(e.message || "Could not update bug details");
+    }
+    setBusy(false);
   };
 
   const handleReassign = async (userIds) => {
@@ -204,17 +231,62 @@ function Detail({
             Reported by {bug.reporter} on {formatIST(bug.createdAt)} IST
           </p>
         </div>
-        <button className="outline" onClick={exportBugPDF}>
-          <Download size={17} />
-          Export PDF
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="outline" onClick={() => setEditing((value) => !value)}>
+            <Pencil size={17} />
+            {editing ? "Cancel Edit" : "Edit Defect"}
+          </button>
+          <button className="outline" onClick={exportBugPDF}>
+            <Download size={17} />
+            Export PDF
+          </button>
+        </div>
       </div>
       <div className="detailGrid">
         <div>
           <article className="panel contentCard">
-            <h3>Description</h3>
-            <p>{bug.desc}</p>
-            {(bug.expectedResult || bug.actualResult) && (
+            {editing ? (
+              <form onSubmit={handleSaveEdit}>
+                <label>
+                  Defect name<b>*</b>
+                  <input
+                    value={editForm.title}
+                    onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                    required
+                  />
+                </label>
+                <label>
+                  Description
+                  <textarea
+                    value={editForm.desc}
+                    onChange={(e) => setEditForm({ ...editForm, desc: e.target.value })}
+                  />
+                </label>
+                <div className="twoCol">
+                  <label>
+                    Expected result
+                    <textarea
+                      value={editForm.expectedResult}
+                      onChange={(e) => setEditForm({ ...editForm, expectedResult: e.target.value })}
+                    />
+                  </label>
+                  <label>
+                    Actual result
+                    <textarea
+                      value={editForm.actualResult}
+                      onChange={(e) => setEditForm({ ...editForm, actualResult: e.target.value })}
+                    />
+                  </label>
+                </div>
+                <button className="primary" type="submit" disabled={busy}>
+                  {busy ? "Saving..." : "Save Defect"}
+                </button>
+              </form>
+            ) : <>
+              <h3>Description</h3>
+              <p>{bug.desc}</p>
+            </>}
+            {!editing && (bug.expectedResult || bug.actualResult) && (
               <div className="twoCol">
                 {bug.expectedResult && (
                   <div>
@@ -367,7 +439,7 @@ function Detail({
                 style={{ minHeight: "110px" }}
               >
                 {users
-                  .filter((u) => u.role === "developer")
+                  .filter((u) => u.role === "developer" || u.role === "tester")
                   .map((u) => (
                     <option key={u._id} value={u._id}>
                       {u.name}

@@ -1,16 +1,16 @@
 import { Bug } from "lucide-react";
 import { STATUS_LABELS } from "../utils/constants";
 
-export function Logo() {
+export function Logo({ onClick }) {
   return (
-    <div className="logo">
+    <button className="logo" type="button" onClick={onClick} aria-label="Go to dashboard">
       <span className="logoMark">
         <Bug size={20} />
       </span>
       <strong>
         Wizzy<span>Bug</span>
       </strong>
-    </div>
+    </button>
   );
 }
 

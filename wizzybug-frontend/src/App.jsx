@@ -104,6 +104,45 @@ function App({ isAdminPage = false }) {
   const [menu, setMenu] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
 
+  useEffect(() => {
+    const initialState = window.history.state;
+    window.history.replaceState(
+      {
+        ...(initialState || {}),
+        page,
+        projectFilter,
+        selectedId: null,
+      },
+      "",
+      window.location.href,
+    );
+
+    const handlePopState = (event) => {
+      const state = event.state;
+      if (!state || !state.page) {
+        setSelectedId(null);
+        setPage("dashboard");
+        setProjectFilter(null);
+        return;
+      }
+      setPage(state.page);
+      setProjectFilter(state.projectFilter || null);
+      setSelectedId(state.selectedId || null);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  useEffect(() => {
+    if (selectedId) return;
+    window.history.replaceState(
+      { ...(window.history.state || {}), page, projectFilter, selectedId: null },
+      "",
+      window.location.href,
+    );
+  }, [page, projectFilter, selectedId]);
+
   const titles = {
     dashboard: "Dashboard",
     bugs: "Bug Management",
@@ -116,7 +155,36 @@ function App({ isAdminPage = false }) {
   const selected = selectedId
     ? bugs.find((b) => b.rawId === selectedId) || null
     : null;
-  const setSelected = (b) => setSelectedId(b ? b.rawId : null);
+  const navigateTo = (nextPage, nextProjectFilter = null) => {
+    window.history.pushState(
+      { page: nextPage, projectFilter: nextProjectFilter, selectedId: null },
+      "",
+      window.location.href,
+    );
+    setSelectedId(null);
+    setPage(nextPage);
+    setProjectFilter(nextProjectFilter);
+  };
+  const navigatePage = (nextPage) => navigateTo(nextPage, null);
+  const navigateProjectFilter = (nextProjectFilter) =>
+    navigateTo("bugs", nextProjectFilter);
+  const setSelected = (b) => {
+    if (b) {
+      window.history.pushState(
+        { page, projectFilter, selectedId: b.rawId },
+        "",
+        window.location.href,
+      );
+      setSelectedId(b.rawId);
+      return;
+    }
+
+    if (selectedId && window.history.state?.selectedId === selectedId) {
+      window.history.back();
+    } else {
+      setSelectedId(null);
+    }
+  };
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -247,6 +315,19 @@ function App({ isAdminPage = false }) {
     setBugs((x) => x.map((b) => (b.rawId === rawId ? formatBug(data) : b)));
   };
 
+  const updateBug = async (rawId, values) => {
+    const data = await apiFetch(`/tickets/${rawId}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        title: values.title,
+        description: values.desc,
+        expectedResult: values.expectedResult,
+        actualResult: values.actualResult,
+      }),
+    });
+    setBugs((x) => x.map((b) => (b.rawId === rawId ? formatBug(data) : b)));
+  };
+
   const assignBug = async (rawId, userIds) => {
     const payload = Array.isArray(userIds)
       ? { assignees: userIds }
@@ -275,6 +356,7 @@ function App({ isAdminPage = false }) {
         setSelected={setSelected}
         updateStatus={updateStatus}
         addComment={addComment}
+        updateBug={updateBug}
         saveFixNotes={saveFixNotes}
         assignBug={assignBug}
         users={users}
@@ -286,7 +368,7 @@ function App({ isAdminPage = false }) {
       <Dashboard
         bugs={bugs}
         setSelected={setSelected}
-        setPage={setPage}
+        setPage={navigatePage}
         user={user}
       />
     );
@@ -300,14 +382,14 @@ function App({ isAdminPage = false }) {
         setGlobalSearch={setGlobalSearch}
         projects={projects}
         projectFilter={projectFilter}
-        setProjectFilter={setProjectFilter}
+        setProjectFilter={navigateProjectFilter}
       />
     );
   } else if (page === "report") {
     content = (
       <ReportPage
         addBug={addBug}
-        setPage={setPage}
+        setPage={navigatePage}
         projects={projects}
         users={users}
         user={user}
@@ -338,8 +420,8 @@ function App({ isAdminPage = false }) {
         bugs={bugs}
         user={user}
         createProject={createProject}
-        setPage={setPage}
-        setProjectFilter={setProjectFilter}
+        setPage={navigatePage}
+        setProjectFilter={navigateProjectFilter}
       />
     );
   } else {
@@ -350,10 +432,7 @@ function App({ isAdminPage = false }) {
     <div className="app">
       <Sidebar
         page={page}
-        setPage={(p) => {
-          setPage(p);
-          setSelectedId(null);
-        }}
+        setPage={navigatePage}
         open={menu}
         setOpen={setMenu}
         onLogout={() => {
@@ -368,7 +447,10 @@ function App({ isAdminPage = false }) {
         bugs={bugs}
         projects={projects}
         projectFilter={projectFilter}
-        setProjectFilter={setProjectFilter}
+        setProjectFilter={navigateProjectFilter}
+        onDashboard={() => {
+          navigatePage("dashboard");
+        }}
         theme={theme}
         toggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
       />
@@ -376,7 +458,7 @@ function App({ isAdminPage = false }) {
         <Header
           title={selected ? "Bug details" : titles[page]}
           onMenu={() => setMenu(true)}
-          setPage={setPage}
+          setPage={navigatePage}
           globalSearch={globalSearch}
           setGlobalSearch={setGlobalSearch}
           theme={theme}

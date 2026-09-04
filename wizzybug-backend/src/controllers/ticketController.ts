@@ -91,7 +91,7 @@ export const createTicket = async (req: AuthRequest, res: Response): Promise<voi
       expectedResult, actualResult, typeOfApplication, browser, browserVersion,
       history: [{
         type: 'created',
-        message: normalizedAssignees.length ? `Bug reported and assigned to ${normalizedAssignees.length} developer${normalizedAssignees.length > 1 ? 's' : ''}` : 'Bug reported',
+        message: normalizedAssignees.length ? `Bug reported and assigned to ${normalizedAssignees.length} team member${normalizedAssignees.length > 1 ? 's' : ''}` : 'Bug reported',
         actor: creatorId,
         actorName: creatorDoc?.name || 'Unknown user',
         createdAt: new Date()
@@ -149,7 +149,10 @@ export const updateTicket = async (req: AuthRequest, res: Response): Promise<voi
       browser, browserVersion
     } = req.body;
 
-    const normalizedAssignees = normalizeAssigneeIds(assignees ?? assignee);
+    const hasAssigneeUpdate = assignees !== undefined || assignee !== undefined;
+    const normalizedAssignees = hasAssigneeUpdate
+      ? normalizeAssigneeIds(assignees ?? assignee)
+      : null;
 
     if (req.file) {
       if (ticket.imagePublicId) {
@@ -170,8 +173,12 @@ export const updateTicket = async (req: AuthRequest, res: Response): Promise<voi
     if (description) ticket.description = description;
     if (priority) ticket.priority = priority.toLowerCase();
     if (project) ticket.project = project;
-    ticket.assignees = normalizedAssignees;
-    ticket.assignee = normalizedAssignees[0] || undefined;
+    if (normalizedAssignees) {
+      if (normalizedAssignees) {
+        ticket.assignees = normalizedAssignees;
+        ticket.assignee = normalizedAssignees[0] || undefined;
+      }
+    }
     if (environment !== undefined) ticket.environment = environment;
     if (moduleFeatureName !== undefined) ticket.moduleFeatureName = moduleFeatureName;
     if (buildAppVersion !== undefined) ticket.buildAppVersion = buildAppVersion;
@@ -259,7 +266,7 @@ export const updateTicketStatus = async (req: AuthRequest, res: Response): Promi
   }
 };
 
-// Admin-only: assign (or reassign) a ticket to a developer, notifying them by email.
+// Admin-only: assign (or reassign) a ticket to a team member, notifying them by email.
 export const assignTicket = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { assignees, assignee } = req.body;
