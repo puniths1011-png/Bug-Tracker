@@ -1,5 +1,5 @@
 import express from 'express';
-import { getProjects, createProject, getProjectById } from '../controllers/projectController';
+import { getProjects, createProject, getProjectById, deleteProject } from '../controllers/projectController';
 import { protect, adminOnly } from '../middleware/authMiddleware';
 
 const router = express.Router();
@@ -10,6 +10,7 @@ router.route('/')
   .post(protect, adminOnly, createProject);
 
 router.route('/:id')
-  .get(protect, getProjectById);
+  .get(protect, getProjectById)
+  .delete(protect, adminOnly, deleteProject);
 
 export default router;

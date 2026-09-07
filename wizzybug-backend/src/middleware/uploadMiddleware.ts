@@ -18,3 +18,19 @@ export const optionalUpload = (req: Request, res: Response, next: NextFunction):
   }
   next();
 };
+
+export const requiredUpload = (req: Request, res: Response, next: NextFunction): void => {
+  upload.single('image')(req, res, (error) => {
+    if (error) {
+      next(error);
+      return;
+    }
+
+    if (!req.file) {
+      res.status(400).json({ message: 'An attachment is required' });
+      return;
+    }
+
+    next();
+  });
+};

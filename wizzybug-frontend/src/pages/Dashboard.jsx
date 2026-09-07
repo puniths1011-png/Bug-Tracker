@@ -139,6 +139,8 @@ function Distribution({ bugs = [] }) {
 }
 
 function Dashboard({ bugs, setSelected, setPage, user }) {
+  const [exportFormat, setExportFormat] = useState("pdf");
+
   const exportToPDF = () => {
     const doc = new jsPDF();
     doc.text(pdfText("WizzyBug - Bug Report"), 14, 15);
@@ -152,6 +154,7 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
       "SEVERITY",
       "STATUS",
       "PROJECT",
+      "REPORTER",
       "ASSIGNEE",
       "CREATED (IST)",
     ];
@@ -161,6 +164,7 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
       pdfText(b.severity),
       pdfText(statusLabel(b.status)),
       pdfText(b.project),
+      pdfText(b.reporter),
       pdfText(b.assignee),
       pdfText(formatIST(b.createdAt)),
     ]);
@@ -177,12 +181,49 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
         2: { cellWidth: 23 },
         3: { cellWidth: 23 },
         4: { cellWidth: 28 },
-        5: { cellWidth: 30 },
+        5: { cellWidth: 28 },
         6: { cellWidth: 28 },
+        7: { cellWidth: 28 },
       },
     });
 
     doc.save("wizzybug_bugs_report.pdf");
+  };
+
+  const exportToDelimited = (format) => {
+    const headers = ["BUG ID", "TITLE", "SEVERITY", "STATUS", "PROJECT", "REPORTER", "ASSIGNEE", "CREATED (IST)"];
+    const rows = bugs.map((b) => [
+      b.id,
+      b.title,
+      b.severity,
+      statusLabel(b.status),
+      b.project,
+      b.reporter,
+      b.assignee,
+      formatIST(b.createdAt),
+    ]);
+    const delimiter = format === "excel" ? "\t" : ",";
+    const escapeCell = (value) => {
+      const text = String(value ?? "").replace(/"/g, '""');
+      return format === "excel" ? text : `"${text}"`;
+    };
+    const content = [headers, ...rows]
+      .map((row) => row.map(escapeCell).join(delimiter))
+      .join("\r\n");
+    const blob = new Blob(["\uFEFF", content], {
+      type: format === "excel" ? "application/vnd.ms-excel;charset=utf-8" : "text/csv;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = format === "excel" ? "wizzybug_bugs_report.xls" : "wizzybug_bugs_report.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportReport = () => {
+    if (exportFormat === "pdf") exportToPDF();
+    else exportToDelimited(exportFormat);
   };
 
   const isAdmin = user?.role === "admin";
@@ -194,7 +235,17 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
           <h2>Hi, {user?.name || "there"}</h2>
           <p>Here's what's happening with your projects today.</p>
         </div>
-        <button className="outline" onClick={exportToPDF}>
+        <select
+          className="exportSelect"
+          value={exportFormat}
+          onChange={(e) => setExportFormat(e.target.value)}
+          aria-label="Export format"
+        >
+          <option value="pdf">PDF</option>
+          <option value="excel">Excel</option>
+          <option value="csv">CSV</option>
+        </select>
+        <button className="outline" onClick={exportReport}>
           <Download size={17} />
           Download Report
         </button>

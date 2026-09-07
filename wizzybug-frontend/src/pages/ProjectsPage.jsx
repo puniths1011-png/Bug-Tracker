@@ -1,6 +1,6 @@
 ﻿import React, { useMemo, useState, useEffect } from 'react';
 import * as Icons from 'lucide-react';
-const {LayoutDashboard,Bug,Plus,Users,User,Settings,LogOut,Search,Bell,ChevronDown,ArrowUpRight,Clock3,CircleCheck,TriangleAlert,Filter,Download,Menu,X,ChevronRight,Paperclip,Send,CalendarDays,BarChart3,FolderKanban,Activity,ShieldCheck,Eye,EyeOff,Moon,Sun,UserCog,Mail,ClipboardList,RefreshCcw,FolderPlus,ArrowLeft} = Icons;
+const {LayoutDashboard,Bug,Plus,Users,User,Settings,LogOut,Search,Bell,ChevronDown,ArrowUpRight,Clock3,CircleCheck,TriangleAlert,Filter,Download,Menu,X,ChevronRight,Paperclip,Send,CalendarDays,BarChart3,FolderKanban,Activity,ShieldCheck,Eye,EyeOff,Moon,Sun,UserCog,Mail,ClipboardList,RefreshCcw,FolderPlus,ArrowLeft,Trash2} = Icons;
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { API, apiFetch, setToken } from '../config/api';
@@ -9,11 +9,17 @@ import { STATUS_LABELS, STATUS_VALUES, PRIORITY_LABELS, SEVERITY_TO_PRIORITY } f
 import { Avatar, Logo, RoleBadge, Status } from '../components/Ui';
 import { initialsOf, isAssignedToUser, priorityLabel, statusLabel, buildTimeline } from '../utils/formatters';
 
+const isCodeLikeDescription = (description = "") => {
+  const codeSignals = /\b(let|const|var|if|else|switch|case|break|console\.log)\b|\/\//g;
+  return description.split(/\r?\n/).length > 1 && (description.match(codeSignals) || []).length >= 2;
+};
+
 function ProjectsPage({
   projects,
   bugs,
   user,
   createProject,
+  deleteProject,
   setPage,
   setProjectFilter,
 }) {
@@ -22,6 +28,7 @@ function ProjectsPage({
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState("");
   const isAdmin = user?.role === "admin";
 
   const handleCreate = async (e) => {
@@ -38,6 +45,19 @@ function ProjectsPage({
       setError(err.message || "Could not create project");
     }
     setSaving(false);
+  };
+
+  const handleDelete = async (project) => {
+    if (!window.confirm(`Remove project "${project.name}" and all of its bugs?`)) return;
+    setDeletingId(project._id);
+    setError("");
+    try {
+      await deleteProject(project._id);
+    } catch (err) {
+      setError(err.message || "Could not remove project");
+    } finally {
+      setDeletingId("");
+    }
   };
 
   return (
@@ -147,9 +167,28 @@ function ProjectsPage({
                   <i />
                   {p.status || "active"}
                 </span>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    className="projectDelete"
+                    aria-label={`Remove ${p.name}`}
+                    title="Remove project"
+                    disabled={deletingId === p._id}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleDelete(p);
+                    }}
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                )}
               </div>
               <h3>{p.name}</h3>
-              <p>{p.description || "No description yet."}</p>
+              <p>
+                {p.description && !isCodeLikeDescription(p.description)
+                  ? p.description
+                  : "No description yet."}
+              </p>
               <div className="projectCardFoot">
                 <span>
                   <Bug size={14} />

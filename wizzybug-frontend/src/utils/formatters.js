@@ -39,9 +39,9 @@ export function formatBug(ticket) {
   const assigneeNames = assignees.map((assignee) => assignee?.name || assignee).filter(Boolean);
 
   return {
-    id: ticket._id
+    id: ticket.defectId || (ticket._id
       ? ticket._id.substring(ticket._id.length - 6).toUpperCase()
-      : "WZ-000000",
+      : "WZ-000000"),
     rawId: ticket._id,
     title: ticket.title,
     desc: ticket.description,

@@ -16,6 +16,7 @@ export interface ITicketComment {
 }
 
 export interface ITicket extends Document {
+  defectId: string;
   title: string;
   description: string;
   status: 'open' | 'in_progress' | 'resolved' | 'closed' | 'rejected' | 'deferred' | 'not_reproducible';
@@ -58,6 +59,7 @@ const CommentSchema = new Schema<ITicketComment>({
 }, { _id: false });
 
 const TicketSchema: Schema = new Schema({
+  defectId: { type: String, unique: true, sparse: true, index: true },
   title: { type: String, required: true },
   description: { type: String, required: true },
   status: { type: String, enum: ['open', 'in_progress', 'resolved', 'closed', 'rejected', 'deferred', 'not_reproducible'], default: 'open' },

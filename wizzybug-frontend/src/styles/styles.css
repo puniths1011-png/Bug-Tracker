@@ -1038,6 +1038,34 @@ select {
   padding: 26px;
 }
 
+.toast {
+  position: fixed;
+  top: 78px;
+  right: 24px;
+  z-index: 30;
+  max-width: min(380px, calc(100vw - 32px));
+  padding: 13px 17px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.toast.success {
+  background: #e7f8ef;
+  border: 1px solid #9ed9b8;
+  color: #17633a;
+}
+
+.exportSelect {
+  min-height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 0 10px;
+  background: var(--panel2);
+  color: var(--text);
+}
+
 .sectionTitle {
   display: flex;
   gap: 11px;
@@ -1114,6 +1142,13 @@ select {
   resize: vertical;
 }
 
+.reportForm .twoCol {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  align-items: start;
+}
+
 .contentCard form > label,
 .contentCard form .twoCol label {
   display: flex;
@@ -1141,12 +1176,6 @@ select {
   min-height: 125px;
   resize: vertical;
 }
-
-/* .twoCol {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px
-} */
 
 .second {
   border-top: 1px solid var(--border);
@@ -1695,10 +1724,13 @@ select {
 
 .reportForm > label:not(.drop) > input,
 .reportForm > label:not(.drop) > select,
+.reportForm > label:not(.drop) > textarea,
 .reportForm .twoCol > label > input,
-.reportForm .twoCol > label > select {
+.reportForm .twoCol > label > select,
+.reportForm .twoCol > label > textarea {
   display: block;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .authRight input {
@@ -1949,7 +1981,8 @@ select {
     order: -1;
   }
 
-  .twoCol {
+  .twoCol,
+  .reportForm .twoCol {
     grid-template-columns: 1fr;
   }
 
@@ -2272,6 +2305,7 @@ select {
 
 .projectCard {
   cursor: pointer;
+  padding: 18px;
   transition:
     border-color 0.15s ease,
     transform 0.15s ease;
@@ -2294,6 +2328,26 @@ select {
   margin-bottom: 10px;
 }
 
+.projectDelete {
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+}
+
+.projectDelete:hover {
+  background: rgba(255, 96, 109, 0.12);
+  color: var(--red);
+}
+
+.projectDelete:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
 .projectKey {
   font-size: 11px;
   font-weight: 700;
@@ -2312,6 +2366,7 @@ select {
 .projectCard p {
   color: var(--muted);
   font-size: 14px;
+  margin: 0;
   min-height: 40px;
 }
 

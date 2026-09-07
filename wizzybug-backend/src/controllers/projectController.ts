@@ -77,3 +77,18 @@ export const getProjectById = async (req: AuthRequest, res: Response): Promise<v
     res.status(500).json({ message: 'Server Error' });
   }
 };
+
+export const deleteProject = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const project = await Project.findByIdAndDelete(req.params.id);
+    if (!project) {
+      res.status(404).json({ message: 'Project not found' });
+      return;
+    }
+
+    await Ticket.deleteMany({ project: req.params.id });
+    res.json({ message: 'Project deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
+};

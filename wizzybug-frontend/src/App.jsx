@@ -103,6 +103,7 @@ function App({ isAdminPage = false }) {
   const [projectFilter, setProjectFilter] = useState(null);
   const [menu, setMenu] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
+  const [toast, setToast] = useState("");
 
   useEffect(() => {
     const initialState = window.history.state;
@@ -287,8 +288,12 @@ function App({ isAdminPage = false }) {
       method: "POST",
       body: formData,
     });
-    setBugs((x) => [formatBug(data), ...x]);
+    const createdBug = formatBug(data);
+    setBugs((x) => [createdBug, ...x]);
+    setToast(`Bug submitted successfully. Defect ID: ${createdBug.id}`);
+    window.setTimeout(() => setToast(""), 5000);
     if (b.assignee) refreshUsers();
+    return createdBug;
   };
 
   const updateStatus = async (rawId, status) => {
@@ -345,6 +350,13 @@ function App({ isAdminPage = false }) {
       body: JSON.stringify(payload),
     });
     setProjects((x) => [data, ...x]);
+  };
+
+  const deleteProject = async (projectId) => {
+    await apiFetch(`/projects/${projectId}`, { method: "DELETE" });
+    setProjects((x) => x.filter((project) => project._id !== projectId));
+    setBugs((x) => x.filter((bug) => bug.projectId !== projectId));
+    if (projectFilter === projectId) setProjectFilter("");
   };
 
   const isAdmin = user?.role === "admin";
@@ -420,6 +432,7 @@ function App({ isAdminPage = false }) {
         bugs={bugs}
         user={user}
         createProject={createProject}
+        deleteProject={deleteProject}
         setPage={navigatePage}
         setProjectFilter={navigateProjectFilter}
       />
@@ -475,6 +488,7 @@ function App({ isAdminPage = false }) {
         </div>
       </main>
       {menu && <div className="overlay" onClick={() => setMenu(false)} />}
+      {toast && <div className="toast success">{toast}</div>}
     </div>
   );
 }

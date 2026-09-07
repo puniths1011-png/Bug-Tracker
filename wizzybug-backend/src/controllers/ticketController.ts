@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { Response } from 'express';
 import Ticket from '../models/Ticket';
+import Project from '../models/Project';
 import User from '../models/User';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { sendMail } from '../utils/mailer';
@@ -58,6 +59,25 @@ export const createTicket = async (req: AuthRequest, res: Response): Promise<voi
       return;
     }
 
+    const existingTicketCount = await Ticket.countDocuments({ project: projectId });
+    await Project.updateOne(
+      { _id: projectId, issueSequence: { $lt: existingTicketCount } },
+      { $set: { issueSequence: existingTicketCount } }
+    );
+    const projectDoc = await Project.findByIdAndUpdate(
+      projectId,
+      { $inc: { issueSequence: 1 } },
+      { new: true }
+    );
+    if (!projectDoc) {
+      res.status(404).json({ message: 'Project not found' });
+      return;
+    }
+    const projectPrefix = projectDoc.name
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toUpperCase();
+    const defectId = `${projectPrefix}-${String(projectDoc.issueSequence).padStart(2, '0')}`;
+
     const creatorDoc = req.user || (creatorId ? await User.findById(creatorId) : null);
     const normalizedAssignees = normalizeAssigneeIds(assignees ?? assignee);
 
@@ -77,6 +97,7 @@ export const createTicket = async (req: AuthRequest, res: Response): Promise<voi
     }
 
     const ticket = await Ticket.create({
+      defectId,
       title,
       description,
       priority: priority ? priority.toLowerCase() : 'medium',
@@ -113,7 +134,13 @@ export const createTicket = async (req: AuthRequest, res: Response): Promise<voi
       }
     }
 
-    res.status(201).json(ticket);
+    const populatedTicket = await Ticket.findById(ticket._id)
+      .populate('project', 'name key')
+      .populate('creator', 'name email')
+      .populate('assignees', 'name email')
+      .populate('assignee', 'name email');
+
+    res.status(201).json(populatedTicket);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server Error' });

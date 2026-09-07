@@ -4,13 +4,13 @@ import {
   getTicketScreenshot, assignTicket, addTicketComment, updateFixNotes
 } from '../controllers/ticketController';
 import { protect, adminOnly } from '../middleware/authMiddleware';
-import { optionalUpload } from '../middleware/uploadMiddleware';
+import { optionalUpload, requiredUpload } from '../middleware/uploadMiddleware';
 
 const router = express.Router();
 
 router.route('/')
   .get(protect, getTickets)
-  .post(protect, optionalUpload, createTicket);
+  .post(protect, requiredUpload, createTicket);
 
 router.route('/:id')
   .get(protect, getTicketById)

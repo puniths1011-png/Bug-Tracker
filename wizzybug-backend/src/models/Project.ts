@@ -7,6 +7,7 @@ export interface IProject extends Document {
   status: 'active' | 'archived';
   members: mongoose.Types.ObjectId[];
   createdBy?: mongoose.Types.ObjectId;
+  issueSequence: number;
 }
 
 const ProjectSchema: Schema = new Schema({
@@ -15,7 +16,8 @@ const ProjectSchema: Schema = new Schema({
   description: { type: String },
   status: { type: String, enum: ['active', 'archived'], default: 'active' },
   members: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-  createdBy: { type: Schema.Types.ObjectId, ref: 'User' }
+  createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
+  issueSequence: { type: Number, default: 0 }
 }, { timestamps: true });
 
 export default mongoose.model<IProject>('Project', ProjectSchema);

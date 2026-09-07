@@ -108,6 +108,10 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
       setError("Select a project before submitting.");
       return;
     }
+    if (!file) {
+      setError("Please upload an attachment before submitting.");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -316,22 +320,22 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
 
         <label>
           Defect Summary<b>*</b>
-          <input
+          <textarea
             name="defectSummary"
             value={form.defectSummary}
             onChange={handleChange}
-            placeholder="your Answer"
+            placeholder="Describe the defect"
             required
           />
         </label>
 
         <label>
           Steps to Reproduce (Write Point Wise with 1 Numbering)<b>*</b>
-          <input
+          <textarea
             name="stepsToReproduce"
             value={form.stepsToReproduce}
             onChange={handleChange}
-            placeholder="your Answer"
+            placeholder="1. Open the application&#10;2. Navigate to the affected area"
             required
           />
         </label>
@@ -428,21 +432,21 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
 
         <label>
           Expected Result<b>*</b>
-          <input
+          <textarea
             name="expectedResult"
             value={form.expectedResult}
             onChange={handleChange}
-            placeholder="your Answer"
+            placeholder="What should happen?"
             required
           />
         </label>
         <label>
           Actual Result<b>*</b>
-          <input
+          <textarea
             name="actualResult"
             value={form.actualResult}
             onChange={handleChange}
-            placeholder="your Answer"
+            placeholder="What happened instead?"
             required
           />
         </label>
@@ -450,8 +454,8 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
         <div className="sectionTitle second">
           <span>2</span>
           <div>
-            <h3>Attachments</h3>
-            <p>Add screenshots or files that help explain the issue.</p>
+            <h3>Attachments <b>*</b></h3>
+            <p>Upload a screenshot or file that helps explain the issue. Required.</p>
           </div>
         </div>
         <label className="drop">
@@ -465,8 +469,14 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
               </>
             )}
           </strong>
+          <b>*</b>
           <small>PNG, JPG, GIF or MP4 - Max 10MB</small>
-          <input type="file" onChange={(e) => setFile(e.target.files[0])} />
+          <input
+            type="file"
+            accept="image/*,video/mp4"
+            aria-required="true"
+            onChange={(e) => setFile(e.target.files[0] || null)}
+          />
         </label>
 
         <label>
