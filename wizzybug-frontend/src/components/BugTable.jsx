@@ -11,7 +11,7 @@ import { initialsOf, isAssignedToUser, priorityLabel, statusLabel, buildTimeline
 
 function BugTable({ bugs, setSelected, compact = false }) {
   return (
-    <div className="tableWrap">
+    <div className={compact ? "tableWrap compact" : "tableWrap"}>
       <table>
         <thead>
           <tr>

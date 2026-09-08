@@ -818,6 +818,36 @@ td {
   border-bottom: 1px solid var(--border);
   color: var(--text);
   font-size: 12px;
+  vertical-align: middle;
+}
+
+.tableWrap.compact th:first-child,
+.tableWrap.compact td:first-child {
+  width: 38%;
+}
+
+.tableWrap.compact table {
+  min-width: 1180px;
+}
+
+.tableWrap.compact th:nth-child(2),
+.tableWrap.compact td:nth-child(2) {
+  width: 13%;
+}
+
+.tableWrap.compact th:nth-child(3),
+.tableWrap.compact td:nth-child(3) {
+  width: 16%;
+}
+
+.tableWrap.compact th:nth-child(4),
+.tableWrap.compact td:nth-child(4) {
+  width: 20%;
+}
+
+.tableWrap.compact th:nth-child(5),
+.tableWrap.compact td:nth-child(5) {
+  width: 18%;
 }
 
 tr:last-child td {
@@ -1003,6 +1033,13 @@ select {
   border-radius: 7px;
   color: var(--text);
   padding: 0 12px;
+}
+
+.roleSelect,
+.roleSelect option {
+  background: #ffffff;
+  color: #222222;
+  color-scheme: light;
 }
 
 .pagination {
@@ -1252,6 +1289,12 @@ select {
 .assignBugList td:nth-child(4) {
   vertical-align: top;
   min-width: 170px;
+}
+
+.assignBugList .assignSelect {
+  width: 150px;
+  max-width: 100%;
+  padding: 6px 8px;
 }
 
 .assignBugList td:nth-child(4) .person {

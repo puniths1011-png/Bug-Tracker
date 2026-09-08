@@ -111,7 +111,7 @@ function InviteUserModal({ onClose, onInvited }) {
         </label>
         <label>
           Role
-          <select name="role">
+          <select name="role" className="roleSelect">
             <option value="developer">Developer</option>
             <option value="tester">Tester</option>
             <option value="admin">Admin</option>
@@ -225,6 +225,7 @@ function UsersPage({ users, bugs = [], currentUser, refreshUsers }) {
             />
           </label>
           <select
+            className="roleSelect"
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
           >

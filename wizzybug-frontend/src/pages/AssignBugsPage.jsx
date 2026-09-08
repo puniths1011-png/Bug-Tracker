@@ -163,20 +163,14 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
                   </td>
                   <td>
                     <select
-                      multiple
-                      defaultValue={[]}
+                      defaultValue=""
                       disabled={busyId === b.rawId}
                       onChange={(e) => {
-                        handleAssign(
-                          b,
-                          Array.from(
-                            e.target.selectedOptions,
-                            (opt) => opt.value,
-                          ),
-                        );
+                        if (e.target.value) handleAssign(b, [e.target.value]);
                       }}
-                      style={{ minHeight: "90px" }}
+                      className="assignSelect"
                     >
+                      <option value="">Select assignee</option>
                       {assignableUsers.map((d) => (
                         <option key={d._id} value={d._id}>
                           {d.name}

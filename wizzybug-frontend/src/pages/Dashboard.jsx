@@ -265,7 +265,7 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
             View all Bugs <ChevronRight size={16} />
           </button>
         </div>
-        <BugTable bugs={bugs.slice(0, 5)} setSelected={setSelected} />
+        <BugTable bugs={bugs.slice(0, 5)} setSelected={setSelected} compact />
       </article>
     </>
   );
