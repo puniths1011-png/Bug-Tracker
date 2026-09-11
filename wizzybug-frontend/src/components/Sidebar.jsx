@@ -103,14 +103,7 @@ function Sidebar({
         )}
       </nav>
       <div className="sideFoot">
-        <div
-          className="profileMini"
-          onClick={() => {
-            setPage("profile");
-            setOpen(false);
-          }}
-          style={{ cursor: "pointer" }}
-        >
+        <div className="profileMini">
           <Avatar text={initialsOf(user?.name)} />
           <div>
             <b>{user?.name || ""}</b>
