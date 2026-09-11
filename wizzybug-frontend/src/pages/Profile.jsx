@@ -95,6 +95,7 @@ function Profile({ user, setUser, bugs = [] }) {
                   );
                 }}
                 required
+                maxLength={20}
               />
             </label>
             <label>
@@ -111,6 +112,7 @@ function Profile({ user, setUser, bugs = [] }) {
                   );
                 }}
                 required
+                maxLength={20}
               />
             </label>
           </div>
@@ -121,6 +123,7 @@ function Profile({ user, setUser, bugs = [] }) {
               type="email"
               defaultValue={user?.email || ""}
               required
+              maxLength={20}
             />
           </label>
           <label>

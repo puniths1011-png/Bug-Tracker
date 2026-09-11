@@ -51,6 +51,7 @@ export default function AcceptInvite() {
               onChange={(event) => setPassword(event.target.value)}
               required
               minLength={6}
+              maxLength={20}
             />
           </label>
           <button

@@ -69,7 +69,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: "DM Sans", "Segoe UI", sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   transition:
     background 0.2s ease,
     color 0.2s ease;
@@ -115,11 +115,17 @@ button {
   display: flex;
 }
 
+.app > main {
+  min-width: 0;
+  flex: 1;
+}
+
 .sidebar {
   position: fixed;
   inset: 0 auto 0 0;
   width: 245px;
   height: 100vh;
+  min-height: 0;
   background: var(--panel);
   border-right: 1px solid var(--border);
   padding: 25px 17px 18px;
@@ -155,8 +161,6 @@ button {
 }
 
 [data-theme="light"] .logo,
-[data-theme="light"] .logoMark,
-[data-theme="light"] .logo strong span,
 [data-theme="light"] nav em {
   color: #000;
 }
@@ -165,6 +169,7 @@ button {
   width: 34px;
   height: 34px;
   background: linear-gradient(145deg, var(--teal), var(--purple));
+  color: #f4f3f8;
   border-radius: 9px;
   display: grid;
   place-items: center;
@@ -205,7 +210,7 @@ button {
 
 .workspace b,
 .profileMini b {
-  font-size: 12px;
+  font-size: 13.5px;
 }
 
 .workspace small,
@@ -265,6 +270,7 @@ nav em {
   font-style: normal;
   margin-left: auto;
   background: #34313e;
+  color: #f4f3f8;
   padding: 1px 7px;
   border-radius: 8px;
   font-size: 10px;
@@ -272,6 +278,7 @@ nav em {
 
 [data-theme="light"] nav em {
   background: #e9e2dc;
+  color: #2f241e;
 }
 
 .sideFoot {
@@ -371,7 +378,7 @@ header p {
   width: 235px;
   height: 36px;
   border: 1px solid var(--border);
-  background: var(--panel2);
+  color: #f4f3f8; /* Added color for logoMark */
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -425,7 +432,7 @@ header p {
 }
 
 .themeToggleLabel {
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
@@ -451,7 +458,7 @@ header p {
   gap: 7px;
   padding: 0 15px;
   font-weight: 600;
-  font-size: 12px;
+  font-size: 13.5px;
 }
 
 .primary {
@@ -471,6 +478,8 @@ header p {
   max-width: 1450px;
   margin: auto;
   padding: 29px 32px 48px;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .welcome,
@@ -561,7 +570,7 @@ header p {
 .stats small {
   grid-column: 1/3;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13.5px;
   margin-top: 13px;
   font-weight: 600;
 }
@@ -766,7 +775,7 @@ header p {
   display: flex;
   justify-content: space-between;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 600;
   padding: 0 4px;
 }
@@ -796,6 +805,48 @@ header p {
   overflow-x: auto;
 }
 
+.assignmentOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(13, 13, 19, 0.42);
+}
+
+.assignmentCard {
+  width: min(420px, 100%);
+  padding: 30px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+  text-align: center;
+}
+
+.assignmentCardIcon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 14px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--green);
+  color: #fff;
+}
+
+.assignmentCard h3 {
+  margin: 0 0 8px;
+}
+
+.assignmentCard p {
+  margin: 0 0 22px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -817,7 +868,7 @@ td {
   padding: 12px 17px;
   border-bottom: 1px solid var(--border);
   color: var(--text);
-  font-size: 12px;
+  font-size: 13.5px;
   vertical-align: middle;
 }
 
@@ -869,9 +920,12 @@ tbody tr:hover {
 td:first-child b {
   display: block;
   color: var(--text);
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 700;
   margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 td:first-child small,
@@ -887,7 +941,7 @@ td:first-child small,
   gap: 5px;
   border-radius: 10px;
   padding: 4px 8px;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -921,7 +975,7 @@ td:first-child small,
 }
 
 .severity {
-  font-size: 9px;
+  font-size: 12px;
   padding: 3px 8px;
   border-radius: 4px;
 }
@@ -953,6 +1007,11 @@ td:first-child small,
   white-space: nowrap;
 }
 
+.tableWrap td:nth-child(4) .person {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .date,
 .muted {
   color: #74727c;
@@ -972,7 +1031,7 @@ td:first-child small,
   color: #777580;
   padding: 0 5px 11px;
   margin-right: 24px;
-  font-size: 12px;
+  font-size: 13.5px;
 }
 
 .tabs button.active {
@@ -984,7 +1043,7 @@ td:first-child small,
   background: none;
   padding: 0;
   border-radius: 0;
-  font-size: 12px;
+  font-size: 13.5px;
   margin-left: 4px;
   color: var(--muted);
 }
@@ -1140,7 +1199,7 @@ select {
   flex-direction: column;
   gap: 7px;
   margin-bottom: 18px;
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--text);
 }
@@ -1192,7 +1251,7 @@ select {
   flex-direction: column;
   gap: 7px;
   margin-bottom: 18px;
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--text);
 }
@@ -1270,6 +1329,10 @@ select {
   font-weight: 600;
 }
 
+.back svg {
+  flex: 0 0 auto;
+}
+
 .back:hover {
   border-color: var(--purple);
   color: var(--purple2);
@@ -1292,9 +1355,72 @@ select {
 }
 
 .assignBugList .assignSelect {
-  width: 150px;
+  width: 220px;
+  min-width: 200px;
   max-width: 100%;
   padding: 6px 8px;
+  white-space: normal;
+}
+
+.assignBugList .assignSelect option {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.assignDropdown {
+  position: relative;
+  width: 220px;
+  max-width: 100%;
+}
+
+.assignSelectButton {
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid var(--field-border);
+  border-radius: 6px;
+  background: var(--field-bg);
+  color: var(--field-text);
+  text-align: left;
+}
+
+.assignSelectButton:hover {
+  border-color: var(--purple);
+}
+
+.assignOptions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 30;
+  width: 100%;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.assignOptions button {
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.assignOptions button:hover {
+  background: var(--panel2);
 }
 
 .assignBugList td:nth-child(4) .person {
@@ -1319,6 +1445,10 @@ select {
   align-items: center;
 }
 
+.detailHead > div:first-child {
+  min-width: 0;
+}
+
 .bugId {
   color: #a08aff;
   font-weight: 700;
@@ -1328,6 +1458,8 @@ select {
 .detailHead h2 {
   font-size: 21px;
   margin-top: 7px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .detailGrid {
@@ -1346,6 +1478,7 @@ select {
 .comments,
 .detailsSide {
   padding: 21px;
+  min-width: 0;
 }
 
 .contentCard p,
@@ -1353,6 +1486,8 @@ select {
   color: var(--muted);
   font-size: 14px;
   line-height: 1.7;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .contentCard h3:not(:first-child) {
@@ -1397,6 +1532,7 @@ select {
   gap: 11px;
   position: relative;
   padding-bottom: 23px;
+  min-width: 0;
 }
 
 .timeline > div:not(:last-child):after {
@@ -1448,6 +1584,10 @@ select {
     --text
   ); /* respect theme: white in dark (moon) mode, dark in light mode */
   font-size: 14px; /* increased font size for readability */
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .timeline p b {
@@ -1458,7 +1598,7 @@ select {
 .timeline p small {
   display: block;
   color: var(--muted); /* use themed muted color for timestamps */
-  font-size: 12px;
+  font-size: 13.5px;
   margin-top: 6px;
 }
 .commentBox button {
@@ -1545,7 +1685,7 @@ select {
 .role {
   padding: 4px 8px;
   border-radius: 5px;
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .role.developer {
@@ -1561,6 +1701,21 @@ select {
 .role.admin {
   background: #3f3525;
   color: #f2b65e;
+}
+
+[data-theme="light"] .role.developer {
+  background: #dce8ff;
+  color: #315ca8;
+}
+
+[data-theme="light"] .role.tester {
+  background: #f0ddfa;
+  color: #7a3b98;
+}
+
+[data-theme="light"] .role.admin {
+  background: #f8e8c8;
+  color: #8a5b16;
 }
 
 .profileGrid {
@@ -2248,6 +2403,15 @@ select {
   margin-top: 10px;
 }
 
+.chartCard {
+  padding: 10px;
+}
+
+.chartCard .panelHead {
+  padding: 0;
+  margin-bottom: 10px;
+}
+
 .chartCard .yaxis {
   flex: 1;
   width: 100%;
@@ -2420,7 +2584,7 @@ select {
   padding-top: 12px;
   border-top: 1px solid var(--border);
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13.5px;
 }
 
 .projectCardFoot span {

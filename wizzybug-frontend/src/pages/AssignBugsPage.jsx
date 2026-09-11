@@ -13,6 +13,8 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
   const [projectFilter, setProjectFilter] = useState("All");
   const [onlyUnassigned, setOnlyUnassigned] = useState(false);
   const [busyId, setBusyId] = useState(null);
+  const [assignmentNotice, setAssignmentNotice] = useState("");
+  const [openAssigneeMenu, setOpenAssigneeMenu] = useState(null);
 
   const assignableUsers = users.filter(
     (u) => u.role === "developer" || u.role === "tester",
@@ -38,7 +40,9 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
         .map((userId) => assignableUsers.find((assignee) => assignee._id === userId)?.name)
         .filter(Boolean)
         .join(", ");
-      alert(`Bug "${bug.title}" has been assigned to ${assignedNames}.`);
+      setAssignmentNotice(
+        `Bug "${bug.title}" has been assigned to ${assignedNames}.`,
+      );
     } catch (e) {
       alert(e.message || "Could not assign bug");
     }
@@ -47,6 +51,24 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
 
   return (
     <>
+      {assignmentNotice && (
+        <div className="assignmentOverlay" role="dialog" aria-modal="true">
+          <div className="assignmentCard">
+            <div className="assignmentCardIcon">
+              <CircleCheck size={24} />
+            </div>
+            <h3>Bug Assigned</h3>
+            <p>{assignmentNotice}</p>
+            <button
+              className="primary"
+              type="button"
+              onClick={() => setAssignmentNotice("")}
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
       <div className="pageIntro">
         <div>
           <h2>
@@ -162,21 +184,40 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
                     )}
                   </td>
                   <td>
-                    <select
-                      defaultValue=""
-                      disabled={busyId === b.rawId}
-                      onChange={(e) => {
-                        if (e.target.value) handleAssign(b, [e.target.value]);
-                      }}
-                      className="assignSelect"
-                    >
-                      <option value="">Select assignee</option>
-                      {assignableUsers.map((d) => (
-                        <option key={d._id} value={d._id}>
-                          {d.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="assignDropdown">
+                      <button
+                        type="button"
+                        className="assignSelectButton"
+                        disabled={busyId === b.rawId}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenAssigneeMenu(
+                            openAssigneeMenu === b.rawId ? null : b.rawId,
+                          );
+                        }}
+                      >
+                        Select assignee
+                        <ChevronDown size={16} />
+                      </button>
+                      {openAssigneeMenu === b.rawId && (
+                        <div className="assignOptions" role="listbox">
+                          {assignableUsers.map((d) => (
+                            <button
+                              type="button"
+                              role="option"
+                              key={d._id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenAssigneeMenu(null);
+                                handleAssign(b, [d._id]);
+                              }}
+                            >
+                              {d.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -98,7 +98,7 @@ function InviteUserModal({ onClose, onInvited }) {
         {error && <div className="formError">{error}</div>}
         <label>
           Full Name
-          <input name="name" required placeholder="Jane Doe" />
+          <input name="name" required maxLength={20} placeholder="Jane Doe" />
         </label>
         <label>
           Email Address
@@ -106,6 +106,7 @@ function InviteUserModal({ onClose, onInvited }) {
             name="email"
             type="email"
             required
+            maxLength={20}
             placeholder="jane@example.com"
           />
         </label>

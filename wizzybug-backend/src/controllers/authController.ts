@@ -9,6 +9,9 @@ const ALLOWED_ROLES = ['admin', 'developer', 'tester'];
 
 const normalizeEmail = (value: string): string => value.trim().toLowerCase();
 
+const exceedsUserFieldLimit = (value: unknown): boolean =>
+  typeof value !== 'string' || value.trim().length > 20;
+
 const getFrontendUrl = (): string => {
   return process.env.FRONTEND_URL || process.env.CLIENT_URL || process.env.VITE_APP_URL || 'http://localhost:5173';
 };
@@ -20,6 +23,15 @@ const generateToken = (id: string) => {
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, email, password, role } = req.body;
+
+    if (
+      exceedsUserFieldLimit(name) ||
+      exceedsUserFieldLimit(email) ||
+      exceedsUserFieldLimit(password)
+    ) {
+      res.status(400).json({ message: 'Name, email, and password must be 20 characters or fewer' });
+      return;
+    }
 
     if (role && !ALLOWED_ROLES.includes(role)) {
       res.status(400).json({ message: 'Role must be one of: admin, developer, tester' });
@@ -83,6 +95,11 @@ export const inviteUser = async (req: Request, res: Response): Promise<void> => 
   try {
     const { name, email, role } = req.body;
     const normalizedEmail = normalizeEmail(email);
+
+    if (exceedsUserFieldLimit(name) || exceedsUserFieldLimit(normalizedEmail)) {
+      res.status(400).json({ message: 'Name and email must be 20 characters or fewer' });
+      return;
+    }
 
     if (role && !ALLOWED_ROLES.includes(role)) {
       res.status(400).json({ message: 'Role must be one of: admin, developer, tester' });
@@ -152,6 +169,11 @@ export const inviteUser = async (req: Request, res: Response): Promise<void> => 
 export const acceptInvite = async (req: Request, res: Response): Promise<void> => {
   try {
     const { token, password } = req.body;
+
+    if (exceedsUserFieldLimit(password)) {
+      res.status(400).json({ message: 'Password must be 20 characters or fewer' });
+      return;
+    }
 
     const user = await User.findOne({ inviteToken: token, status: 'pending' });
     if (!user) {

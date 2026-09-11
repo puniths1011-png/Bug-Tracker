@@ -264,6 +264,7 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
             name="moduleFeatureName"
             value={form.moduleFeatureName}
             onChange={handleChange}
+            maxLength={150}
             placeholder="your Answer"
             required
           />

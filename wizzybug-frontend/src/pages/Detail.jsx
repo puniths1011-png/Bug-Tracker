@@ -216,7 +216,12 @@ function Detail({
 
   return (
     <>
-      <button className="back" onClick={() => setSelected(null)}>
+      <button
+        className="back"
+        type="button"
+        aria-label="Back to all bugs"
+        onClick={() => setSelected(null)}
+      >
         <ArrowLeft size={16} />
         Back to All Bugs
       </button>
