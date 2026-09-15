@@ -118,7 +118,7 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
                 type="text"
                 placeholder="Enter your name"
                 required
-                maxLength={20}
+                maxLength={40}
                 autoComplete="off"
               />
             </label>
@@ -130,7 +130,7 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
               type="email"
               placeholder="Enter your email"
               required
-              maxLength={20}
+              maxLength={40}
               autoComplete="off"
             />
           </label>
@@ -142,7 +142,7 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
                 type={show ? "text" : "password"}
                 placeholder="Enter your password"
                 required
-                maxLength={20}
+                maxLength={40}
                 autoComplete="new-password"
                 minLength={6}
               />

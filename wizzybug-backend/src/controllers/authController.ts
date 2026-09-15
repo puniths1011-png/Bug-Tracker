@@ -10,7 +10,7 @@ const ALLOWED_ROLES = ['admin', 'developer', 'tester'];
 const normalizeEmail = (value: string): string => value.trim().toLowerCase();
 
 const exceedsUserFieldLimit = (value: unknown): boolean =>
-  typeof value !== 'string' || value.trim().length > 20;
+  typeof value !== 'string' || value.trim().length > 40;
 
 const getFrontendUrl = (): string => {
   return process.env.FRONTEND_URL || process.env.CLIENT_URL || process.env.VITE_APP_URL || 'http://localhost:5173';
@@ -29,7 +29,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
       exceedsUserFieldLimit(email) ||
       exceedsUserFieldLimit(password)
     ) {
-      res.status(400).json({ message: 'Name, email, and password must be 20 characters or fewer' });
+      res.status(400).json({ message: 'Name, email, and password must be 40 characters or fewer' });
       return;
     }
 
@@ -97,7 +97,7 @@ export const inviteUser = async (req: Request, res: Response): Promise<void> => 
     const normalizedEmail = normalizeEmail(email);
 
     if (exceedsUserFieldLimit(name) || exceedsUserFieldLimit(normalizedEmail)) {
-      res.status(400).json({ message: 'Name and email must be 20 characters or fewer' });
+      res.status(400).json({ message: 'Name and email must be 40 characters or fewer' });
       return;
     }
 
@@ -171,7 +171,7 @@ export const acceptInvite = async (req: Request, res: Response): Promise<void> =
     const { token, password } = req.body;
 
     if (exceedsUserFieldLimit(password)) {
-      res.status(400).json({ message: 'Password must be 20 characters or fewer' });
+      res.status(400).json({ message: 'Password must be 40 characters or fewer' });
       return;
     }
 
