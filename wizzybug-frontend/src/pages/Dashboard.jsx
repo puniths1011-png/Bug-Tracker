@@ -140,6 +140,7 @@ function Distribution({ bugs = [] }) {
 
 function Dashboard({ bugs, setSelected, setPage, user }) {
   const [exportFormat, setExportFormat] = useState("pdf");
+  const [exportOpen, setExportOpen] = useState(false);
 
   const exportToPDF = () => {
     const doc = new jsPDF();
@@ -235,20 +236,37 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
           <h2>Hi, {user?.name || "there"}</h2>
           <p>Here's what's happening with your projects today.</p>
         </div>
-        <select
-          className="exportSelect"
-          value={exportFormat}
-          onChange={(e) => setExportFormat(e.target.value)}
-          aria-label="Export format"
-        >
-          <option value="pdf">PDF</option>
-          <option value="excel">Excel</option>
-          <option value="csv">CSV</option>
-        </select>
-        <button className="outline" onClick={exportReport}>
-          <Download size={17} />
-          Download Report
-        </button>
+        <div className="exportMenu">
+          <button
+            className="outline"
+            onClick={() => setExportOpen((open) => !open)}
+            aria-expanded={exportOpen}
+            aria-haspopup="menu"
+          >
+            <Download size={17} />
+            Download Report
+            <ChevronDown size={16} />
+          </button>
+          {exportOpen && (
+            <div className="exportOptions" role="menu">
+              {["pdf", "excel", "csv"].map((format) => (
+                <button
+                  key={format}
+                  role="menuitem"
+                  className={exportFormat === format ? "selected" : ""}
+                  onClick={() => {
+                    setExportFormat(format);
+                    setExportOpen(false);
+                    if (format === "pdf") exportToPDF();
+                    else exportToDelimited(format);
+                  }}
+                >
+                  {format === "pdf" ? "PDF" : format === "excel" ? "Excel" : "CSV"}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       <Stats bugs={bugs} admin={isAdmin} user={user} />
       <div className="analytics">

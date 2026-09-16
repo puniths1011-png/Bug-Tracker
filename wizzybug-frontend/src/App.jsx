@@ -50,7 +50,6 @@ import {
 } from "./config/api";
 import {
   PRIORITY_LABELS,
-  SEVERITY_TO_PRIORITY,
   STATUS_LABELS,
   STATUS_VALUES,
 } from "./utils/constants";
@@ -247,6 +246,9 @@ function App({ isAdminPage = false }) {
         onLogin={(u, token) => {
           setToken(token);
           setUser(u);
+          setPage("dashboard");
+          setSelectedId(null);
+          setProjectFilter(null);
           setLogged(true);
         }}
         isAdminPage={isAdminPage}
@@ -256,7 +258,12 @@ function App({ isAdminPage = false }) {
     );
 
   const addBug = async (b) => {
-    const mappedPriority = SEVERITY_TO_PRIORITY[b.severity] || "medium";
+    const mappedPriority = {
+      "P1-Immediate Fix": "critical",
+      "P2-High": "high",
+      "P3-Medium": "medium",
+      "P4-Low": "low",
+    }[b.priority] || "medium";
     const formData = new FormData();
     formData.append("title", b.title);
     formData.append("description", b.desc);
@@ -290,7 +297,7 @@ function App({ isAdminPage = false }) {
     });
     const createdBug = formatBug(data);
     setBugs((x) => [createdBug, ...x]);
-    setToast(`Bug submitted successfully. Defect ID: ${createdBug.id}`);
+    setToast(`Defect ID: ${createdBug.id}`);
     window.setTimeout(() => setToast(""), 5000);
     if (b.assignee) refreshUsers();
     return createdBug;
@@ -455,6 +462,8 @@ function App({ isAdminPage = false }) {
           setBugs([]);
           setUsers([]);
           setProjects([]);
+          setPage("dashboard");
+          setPage("dashboard");
         }}
         user={user}
         bugs={bugs}
@@ -488,7 +497,15 @@ function App({ isAdminPage = false }) {
         </div>
       </main>
       {menu && <div className="overlay" onClick={() => setMenu(false)} />}
-      {toast && <div className="toast success">{toast}</div>}
+      {toast && (
+        <div className="toast success" role="status">
+          <CircleCheck size={22} />
+          <div>
+            <strong>Bug submitted successfully</strong>
+            <span>{toast}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

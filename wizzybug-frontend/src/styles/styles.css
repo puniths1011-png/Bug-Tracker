@@ -1145,6 +1145,24 @@ select {
   box-shadow: var(--shadow);
   font-weight: 700;
   font-size: 13px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.toast > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.toast strong,
+.toast span {
+  display: block;
+}
+
+.toast span {
+  margin-top: 2px;
+  font-weight: 600;
 }
 
 .toast.success {
@@ -1160,6 +1178,40 @@ select {
   padding: 0 10px;
   background: var(--panel2);
   color: var(--text);
+}
+
+.exportMenu {
+  position: relative;
+}
+
+.exportOptions {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 10;
+  min-width: 132px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.exportOptions button {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  font-size: 13px;
+}
+
+.exportOptions button:hover,
+.exportOptions button.selected {
+  background: var(--panel2);
 }
 
 .sectionTitle {
@@ -2140,10 +2192,6 @@ select {
 
   .welcome {
     align-items: center;
-  }
-
-  .welcome .outline {
-    display: none;
   }
 
   .stats {
