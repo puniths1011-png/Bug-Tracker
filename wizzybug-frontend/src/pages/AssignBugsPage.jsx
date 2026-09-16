@@ -163,7 +163,7 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
                     </small>
                   </td>
                   <td>
-                    <span className={"severity " + b.severity.toLowerCase()}>
+                    <span className={"severity " + severityClass(b.severity)}>
                       {b.severity}
                     </span>
                   </td>

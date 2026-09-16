@@ -403,7 +403,7 @@ function Detail({
           </label>
           <label>
             Severity
-            <span className={"severity " + bug.severity.toLowerCase()}>
+            <span className={"severity " + severityClass(bug.severity)}>
               {bug.severity}
             </span>
           </label>

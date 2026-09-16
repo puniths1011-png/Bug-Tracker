@@ -34,6 +34,13 @@ export const severityLabel = (severity, priority) => {
   return selectedSeverity || legacyPrioritySeverity[priority] || "Minor";
 };
 
+export const severityClass = (severity) =>
+  String(severity || "minor")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
 export const pdfText = (value) =>
   String(value ?? "")
     .replace(/â€™/g, "'")

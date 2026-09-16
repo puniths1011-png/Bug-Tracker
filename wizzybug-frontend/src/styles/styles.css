@@ -978,23 +978,29 @@ td:first-child small,
   font-size: 12px;
   padding: 3px 8px;
   border-radius: 4px;
+  color: #d8d5df;
+  background: #292932;
 }
 
+.severity.blocker-system-crash-data-loss,
 .severity.critical {
   color: #ff7d87;
   background: #44262c;
 }
 
+.severity.major,
 .severity.high {
   color: #f0a456;
   background: #403126;
 }
 
+.severity.minor,
 .severity.medium {
   color: #80aaff;
   background: #26354b;
 }
 
+.severity.cosmetic,
 .severity.low {
   color: #9b99a4;
   background: #292932;
@@ -2063,18 +2069,21 @@ select {
 }
 
 [data-theme="light"] .status.open,
+[data-theme="light"] .severity.blocker-system-crash-data-loss,
 [data-theme="light"] .severity.critical {
   color: #b52f3d;
   background: #ffe8ea;
 }
 
 [data-theme="light"] .status.in-progress,
+[data-theme="light"] .severity.major,
 [data-theme="light"] .severity.high {
   color: #a85b13;
   background: #fff0dc;
 }
 
 [data-theme="light"] .status.fixed,
+[data-theme="light"] .severity.minor,
 [data-theme="light"] .severity.medium {
   color: #285cae;
   background: #e7f0ff;
@@ -2086,9 +2095,10 @@ select {
 [data-theme="light"] .status.rejected,
 [data-theme="light"] .status.deferred,
 [data-theme="light"] .status.not-reproducible,
+[data-theme="light"] .severity.cosmetic,
 [data-theme="light"] .severity.low {
-  color: #167054;
-  background: #e2f6ed;
+  color: #6d6670;
+  background: #eee9e5;
 }
 
 .signup b {
