@@ -24,3 +24,11 @@ export const SEVERITY_TO_PRIORITY = {
   Minor: "medium",
   Cosmetic: "low",
 };
+
+export const SEVERITY_LABELS = [
+  "Blocker(System Crash/Data Loss)",
+  "Critical",
+  "Major",
+  "Minor",
+  "Cosmetic",
+];

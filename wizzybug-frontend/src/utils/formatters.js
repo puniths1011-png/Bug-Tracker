@@ -1,4 +1,4 @@
-import { PRIORITY_LABELS, STATUS_LABELS } from "./constants";
+import { PRIORITY_LABELS, SEVERITY_LABELS, STATUS_LABELS } from "./constants";
 
 export const initialsOf = (name = "") =>
   name.trim()
@@ -18,6 +18,21 @@ export const priorityLabel = (priority) =>
   (priority
     ? priority.charAt(0).toUpperCase() + priority.slice(1)
     : "Medium");
+
+const legacyPrioritySeverity = {
+  critical: "Critical",
+  high: "Major",
+  medium: "Minor",
+  low: "Cosmetic",
+};
+
+export const severityLabel = (severity, priority) => {
+  const normalizedSeverity = String(severity || "").trim().toLowerCase();
+  const selectedSeverity = SEVERITY_LABELS.find(
+    (label) => label.toLowerCase() === normalizedSeverity,
+  );
+  return selectedSeverity || legacyPrioritySeverity[priority] || "Minor";
+};
 
 export const pdfText = (value) =>
   String(value ?? "")
@@ -45,7 +60,7 @@ export function formatBug(ticket) {
     rawId: ticket._id,
     title: ticket.title,
     desc: ticket.description,
-    severity: priorityLabel(priority),
+    severity: severityLabel(ticket.severity, priority),
     priority,
     status,
     project: ticket.project?.name || "Unassigned project",

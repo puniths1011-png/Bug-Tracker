@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState, useEffect } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import * as Icons from 'lucide-react';
 const {LayoutDashboard,Bug,Plus,Users,User,Settings,LogOut,Search,Bell,ChevronDown,ArrowUpRight,Clock3,CircleCheck,TriangleAlert,Filter,Download,Menu,X,ChevronRight,Paperclip,Send,CalendarDays,BarChart3,FolderKanban,Activity,ShieldCheck,Eye,EyeOff,Moon,Sun,UserCog,Mail,ClipboardList,RefreshCcw,FolderPlus,ArrowLeft} = Icons;
 import { jsPDF } from 'jspdf';
@@ -12,7 +12,7 @@ import { initialsOf, isAssignedToUser, priorityLabel, statusLabel, buildTimeline
 function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
   const [form, setForm] = useState({
     technicalMemberName: user?.name || "",
-    project: projects[0]?._id || "",
+    project: "",
     assignee: "",
     assignees: [],
     moduleFeatureName: "",
@@ -22,9 +22,9 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
     defectSummary: "",
     stepsToReproduce: "",
     defectType: "",
-    severity: "Blocker(System Crash/Data Loss)",
-    priority: "P3-Medium",
-    reproductionRate: "100%",
+    severity: "",
+    priority: "",
+    reproductionRate: "",
     expectedResult: "",
     actualResult: "",
     typeOfApplication: "",
@@ -89,12 +89,6 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
       mimeType,
     };
   };
-
-  // Keep the project dropdown pointed at a real project once the list loads.
-  useEffect(() => {
-    if (!form.project && projects.length)
-      setForm((f) => ({ ...f, project: projects[0]._id }));
-  }, [projects]);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -217,6 +211,9 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
               onChange={handleChange}
               required
             >
+              <option value="" disabled>
+                Select project
+              </option>
               {projects.map((p) => (
                 <option key={p._id} value={p._id}>
                   {p.name}
@@ -392,7 +389,11 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
               name="severity"
               value={form.severity}
               onChange={handleChange}
+              required
             >
+              <option value="" disabled>
+                Select severity
+              </option>
               <option>Blocker(System Crash/Data Loss)</option>
               <option>Critical</option>
               <option>Major</option>
@@ -406,7 +407,11 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
               name="priority"
               value={form.priority}
               onChange={handleChange}
+              required
             >
+              <option value="" disabled>
+                Select priority
+              </option>
               <option>P1-Immediate Fix</option>
               <option>P2-High</option>
               <option>P3-Medium</option>
@@ -422,7 +427,11 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
               name="reproductionRate"
               value={form.reproductionRate}
               onChange={handleChange}
+              required
             >
+              <option value="" disabled>
+                Select reproduction rate
+              </option>
               <option>100%</option>
               <option>75%</option>
               <option>50%</option>

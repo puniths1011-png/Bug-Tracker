@@ -267,6 +267,7 @@ function App({ isAdminPage = false }) {
     const formData = new FormData();
     formData.append("title", b.title);
     formData.append("description", b.desc);
+    formData.append("severity", b.severity || "Minor");
     formData.append("priority", mappedPriority);
     formData.append("project", b.project);
     if (b.assignee) formData.append("assignee", b.assignee);

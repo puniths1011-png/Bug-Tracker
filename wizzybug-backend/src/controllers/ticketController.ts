@@ -41,7 +41,7 @@ export const getTickets = async (req: AuthRequest, res: Response): Promise<void>
 export const createTicket = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const {
-      title, description, priority, project, assignee, assignees, screenshotBase64, screenshotMimeType,
+      title, description, severity, priority, project, assignee, assignees, screenshotBase64, screenshotMimeType,
       environment, moduleFeatureName, buildAppVersion, releaseVersion, reproductionRate,
       expectedResult, actualResult, typeOfApplication, browser, browserVersion
     } = req.body;
@@ -100,6 +100,7 @@ export const createTicket = async (req: AuthRequest, res: Response): Promise<voi
       defectId,
       title,
       description,
+      severity: severity || 'Minor',
       priority: priority ? priority.toLowerCase() : 'medium',
       project: projectId,
       assignees: normalizedAssignees,

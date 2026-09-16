@@ -19,6 +19,7 @@ export interface ITicket extends Document {
   defectId: string;
   title: string;
   description: string;
+  severity: 'Blocker(System Crash/Data Loss)' | 'Critical' | 'Major' | 'Minor' | 'Cosmetic';
   status: 'open' | 'in_progress' | 'resolved' | 'closed' | 'rejected' | 'deferred' | 'not_reproducible';
   priority: 'low' | 'medium' | 'high' | 'critical';
   project: mongoose.Types.ObjectId;
@@ -62,6 +63,7 @@ const TicketSchema: Schema = new Schema({
   defectId: { type: String, unique: true, sparse: true, index: true },
   title: { type: String, required: true },
   description: { type: String, required: true },
+  severity: { type: String, enum: ['Blocker(System Crash/Data Loss)', 'Critical', 'Major', 'Minor', 'Cosmetic'], default: 'Minor' },
   status: { type: String, enum: ['open', 'in_progress', 'resolved', 'closed', 'rejected', 'deferred', 'not_reproducible'], default: 'open' },
   priority: { type: String, enum: ['low', 'medium', 'high', 'critical'], default: 'medium' },
   project: { type: Schema.Types.ObjectId, ref: 'Project', required: true },
