@@ -53,6 +53,7 @@ export const pdfText = (value) =>
 export function formatBug(ticket) {
   const priority = (ticket.priority || "medium").toLowerCase();
   const status = (ticket.status || "open").toLowerCase();
+  const rawId = ticket._id || ticket.id || ticket.rawId || null;
   const assignees = Array.isArray(ticket.assignees)
     ? ticket.assignees
     : ticket.assignee
@@ -64,7 +65,7 @@ export function formatBug(ticket) {
     id: ticket.defectId || (ticket._id
       ? ticket._id.substring(ticket._id.length - 6).toUpperCase()
       : "WZ-000000"),
-    rawId: ticket._id,
+    rawId: rawId ? String(rawId) : null,
     title: ticket.title,
     desc: ticket.description,
     severity: severityLabel(ticket.severity, priority),

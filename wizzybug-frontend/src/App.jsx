@@ -153,7 +153,7 @@ function App({ isAdminPage = false }) {
     projects: "Projects",
   };
   const selected = selectedId
-    ? bugs.find((b) => b.rawId === selectedId) || null
+    ? bugs.find((b) => String(b.rawId) === String(selectedId)) || null
     : null;
   const navigateTo = (nextPage, nextProjectFilter = null) => {
     window.history.pushState(
@@ -169,13 +169,13 @@ function App({ isAdminPage = false }) {
   const navigateProjectFilter = (nextProjectFilter) =>
     navigateTo("bugs", nextProjectFilter);
   const setSelected = (b) => {
-    if (b) {
+    if (b?.rawId) {
       window.history.pushState(
-        { page, projectFilter, selectedId: b.rawId },
+        { page, projectFilter, selectedId: String(b.rawId) },
         "",
         window.location.href,
       );
-      setSelectedId(b.rawId);
+      setSelectedId(String(b.rawId));
       return;
     }
 

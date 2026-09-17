@@ -7,7 +7,7 @@ import { API, apiFetch, setToken } from '../config/api';
 import { formatIST, formatISTLong, timeAgoIST, IST_TZ } from '../utils/date';
 import { STATUS_LABELS, STATUS_VALUES, PRIORITY_LABELS, SEVERITY_TO_PRIORITY } from '../utils/constants';
 import { Avatar, Logo, RoleBadge, Status } from '../components/Ui';
-import { initialsOf, isAssignedToUser, priorityLabel, statusLabel, pdfText } from '../utils/formatters';
+import { initialsOf, isAssignedToUser, priorityLabel, statusLabel, pdfText, severityClass } from '../utils/formatters';
 
 function buildTimeline(bug) {
   const historyItems = (bug.history || []).map((h) => ({
