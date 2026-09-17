@@ -197,7 +197,7 @@ function Detail({
         doc.addPage();
         y = 18;
       }
-      doc.text("Activity log", 14, y);
+      doc.text("History and Comments", 14, y);
       y += 3;
       autoTable(doc, {
         startY: y + 3,
@@ -345,7 +345,7 @@ function Detail({
           </article>
           <article className="panel comments">
             <h3>
-              Activity
+              History and Comments
               <span>{timeline.length}</span>
             </h3>
             <div className="timeline">
@@ -364,7 +364,7 @@ function Detail({
                 </div>
               ))}
               {timeline.length === 0 && (
-                <p className="muted">No activity yet.</p>
+                <p className="muted">No history or comments yet.</p>
               )}
             </div>
             <div className="commentBox">
