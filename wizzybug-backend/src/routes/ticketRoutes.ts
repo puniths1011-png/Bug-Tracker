@@ -3,7 +3,7 @@ import {
   getTickets, createTicket, getTicketById, updateTicket, updateTicketStatus,
   getTicketScreenshot, assignTicket, addTicketComment, updateFixNotes
 } from '../controllers/ticketController';
-import { protect, adminOnly } from '../middleware/authMiddleware';
+import { protect } from '../middleware/authMiddleware';
 import { optionalUpload, requiredUpload } from '../middleware/uploadMiddleware';
 
 const router = express.Router();
@@ -24,9 +24,9 @@ router.route('/:id/screenshot')
 router.route('/:id/status')
   .put(protect, updateTicketStatus);
 
-// Admin-only: assign/reassign a bug to a developer.
+// Any authenticated user can assign an unassigned bug; only admins can reassign it.
 router.route('/:id/assign')
-  .put(protect, adminOnly, assignTicket);
+  .put(protect, assignTicket);
 
 router.route('/:id/comments')
   .post(protect, addTicketComment);

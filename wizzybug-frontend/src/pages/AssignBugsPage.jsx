@@ -7,7 +7,7 @@ import { API, apiFetch, setToken } from '../config/api';
 import { formatIST, formatISTLong, timeAgoIST, IST_TZ } from '../utils/date';
 import { STATUS_LABELS, STATUS_VALUES, PRIORITY_LABELS, SEVERITY_TO_PRIORITY } from '../utils/constants';
 import { Avatar, Logo, RoleBadge, Status } from '../components/Ui';
-import { initialsOf, isAssignedToUser, priorityLabel, statusLabel, buildTimeline } from '../utils/formatters';
+import { initialsOf, isAssignedToUser, priorityLabel, statusLabel, buildTimeline, severityClass } from '../utils/formatters';
 
 function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
   const [projectFilter, setProjectFilter] = useState("All");

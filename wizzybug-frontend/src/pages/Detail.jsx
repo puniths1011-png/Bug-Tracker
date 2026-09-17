@@ -68,6 +68,7 @@ function Detail({
   }, [bug.rawId, bug.status, bug.fixDescription]);
 
   const isAdmin = user?.role === "admin";
+  const canReassign = isAdmin || bug.assignee === "Unassigned";
   const timeline = buildTimeline(bug);
 
   const handleSend = async () => {
@@ -420,14 +421,14 @@ function Detail({
               />
               {bug.assignee}
             </span>
-            {isAdmin && (
+            {canReassign && (
               <button
                 type="button"
                 className="link"
                 style={{ marginTop: 6 }}
                 onClick={() => setReassignOpen((o) => !o)}
               >
-                {bug.assignee === "Unassigned" ? "Assign..." : "Reassign..."}
+                Reassign...
               </button>
             )}
             {reassignOpen && (

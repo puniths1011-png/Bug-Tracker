@@ -294,7 +294,7 @@ export const updateTicketStatus = async (req: AuthRequest, res: Response): Promi
   }
 };
 
-// Admin-only: assign (or reassign) a ticket to a team member, notifying them by email.
+// Assign an unassigned ticket, or reassign an existing ticket as an admin.
 export const assignTicket = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { assignees, assignee } = req.body;
@@ -302,6 +302,14 @@ export const assignTicket = async (req: AuthRequest, res: Response): Promise<voi
 
     if (!ticket) {
       res.status(404).json({ message: 'Ticket not found' });
+      return;
+    }
+
+    // Assignment is independent from the workflow status.
+    const currentStatus = ticket.status;
+    const hasExistingAssignee = (ticket.assignees?.length ?? 0) > 0 || Boolean(ticket.assignee);
+    if (hasExistingAssignee && req.user?.role !== 'admin') {
+      res.status(403).json({ message: 'Only admins can reassign an assigned ticket' });
       return;
     }
 
@@ -317,7 +325,7 @@ export const assignTicket = async (req: AuthRequest, res: Response): Promise<voi
 
     ticket.assignees = normalizedAssignees as any;
     ticket.assignee = normalizedAssignees[0] as any;
-    if (ticket.status === 'open') ticket.status = 'in_progress';
+    ticket.status = currentStatus;
     const assigneeNames = assigneeDocs.map(doc => doc.name).join(', ');
     ticket.history.push({
       type: 'assignment',
@@ -363,10 +371,15 @@ export const updateFixNotes = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
-    ticket.fixDescription = fixDescription;
+    const normalizedFixDescription = typeof fixDescription === 'string'
+      ? fixDescription.trim()
+      : '';
+    ticket.fixDescription = normalizedFixDescription;
     ticket.history.push({
       type: 'update',
-      message: 'Updated the fix description',
+      message: normalizedFixDescription
+        ? `Fix description updated: ${normalizedFixDescription}`
+        : 'Fix description cleared',
       actor: req.user?._id,
       actorName: req.user?.name || 'Unknown user',
       createdAt: new Date()
