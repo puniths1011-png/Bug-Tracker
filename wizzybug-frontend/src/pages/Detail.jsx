@@ -52,8 +52,17 @@ function Detail({
   const [editForm, setEditForm] = useState({
     title: bug.title || "",
     desc: bug.desc || "",
+    moduleFeatureName: bug.moduleFeatureName || "",
+    environment: bug.environment || "",
+    buildAppVersion: bug.buildAppVersion || "",
+    releaseVersion: bug.releaseVersion || "",
+    defectType: bug.defectType || "",
+    reproductionRate: bug.reproductionRate || "",
     expectedResult: bug.expectedResult || "",
     actualResult: bug.actualResult || "",
+    typeOfApplication: bug.typeOfApplication || "",
+    browser: bug.browser || "",
+    browserVersion: bug.browserVersion || "",
   });
 
   useEffect(() => {
@@ -62,8 +71,17 @@ function Detail({
     setEditForm({
       title: bug.title || "",
       desc: bug.desc || "",
+      moduleFeatureName: bug.moduleFeatureName || "",
+      environment: bug.environment || "",
+      buildAppVersion: bug.buildAppVersion || "",
+      releaseVersion: bug.releaseVersion || "",
+      defectType: bug.defectType || "",
+      reproductionRate: bug.reproductionRate || "",
       expectedResult: bug.expectedResult || "",
       actualResult: bug.actualResult || "",
+      typeOfApplication: bug.typeOfApplication || "",
+      browser: bug.browser || "",
+      browserVersion: bug.browserVersion || "",
     });
   }, [bug.rawId, bug.status, bug.fixDescription]);
 
@@ -270,6 +288,36 @@ function Detail({
                 </label>
                 <div className="twoCol">
                   <label>
+                    Module / Feature
+                    <input value={editForm.moduleFeatureName} onChange={(e) => setEditForm({ ...editForm, moduleFeatureName: e.target.value })} />
+                  </label>
+                  <label>
+                    Environment
+                    <input value={editForm.environment} onChange={(e) => setEditForm({ ...editForm, environment: e.target.value })} />
+                  </label>
+                </div>
+                <div className="twoCol">
+                  <label>
+                    Build / App Version
+                    <input value={editForm.buildAppVersion} onChange={(e) => setEditForm({ ...editForm, buildAppVersion: e.target.value })} />
+                  </label>
+                  <label>
+                    Release Version
+                    <input value={editForm.releaseVersion} onChange={(e) => setEditForm({ ...editForm, releaseVersion: e.target.value })} />
+                  </label>
+                </div>
+                <div className="twoCol">
+                  <label>
+                    Defect Type
+                    <input value={editForm.defectType} onChange={(e) => setEditForm({ ...editForm, defectType: e.target.value })} />
+                  </label>
+                  <label>
+                    Reproduction Rate
+                    <input value={editForm.reproductionRate} onChange={(e) => setEditForm({ ...editForm, reproductionRate: e.target.value })} />
+                  </label>
+                </div>
+                <div className="twoCol">
+                  <label>
                     Expected result
                     <textarea
                       value={editForm.expectedResult}
@@ -284,6 +332,20 @@ function Detail({
                     />
                   </label>
                 </div>
+                <div className="twoCol">
+                  <label>
+                    Type of Application
+                    <input value={editForm.typeOfApplication} onChange={(e) => setEditForm({ ...editForm, typeOfApplication: e.target.value })} />
+                  </label>
+                  <label>
+                    Browser
+                    <input value={editForm.browser} onChange={(e) => setEditForm({ ...editForm, browser: e.target.value })} />
+                  </label>
+                </div>
+                <label>
+                  Browser Version
+                  <input value={editForm.browserVersion} onChange={(e) => setEditForm({ ...editForm, browserVersion: e.target.value })} />
+                </label>
                 <button className="primary" type="submit" disabled={busy}>
                   {busy ? "Saving..." : "Save Defect"}
                 </button>
@@ -292,6 +354,25 @@ function Detail({
               <h3>Description</h3>
               <p>{bug.desc}</p>
             </>}
+            {!editing && (
+              <div className="detailReportFields">
+                {[
+                  ["Module / Feature", bug.moduleFeatureName],
+                  ["Environment", bug.environment],
+                  ["Build / App Version", bug.buildAppVersion],
+                  ["Release Version", bug.releaseVersion],
+                  ["Defect Type", bug.defectType],
+                  ["Reproduction Rate", bug.reproductionRate],
+                  ["Type of Application", bug.typeOfApplication],
+                  ["Browser", [bug.browser, bug.browserVersion].filter(Boolean).join(" ")],
+                ].filter(([, value]) => value).map(([label, value]) => (
+                  <div key={label}>
+                    <h3>{label}</h3>
+                    <p>{value}</p>
+                  </div>
+                ))}
+              </div>
+            )}
             {!editing && (bug.expectedResult || bug.actualResult) && (
               <div className="twoCol">
                 {bug.expectedResult && (

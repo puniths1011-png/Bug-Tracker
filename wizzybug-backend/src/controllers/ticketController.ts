@@ -43,7 +43,7 @@ export const createTicket = async (req: AuthRequest, res: Response): Promise<voi
     const {
       title, description, severity, priority, project, assignee, assignees, screenshotBase64, screenshotMimeType,
       environment, moduleFeatureName, buildAppVersion, releaseVersion, reproductionRate,
-      expectedResult, actualResult, typeOfApplication, browser, browserVersion
+      expectedResult, actualResult, defectType, typeOfApplication, browser, browserVersion
     } = req.body;
 
     const projectId = project;
@@ -110,7 +110,7 @@ export const createTicket = async (req: AuthRequest, res: Response): Promise<voi
       imageUrl,
       imagePublicId,
       environment, moduleFeatureName, buildAppVersion, releaseVersion, reproductionRate,
-      expectedResult, actualResult, typeOfApplication, browser, browserVersion,
+      expectedResult, actualResult, defectType, typeOfApplication, browser, browserVersion,
       history: [{
         type: 'created',
         message: normalizedAssignees.length ? `Bug reported and assigned to ${normalizedAssignees.length} team member${normalizedAssignees.length > 1 ? 's' : ''}` : 'Bug reported',
@@ -173,7 +173,7 @@ export const updateTicket = async (req: AuthRequest, res: Response): Promise<voi
     const {
       title, description, priority, project, assignee, assignees,
       environment, moduleFeatureName, buildAppVersion, releaseVersion,
-      reproductionRate, expectedResult, actualResult, typeOfApplication,
+      reproductionRate, expectedResult, actualResult, defectType, typeOfApplication,
       browser, browserVersion
     } = req.body;
 
@@ -214,6 +214,7 @@ export const updateTicket = async (req: AuthRequest, res: Response): Promise<voi
     if (reproductionRate !== undefined) ticket.reproductionRate = reproductionRate;
     if (expectedResult !== undefined) ticket.expectedResult = expectedResult;
     if (actualResult !== undefined) ticket.actualResult = actualResult;
+    if (defectType !== undefined) ticket.defectType = defectType;
     if (typeOfApplication !== undefined) ticket.typeOfApplication = typeOfApplication;
     if (browser !== undefined) ticket.browser = browser;
     if (browserVersion !== undefined) ticket.browserVersion = browserVersion;

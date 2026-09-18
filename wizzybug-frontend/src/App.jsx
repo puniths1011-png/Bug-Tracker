@@ -288,6 +288,7 @@ function App({ isAdminPage = false }) {
     formData.append("reproductionRate", b.reproductionRate || "");
     formData.append("expectedResult", b.expectedResult || "");
     formData.append("actualResult", b.actualResult || "");
+    formData.append("defectType", b.defectType || "");
     formData.append("typeOfApplication", b.typeOfApplication || "");
     formData.append("browser", b.browser || "");
     formData.append("browserVersion", b.browserVersion || "");
@@ -334,8 +335,17 @@ function App({ isAdminPage = false }) {
       body: JSON.stringify({
         title: values.title,
         description: values.desc,
+        environment: values.environment,
+        moduleFeatureName: values.moduleFeatureName,
+        buildAppVersion: values.buildAppVersion,
+        releaseVersion: values.releaseVersion,
+        reproductionRate: values.reproductionRate,
         expectedResult: values.expectedResult,
         actualResult: values.actualResult,
+        defectType: values.defectType,
+        typeOfApplication: values.typeOfApplication,
+        browser: values.browser,
+        browserVersion: values.browserVersion,
       }),
     });
     setBugs((x) => x.map((b) => (b.rawId === rawId ? formatBug(data) : b)));

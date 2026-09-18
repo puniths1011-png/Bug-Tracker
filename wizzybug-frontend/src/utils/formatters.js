@@ -96,6 +96,7 @@ export function formatBug(ticket) {
     reproductionRate: ticket.reproductionRate,
     expectedResult: ticket.expectedResult,
     actualResult: ticket.actualResult,
+    defectType: ticket.defectType,
     typeOfApplication: ticket.typeOfApplication,
     browser: ticket.browser,
     browserVersion: ticket.browserVersion,

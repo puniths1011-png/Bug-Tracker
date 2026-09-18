@@ -37,6 +37,7 @@ export interface ITicket extends Document {
   reproductionRate?: string;
   expectedResult?: string;
   actualResult?: string;
+  defectType?: string;
   typeOfApplication?: string;
   browser?: string;
   browserVersion?: string;
@@ -81,6 +82,7 @@ const TicketSchema: Schema = new Schema({
   reproductionRate: { type: String },
   expectedResult: { type: String },
   actualResult: { type: String },
+  defectType: { type: String },
   typeOfApplication: { type: String },
   browser: { type: String },
   browserVersion: { type: String },
