@@ -145,7 +145,20 @@ function ProjectsPage({
 
       <div className="projectGrid">
         {projects.map((p) => {
-          const projBugs = bugs.filter((b) => b.projectId === p._id);
+          const projBugs = bugs.filter(
+            (b) => String(b.projectId) === String(p._id),
+          );
+          const memberKeys = new Set(
+            (p.members || [])
+              .map((member) => member?._id || member)
+              .filter(Boolean)
+              .map(String),
+          );
+          projBugs.forEach((bug) => {
+            (bug.assigneeIds || []).filter(Boolean).forEach((assigneeId) => {
+              memberKeys.add(String(assigneeId));
+            });
+          });
           const open = projBugs.filter((b) => b.status !== "closed").length;
           return (
             <article
@@ -196,7 +209,7 @@ function ProjectsPage({
                 </span>
                 <span>
                   <Users size={14} />
-                  {(p.members || []).length} members
+                  {memberKeys.size} members
                 </span>
               </div>
             </article>

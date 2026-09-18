@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import User from '../models/User';
-import { isRealMailerConfigured, sendInviteViaMail } from '../utils/mailer';
+import { isRealMailerConfigured, sendInviteViaMail, sendPasswordResetViaMail } from '../utils/mailer';
 
 const ALLOWED_ROLES = ['admin', 'developer', 'tester'];
 
@@ -86,6 +86,56 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     } else {
       res.status(401).json({ message: 'Invalid credentials' });
     }
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const email = normalizeEmail(req.body.email || '');
+    const user = await User.findOne({ email, status: 'active' });
+
+    if (user) {
+      const resetToken = uuidv4();
+      user.resetToken = resetToken;
+      user.resetTokenExpiresAt = new Date(Date.now() + 60 * 60 * 1000);
+      await user.save();
+
+      const resetLink = `${getFrontendUrl()}/reset-password?token=${resetToken}`;
+      await sendPasswordResetViaMail({ email: user.email, name: user.name, resetLink });
+    }
+
+    res.json({ message: 'If an active account exists for that email, a reset link has been sent.' });
+  } catch (error) {
+    console.error('[forgotPassword]', error);
+    res.status(502).json({ message: 'Unable to send the password reset email. Check the mail service configuration.' });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token, password } = req.body;
+    if (!token || exceedsUserFieldLimit(password) || password.length < 6) {
+      res.status(400).json({ message: 'A valid reset token and a password of 6 to 40 characters are required' });
+      return;
+    }
+
+    const user = await User.findOne({
+      resetToken: token,
+      resetTokenExpiresAt: { $gt: new Date() },
+      status: 'active',
+    });
+    if (!user) {
+      res.status(400).json({ message: 'Invalid or expired reset token' });
+      return;
+    }
+
+    user.password = await bcrypt.hash(password, await bcrypt.genSalt(10));
+    user.resetToken = undefined;
+    user.resetTokenExpiresAt = undefined;
+    await user.save();
+    res.json({ message: 'Password reset successfully. You can now sign in.' });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }

@@ -17,12 +17,20 @@ function Header({
   setGlobalSearch,
   theme,
   toggleTheme,
+  bugs = [],
+  user,
+  setSelected,
 }) {
   const [now, setNow] = useState(new Date());
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 30000);
     return () => clearInterval(t);
   }, []);
+
+  const notifications = bugs
+    .filter((bug) => isAssignedToUser(bug, user))
+    .slice(0, 8);
 
   return (
     <header>
@@ -55,12 +63,50 @@ function Header({
             }}
           />
         </label>
-        <button
-          className="iconBtn"
-          onClick={() => alert("You have no new notifications at this time.")}
-        >
-          <Bell size={19} />
-        </button>
+        <div className="notificationWrap">
+          <button
+            className="iconBtn"
+            type="button"
+            aria-label="Open notifications"
+            aria-expanded={notificationsOpen}
+            onClick={() => setNotificationsOpen((open) => !open)}
+          >
+            <Bell size={19} />
+            {notifications.length > 0 && <i />}
+          </button>
+          {notificationsOpen && (
+            <div className="notificationMenu" role="dialog" aria-label="Notifications">
+              <div className="notificationHead">
+                <strong>Notifications</strong>
+                <span>{notifications.length}</span>
+              </div>
+              {notifications.length ? (
+                <div className="notificationList">
+                  {notifications.map((bug) => (
+                    <button
+                      className={`notificationCard ${user?.role || "member"}`}
+                      key={bug.rawId || bug.id}
+                      type="button"
+                      onClick={() => {
+                        setNotificationsOpen(false);
+                        setSelected(bug);
+                      }}
+                    >
+                      <span className="notificationIcon"><Bell size={16} /></span>
+                      <span className="notificationText">
+                        <b>Bug assigned to you</b>
+                        <span>{bug.title}</span>
+                        <small>{bug.project} · {timeAgoIST(bug.updatedAt || bug.createdAt)}</small>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="notificationEmpty">No bug assignments yet.</p>
+              )}
+            </div>
+          )}
+        </div>
         <button
           className="iconBtn themeToggle themeToggleNav"
           onClick={toggleTheme}

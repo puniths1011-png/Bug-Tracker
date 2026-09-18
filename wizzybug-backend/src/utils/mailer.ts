@@ -163,6 +163,48 @@ WizzyBug Team`;
   throw new Error('No mail transport is configured.');
 };
 
+export const sendPasswordResetViaMail = async (opts: {
+  email: string;
+  name: string;
+  resetLink: string;
+}): Promise<{ success: boolean; message: string }> => {
+  const mailServiceUrl = resolveMailServiceUrl();
+  const smtpTransport = getSmtpTransport();
+  if (!mailServiceUrl && !smtpTransport) {
+    throw new Error('MAIL_SERVICE_URL is not configured. Set it in your environment variables.');
+  }
+
+  const subject = 'Reset your WizzyBug password';
+  const body = `Hello ${opts.name},\n\nReset your WizzyBug password using this link:\n\n${opts.resetLink}\n\nThis link expires in one hour.`;
+  const html = `<h2>Hello ${opts.name},</h2><p>Reset your WizzyBug password using the link below:</p><p><a href="${opts.resetLink}">Reset Password</a></p><p>This link expires in one hour.</p>`;
+
+  if (mailServiceUrl) {
+    try {
+      const response = await fetch(mailServiceUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: opts.email, subject, body, html }),
+      });
+      if (response.ok) return { success: true, message: 'Password reset email sent' };
+    } catch (error) {
+      console.error('[mailer] Password reset mail service failed:', error);
+    }
+  }
+
+  if (smtpTransport) {
+    await smtpTransport.sendMail({
+      from: process.env.MAIL_FROM || process.env.MAIL_USER || process.env.GMAIL_USER,
+      to: opts.email,
+      subject,
+      text: body,
+      html,
+    });
+    return { success: true, message: 'Password reset email sent via SMTP fallback' };
+  }
+
+  throw new Error('Password reset email could not be sent.');
+};
+
 /**
  * Legacy sendMail function (kept for backwards compatibility)
  * Use sendInviteViaMail for sending invitations instead

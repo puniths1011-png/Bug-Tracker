@@ -445,10 +445,15 @@ function Detail({
                 style={{ minHeight: "110px" }}
               >
                 {users
-                  .filter((u) => u.role === "developer" || u.role === "tester")
+                  .filter(
+                    (u) =>
+                      u.role === "admin" ||
+                      u.role === "developer" ||
+                      u.role === "tester",
+                  )
                   .map((u) => (
                     <option key={u._id} value={u._id}>
-                      {u.name}
+                      {u.role.charAt(0).toUpperCase() + u.role.slice(1)} - {u.name}
                     </option>
                   ))}
               </select>

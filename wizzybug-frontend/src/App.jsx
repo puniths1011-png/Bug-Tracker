@@ -484,6 +484,9 @@ function App({ isAdminPage = false }) {
           setPage={navigatePage}
           globalSearch={globalSearch}
           setGlobalSearch={setGlobalSearch}
+          bugs={bugs}
+          user={user}
+          setSelected={setSelected}
           theme={theme}
           toggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
         />

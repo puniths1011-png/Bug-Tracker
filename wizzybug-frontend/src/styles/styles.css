@@ -416,6 +416,128 @@ header p {
   place-items: center;
 }
 
+.notificationWrap {
+  position: relative;
+}
+
+.notificationMenu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: min(360px, calc(100vw - 32px));
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  z-index: 30;
+}
+
+.notificationHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 4px 10px;
+  color: var(--text);
+}
+
+.notificationHead span {
+  min-width: 22px;
+  padding: 1px 6px;
+  border-radius: 12px;
+  background: var(--red);
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+}
+
+.notificationList {
+  display: grid;
+  gap: 8px;
+  max-height: min(430px, calc(100vh - 150px));
+  overflow-y: auto;
+}
+
+.notificationCard {
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--blue);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+}
+
+.notificationCard:hover,
+.notificationCard:focus-visible {
+  background: var(--panel2);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.notificationCard.tester {
+  border-left-color: var(--teal);
+}
+
+.notificationCard.developer {
+  border-left-color: var(--orange);
+}
+
+.notificationIcon {
+  flex: 0 0 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--blue) 20%, transparent);
+  color: var(--blue);
+}
+
+.notificationCard.tester .notificationIcon {
+  background: color-mix(in srgb, var(--teal) 20%, transparent);
+  color: var(--teal);
+}
+
+.notificationCard.developer .notificationIcon {
+  background: color-mix(in srgb, var(--orange) 20%, transparent);
+  color: var(--orange);
+}
+
+.notificationText {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.notificationText b,
+.notificationText span,
+.notificationText small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notificationText b {
+  font-size: 12px;
+}
+
+.notificationText span {
+  font-size: 13px;
+}
+
+.notificationText small,
+.notificationEmpty {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.notificationEmpty {
+  margin: 12px 4px 4px;
+}
+
 .themeToggle {
   width: 38px;
   height: 38px;
@@ -509,7 +631,7 @@ header p {
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 14px;
   margin-bottom: 18px;
 }
@@ -1468,6 +1590,9 @@ select {
 .assignOptions button {
   width: 100%;
   padding: 9px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   border: 0;
   border-radius: 5px;
   background: transparent;
@@ -2039,8 +2164,22 @@ select {
   height: auto;
 }
 
-.remember a {
+.remember a,
+.forgotPassword {
   color: #9f8bff;
+}
+
+.forgotPassword {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.forgotPassword:disabled {
+  cursor: wait;
+  opacity: 0.7;
 }
 
 .loginBtn {

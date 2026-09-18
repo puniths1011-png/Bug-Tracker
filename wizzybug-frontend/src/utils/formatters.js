@@ -137,6 +137,17 @@ export function isAssignedToUser(bug, user) {
   return Boolean(userEmail && assigneeText && assigneeText.toLowerCase().includes(userEmail));
 }
 
+export function isReportedByUser(bug, user) {
+  if (!bug || !user) return false;
+  const userId = user._id ? String(user._id) : "";
+  const reporterId = bug.reporterId ? String(bug.reporterId) : "";
+  if (userId && reporterId) return userId === reporterId;
+
+  const userName = user.name ? String(user.name).trim().toLowerCase() : "";
+  const reporterName = bug.reporter ? String(bug.reporter).trim().toLowerCase() : "";
+  return Boolean(userName && reporterName && userName === reporterName);
+}
+
 export function buildTimeline(bug) {
   const historyItems = (bug.history || []).map((history) => ({
     kind: "history",

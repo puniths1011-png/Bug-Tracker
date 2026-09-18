@@ -7,7 +7,7 @@ import { API, apiFetch, setToken } from '../config/api';
 import { formatIST, formatISTLong, timeAgoIST, IST_TZ } from '../utils/date';
 import { STATUS_LABELS, STATUS_VALUES, PRIORITY_LABELS, SEVERITY_TO_PRIORITY } from '../utils/constants';
 import { Avatar, Logo, RoleBadge, Status } from '../components/Ui';
-import { initialsOf, isAssignedToUser, priorityLabel, statusLabel, buildTimeline } from '../utils/formatters';
+import { initialsOf, isAssignedToUser, isReportedByUser, priorityLabel, statusLabel, buildTimeline } from '../utils/formatters';
 
 function Stats({ admin = true, bugs = [], user }) {
   const total = bugs.length;
@@ -74,6 +74,13 @@ function Stats({ admin = true, bugs = [], user }) {
           ).length,
           "done",
           CircleCheck,
+          "blue",
+        ],
+        [
+          "Reported by Me",
+          bugs.filter((b) => isReportedByUser(b, user)).length,
+          "submitted",
+          Plus,
           "blue",
         ],
         ["Open bugs", open, "across team", Activity, "green"],

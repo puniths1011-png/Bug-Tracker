@@ -15,6 +15,7 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [forgotSubmitting, setForgotSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -55,6 +56,28 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
       setError(err.message || "Something went wrong");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const email = document.querySelector('input[name="email"]')?.value.trim();
+    if (!email) {
+      setError("Enter your email address first.");
+      return;
+    }
+    setError("");
+    setStatus("");
+    setForgotSubmitting(true);
+    try {
+      const data = await apiFetch("/auth/forgot-password", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+      setStatus(data.message || "If an account exists, a reset link has been sent.");
+    } catch (err) {
+      setError(err.message || "Could not send the reset email.");
+    } finally {
+      setForgotSubmitting(false);
     }
   };
 
@@ -169,7 +192,14 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
               <label>
                 <input type="checkbox" defaultChecked /> Remember me
               </label>
-              <a>Forgot password?</a>
+              <button
+                type="button"
+                className="forgotPassword"
+                onClick={handleForgotPassword}
+                disabled={forgotSubmitting}
+              >
+                {forgotSubmitting ? "Sending..." : "Forgot password?"}
+              </button>
             </div>
           )}
           <button className="primary loginBtn" disabled={submitting}>

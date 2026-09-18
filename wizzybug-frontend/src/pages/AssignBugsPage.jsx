@@ -17,7 +17,7 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
   const [openAssigneeMenu, setOpenAssigneeMenu] = useState(null);
 
   const assignableUsers = users.filter(
-    (u) => u.role === "developer" || u.role === "tester",
+    (u) => u.role === "admin" || u.role === "developer" || u.role === "tester",
   );
   const projectNames = [
     "All",
@@ -212,6 +212,7 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
                                 handleAssign(b, [d._id]);
                               }}
                             >
+                              <RoleBadge role={d.role} />
                               {d.name}
                             </button>
                           ))}
