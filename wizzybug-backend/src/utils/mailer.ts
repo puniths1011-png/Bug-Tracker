@@ -1,6 +1,6 @@
 /**
- * Mail Service Integration
- * Tries the deployed mail endpoint first and falls back to Gmail SMTP if the external service is unavailable.
+ * Mail delivery integration.
+ * Prefer authenticated Gmail SMTP when configured, then fall back to the deployed mail service.
  */
 import nodemailer from 'nodemailer';
 
@@ -30,6 +30,9 @@ const getSmtpTransport = () => {
     },
   });
 };
+
+const getMailFrom = (): string | undefined =>
+  process.env.MAIL_FROM || process.env.MAIL_USER || process.env.GMAIL_USER;
 
 export const isRealMailerConfigured = (): boolean => Boolean(resolveMailServiceUrl()) || Boolean(getSmtpTransport());
 
@@ -78,6 +81,27 @@ WizzyBug Team`;
 
   let mailServiceError: Error | null = null;
 
+  if (smtpTransport) {
+    try {
+      const info = await smtpTransport.sendMail({
+        from: getMailFrom(),
+        replyTo: getMailFrom(),
+        to: opts.email,
+        subject,
+        text: body,
+        html,
+      });
+
+      console.log('[mailer] ✅ SMTP fallback invitation sent successfully:', info.messageId);
+      return {
+        success: true,
+        message: 'Invite sent successfully via Gmail SMTP',
+      };
+    } catch (smtpError) {
+      console.error('[mailer] ❌ Gmail SMTP invitation send failed:', smtpError);
+    }
+  }
+
   try {
     if (mailServiceUrl) {
       const response = await fetch(mailServiceUrl, {
@@ -90,6 +114,8 @@ WizzyBug Team`;
           subject,
           body,
           html,
+          from: getMailFrom(),
+          replyTo: getMailFrom(),
         }),
       });
 
@@ -121,39 +147,7 @@ WizzyBug Team`;
     }
   } catch (error) {
     mailServiceError = error instanceof Error ? error : new Error(String(error));
-    console.error('[mailer] ❌ Mail Service invitation send failed:');
-    console.error({
-      errorName: mailServiceError.name,
-      errorMessage: mailServiceError.message,
-      mailServiceUrl,
-    });
-  }
-
-  if (smtpTransport) {
-    try {
-      const info = await smtpTransport.sendMail({
-        from: process.env.MAIL_FROM || process.env.MAIL_USER || process.env.GMAIL_USER,
-        to: opts.email,
-        subject,
-        text: body,
-        html,
-      });
-
-      console.log('[mailer] ✅ SMTP fallback invitation sent successfully:', info.messageId);
-      return {
-        success: true,
-        message: 'Invite sent successfully via SMTP fallback',
-      };
-    } catch (smtpError) {
-      const fallbackError = smtpError instanceof Error ? smtpError : new Error(String(smtpError));
-      console.error('[mailer] ❌ SMTP fallback send failed:', fallbackError);
-
-      if (mailServiceError) {
-        throw mailServiceError;
-      }
-
-      throw fallbackError;
-    }
+    console.error('[mailer] ❌ Mail Service invitation send failed:', mailServiceError);
   }
 
   if (mailServiceError) {
@@ -193,7 +187,8 @@ export const sendPasswordResetViaMail = async (opts: {
 
   if (smtpTransport) {
     await smtpTransport.sendMail({
-      from: process.env.MAIL_FROM || process.env.MAIL_USER || process.env.GMAIL_USER,
+    from: getMailFrom(),
+    replyTo: getMailFrom(),
       to: opts.email,
       subject,
       text: body,

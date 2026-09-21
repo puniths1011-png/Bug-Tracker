@@ -10,8 +10,18 @@ import { Avatar, Logo, RoleBadge, Status } from '../components/Ui';
 import { initialsOf, isAssignedToUser, priorityLabel, statusLabel, buildTimeline } from '../utils/formatters';
 
 function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
+  const rememberedCredentials = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("rememberedCredentials") || "null");
+    } catch {
+      return null;
+    }
+  })();
   const [show, setShow] = useState(false);
   const [isRegister, setIsRegister] = useState(false);
+  const [email, setEmail] = useState(rememberedCredentials?.email || "");
+  const [password, setPassword] = useState(rememberedCredentials?.password || "");
+  const [rememberMe, setRememberMe] = useState(Boolean(rememberedCredentials));
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -21,8 +31,6 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
     e.preventDefault();
     setError("");
     setStatus("");
-    const email = e.target.email.value;
-    const password = e.target.password.value;
     setSubmitting(true);
 
     try {
@@ -42,6 +50,14 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
           method: "POST",
           body: JSON.stringify({ email, password }),
         });
+        if (rememberMe) {
+          localStorage.setItem(
+            "rememberedCredentials",
+            JSON.stringify({ email, password }),
+          );
+        } else {
+          localStorage.removeItem("rememberedCredentials");
+        }
         onLogin(
           {
             _id: data._id,
@@ -151,10 +167,12 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
             <input
               name="email"
               type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
               placeholder="Enter your email"
               required
               maxLength={40}
-              autoComplete="off"
+                autoComplete="username"
             />
           </label>
           <label>
@@ -163,10 +181,12 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
               <input
                 name="password"
                 type={show ? "text" : "password"}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
                 placeholder="Enter your password"
                 required
                 maxLength={40}
-                autoComplete="new-password"
+                autoComplete={isRegister ? "new-password" : "current-password"}
                 minLength={6}
               />
               <button type="button" onClick={() => setShow(!show)}>
@@ -190,7 +210,15 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
           {!isRegister && (
             <div className="remember">
               <label>
-                <input type="checkbox" defaultChecked /> Remember me
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(event) => {
+                    const checked = event.target.checked;
+                    setRememberMe(checked);
+                    if (!checked) localStorage.removeItem("rememberedCredentials");
+                  }}
+                /> Remember me
               </label>
               <button
                 type="button"

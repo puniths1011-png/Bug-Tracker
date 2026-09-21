@@ -17,6 +17,7 @@ function BugTable({ bugs, setSelected, compact = false }) {
           <tr>
             <th>BUG</th>
             <th>SEVERITY</th>
+            <th>PRIORITY</th>
             <th>STATUS</th>
             <th>ASSIGNEE</th>
             <th>CREATED (IST)</th>
@@ -42,6 +43,11 @@ function BugTable({ bugs, setSelected, compact = false }) {
                 </span>
               </td>
               <td>
+                <span className={"severity " + severityClass(b.priority)}>
+                  {priorityLabel(b.priority)}
+                </span>
+              </td>
+              <td>
                 <Status>{b.status}</Status>
               </td>
               <td>
@@ -61,7 +67,7 @@ function BugTable({ bugs, setSelected, compact = false }) {
           {bugs.length === 0 && (
             <tr>
               <td
-                colSpan={6}
+                colSpan={7}
                 className="muted"
                 style={{ textAlign: "center", padding: "30px 0" }}
               >
