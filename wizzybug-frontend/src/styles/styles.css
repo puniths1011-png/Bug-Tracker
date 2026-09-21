@@ -1676,6 +1676,7 @@ select {
   line-height: 1.7;
   overflow-wrap: anywhere;
   word-break: break-word;
+  white-space: pre-wrap;
 }
 
 .contentCard h3:not(:first-child) {
