@@ -144,10 +144,19 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
 
   const exportToPDF = () => {
     const doc = new jsPDF();
-    doc.text(pdfText("WizzyBug - Bug Report"), 14, 15);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const center = pageWidth / 2;
+    const margin = 14;
+
+    doc.setFontSize(18);
+    doc.setFont(undefined, "bold");
+    doc.text("BUG REPORT", center, 16, { align: "center" });
+    doc.setFont(undefined, "normal");
     doc.setFontSize(9);
     doc.setTextColor(120);
-    doc.text(pdfText(`Generated ${formatIST(new Date())} IST`), 14, 21);
+    doc.text(pdfText(`Generated ${formatIST(new Date())} IST`), center, 23, {
+      align: "center",
+    });
 
     const tableColumn = [
       "BUG ID",
@@ -173,20 +182,43 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
     autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
-      startY: 26,
-      margin: { left: 14, right: 14 },
-      styles: { fontSize: 8, cellPadding: 3, overflow: "linebreak" },
+      startY: 31,
+      theme: "grid",
+      margin: { left: margin, right: margin },
+      headStyles: {
+        fillColor: [91, 70, 190],
+        textColor: 255,
+        fontStyle: "bold",
+        halign: "center",
+        valign: "middle",
+      },
+      styles: {
+        fontSize: 7.5,
+        cellPadding: 2.5,
+        overflow: "linebreak",
+        valign: "top",
+      },
       columnStyles: {
-        0: { cellWidth: 22 },
-        1: { cellWidth: 42 },
-        2: { cellWidth: 23 },
-        3: { cellWidth: 23 },
-        4: { cellWidth: 28 },
-        5: { cellWidth: 28 },
-        6: { cellWidth: 28 },
-        7: { cellWidth: 28 },
+        0: { cellWidth: 15, halign: "center" },
+        1: { cellWidth: 45 },
+        2: { cellWidth: 17, halign: "center" },
+        3: { cellWidth: 20, halign: "center" },
+        4: { cellWidth: 22 },
+        5: { cellWidth: 20 },
+        6: { cellWidth: 20 },
+        7: { cellWidth: 23, halign: "center" },
       },
     });
+
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let page = 1; page <= pageCount; page += 1) {
+      doc.setPage(page);
+      doc.setFontSize(8);
+      doc.setTextColor(120);
+      doc.text(`WizzyBug | Page ${page} of ${pageCount}`, center, 290, {
+        align: "center",
+      });
+    }
 
     doc.save("wizzybug_bugs_report.pdf");
   };
