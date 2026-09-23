@@ -211,9 +211,14 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
                                 setOpenAssigneeMenu(null);
                                 handleAssign(b, [d._id]);
                               }}
+                              className="assignOptionItem"
                             >
-                              <RoleBadge role={d.role} />
-                              {d.name}
+                              <span className="assignOptionLine">
+                                <span className="assignOptionName">{d.name}</span>
+                                <span className="assignOptionRole">
+                                  <RoleBadge role={d.role} />
+                                </span>
+                              </span>
                             </button>
                           ))}
                         </div>

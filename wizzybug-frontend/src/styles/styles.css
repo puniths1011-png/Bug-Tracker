@@ -1677,8 +1677,8 @@ select {
   width: 100%;
   padding: 9px 10px;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 6px;
   border: 0;
   border-radius: 5px;
   background: transparent;
@@ -1686,6 +1686,30 @@ select {
   text-align: left;
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+.assignOptionItem {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.assignOptionLine {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.assignOptionName {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.assignOptionRole {
+  display: inline-flex;
+  align-items: center;
 }
 
 .assignOptions button:hover {
