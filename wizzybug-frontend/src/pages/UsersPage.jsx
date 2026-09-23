@@ -104,7 +104,7 @@ function InviteUserModal({ onClose, onInvited }) {
           Email Address
           <input
             name="email"
-            type="email"
+            type="text"
             required
             maxLength={40}
             placeholder="jane@example.com"

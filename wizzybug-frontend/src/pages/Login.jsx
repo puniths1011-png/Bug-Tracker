@@ -166,13 +166,13 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
             Email address
             <input
               name="email"
-              type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
+              type="text"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
               placeholder="Enter your email"
               required
               maxLength={40}
-                autoComplete="username"
+              autoComplete="username"
             />
           </label>
           <label>

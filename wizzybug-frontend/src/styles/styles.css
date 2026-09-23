@@ -1016,22 +1016,34 @@ table {
 }
 
 th {
-  font-size: 10px;
+  font-size: 15px;
+  font-weight: 700;
   color: var(--muted);
-  letter-spacing: 0.8px;
-  text-align: left;
-  padding: 10px 17px;
+  letter-spacing: 0.4px;
+  text-align: center;
+  padding: 12px 16px;
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   background: var(--panel2);
+}
+
+th:first-child {
+  text-align: left;
 }
 
 td {
   padding: 12px 17px;
   border-bottom: 1px solid var(--border);
   color: var(--text);
-  font-size: 13.5px;
+  font-size: 15px;
+  font-weight: 600;
   vertical-align: middle;
+  text-align: center;
+}
+
+.tableWrap td:not(:first-child),
+.tableWrap th:not(:first-child) {
+  text-align: center;
 }
 
 .tableWrap.compact th:first-child,
@@ -1087,7 +1099,7 @@ tbody tr:hover {
 td:first-child b {
   display: block;
   color: var(--text);
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 700;
   margin-bottom: 3px;
   max-width: 90ch;
@@ -1099,6 +1111,7 @@ td:first-child b {
 
 .tableWrap td:first-child {
   max-width: 90ch;
+  text-align: left;
 }
 
 td:first-child small,

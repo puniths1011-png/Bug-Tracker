@@ -120,7 +120,7 @@ function Profile({ user, setUser, bugs = [] }) {
             Email address
             <input
               name="email"
-              type="email"
+              type="text"
               defaultValue={user?.email || ""}
               required
               maxLength={40}
