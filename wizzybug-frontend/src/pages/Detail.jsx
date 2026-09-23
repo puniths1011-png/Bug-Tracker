@@ -150,82 +150,122 @@ function Detail({
 
   const exportBugPDF = () => {
     const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text(pdfText(`WizzyBug - ${bug.id}`), 14, 16);
-    doc.setFontSize(11);
-    doc.setTextColor(80);
-    doc.text(pdfText(bug.title), 14, 24);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 14;
+    const center = pageWidth / 2;
+
+    doc.setTextColor(20);
+    doc.setFontSize(18);
+    doc.setFont(undefined, "bold");
+    doc.text("BUG REPORT", center, 16, { align: "center" });
+    doc.setFontSize(12);
+    doc.text(pdfText(bug.title), center, 24, { align: "center" });
+    doc.setFont(undefined, "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(90);
+    doc.text(pdfText(`Generated: ${formatIST(new Date())}`), center, 31, {
+      align: "center",
+    });
 
     autoTable(doc, {
-      startY: 30,
-      theme: "plain",
-      margin: { left: 14, right: 14 },
-      styles: { fontSize: 9, cellPadding: 3, overflow: "linebreak" },
-      columnStyles: { 0: { cellWidth: 42 }, 1: { cellWidth: 138 } },
+      startY: 38,
+      theme: "grid",
+      margin: { left: margin, right: margin },
+      head: [["FIELD", "DETAIL"]],
+      headStyles: {
+        fillColor: [91, 70, 190],
+        textColor: 255,
+        fontStyle: "bold",
+        halign: "center",
+      },
+      styles: {
+        fontSize: 9,
+        cellPadding: 3,
+        overflow: "linebreak",
+        valign: "middle",
+      },
+      columnStyles: {
+        0: { cellWidth: 45, fontStyle: "bold" },
+        1: { cellWidth: pageWidth - margin * 2 - 45 },
+      },
       body: [
-        ["Status", pdfText(statusLabel(bug.status))],
-        ["Severity", pdfText(bug.severity)],
-        ["Project", pdfText(bug.project)],
-        ["Reporter", pdfText(bug.reporter)],
-        ["Assignee", pdfText(bug.assignee)],
-        ["Reported (IST)", pdfText(formatIST(bug.createdAt))],
-        ["Last updated (IST)", pdfText(formatIST(bug.updatedAt))],
-        ["Environment", pdfText(bug.environment || "-")],
-        ["Module / Feature", pdfText(bug.moduleFeatureName || "-")],
+        ["BUG ID", pdfText(bug.id)],
+        ["STATUS", pdfText(statusLabel(bug.status))],
+        ["SEVERITY", pdfText(bug.severity)],
+        ["PROJECT", pdfText(bug.project)],
+        ["REPORTER", pdfText(bug.reporter)],
+        ["ASSIGNEE", pdfText(bug.assignee)],
+        ["REPORTED (IST)", pdfText(formatIST(bug.createdAt))],
+        ["LAST UPDATED (IST)", pdfText(formatIST(bug.updatedAt))],
+        ["ENVIRONMENT", pdfText(bug.environment || "-")],
+        ["MODULE / FEATURE", pdfText(bug.moduleFeatureName || "-")],
         [
-          "Browser",
+          "BROWSER",
           pdfText([bug.browser, bug.browserVersion].filter(Boolean).join(" ") || "-"),
         ],
       ],
     });
 
     let y = doc.lastAutoTable.finalY + 8;
-    const addBlock = (label, text) => {
-      if (!text) return;
-      doc.setFontSize(11);
-      doc.setTextColor(20);
-      doc.text(pdfText(label), 14, y);
-      y += 5;
-      doc.setFontSize(9);
-      doc.setTextColor(90);
-      const lines = doc.splitTextToSize(pdfText(text), 180);
-      if (y + lines.length * 4.5 + 8 > 280) {
-        doc.addPage();
-        y = 18;
-        doc.setFontSize(11);
-        doc.setTextColor(20);
-        doc.text(pdfText(label), 14, y);
-        y += 5;
-        doc.setFontSize(9);
-        doc.setTextColor(90);
-      }
-      doc.text(lines, 14, y);
-      y += lines.length * 4.5 + 5;
-    };
-    addBlock("Description", bug.desc);
-    addBlock("Expected result", bug.expectedResult);
-    addBlock("Actual result", bug.actualResult);
-    addBlock("Fix description", bug.fixDescription);
+    const reportSections = [
+      ["DESCRIPTION", bug.desc],
+      ["EXPECTED RESULT", bug.expectedResult],
+      ["ACTUAL RESULT", bug.actualResult],
+      ["FIX DESCRIPTION", bug.fixDescription],
+    ].filter(([, value]) => value);
+
+    if (reportSections.length) {
+      autoTable(doc, {
+        startY: y,
+        theme: "grid",
+        margin: { left: margin, right: margin },
+        head: [["REPORT SECTION", "CONTENT"]],
+        headStyles: {
+          fillColor: [91, 70, 190],
+          textColor: 255,
+          fontStyle: "bold",
+          halign: "center",
+        },
+        styles: { fontSize: 9, cellPadding: 4, overflow: "linebreak", valign: "top" },
+        columnStyles: {
+          0: { cellWidth: 45, fontStyle: "bold" },
+          1: { cellWidth: pageWidth - margin * 2 - 45 },
+        },
+        body: reportSections.map(([label, value]) => [label, pdfText(value)]),
+      });
+      y = doc.lastAutoTable.finalY + 8;
+    }
 
     if (timeline.length) {
-      doc.setFontSize(11);
-      doc.setTextColor(20);
-      if (y > 270) {
-        doc.addPage();
-        y = 18;
-      }
-      doc.text("History and Comments", 14, y);
-      y += 3;
+      if (y > 260) y = 18;
       autoTable(doc, {
-        startY: y + 3,
-        head: [["When (IST)", "Who", "Update"]],
-        margin: { left: 14, right: 14 },
-        styles: { fontSize: 8, cellPadding: 3, overflow: "linebreak" },
+        startY: y,
+        theme: "grid",
+        head: [["WHEN (IST)", "WHO", "ACTIVITY"]],
+        margin: { left: margin, right: margin },
+        headStyles: {
+          fillColor: [91, 70, 190],
+          textColor: 255,
+          fontStyle: "bold",
+          halign: "center",
+        },
+        styles: { fontSize: 8, cellPadding: 3, overflow: "linebreak", valign: "top" },
+        columnStyles: { 0: { cellWidth: 38 }, 1: { cellWidth: 35 } },
         body: timeline.map((t) => [
           pdfText(formatIST(t.createdAt)),
           pdfText(t.actorName),
           pdfText(t.message),
         ]),
+      });
+    }
+
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let page = 1; page <= pageCount; page += 1) {
+      doc.setPage(page);
+      doc.setFontSize(8);
+      doc.setTextColor(120);
+      doc.text(`WizzyBug | Page ${page} of ${pageCount}`, center, 290, {
+        align: "center",
       });
     }
 

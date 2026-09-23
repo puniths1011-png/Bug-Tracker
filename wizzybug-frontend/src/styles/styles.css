@@ -2917,7 +2917,8 @@ select {
 }
 
 .projectDetailPage {
-  max-width: 860px;
+  width: 100%;
+  max-width: none;
 }
 
 .backButton {
@@ -2968,6 +2969,47 @@ select {
   display: inline-flex;
   align-items: center;
   gap: 7px;
+}
+
+.projectBugList {
+  margin-top: 12px;
+  overflow: hidden;
+}
+
+.projectBugList .bugTable table {
+  min-width: 0;
+  width: 100%;
+}
+
+.projectBugListHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.projectBugListHeader h3 {
+  margin: 0 0 4px;
+}
+
+.projectBugListHeader p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.projectBugListHeader > span {
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .projectBugList .bugTable table {
+    min-width: 780px;
+  }
 }
 
 .modalHeading {

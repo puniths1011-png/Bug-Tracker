@@ -1,7 +1,8 @@
 import React from "react";
 import { ArrowLeft, Bug, Users } from "lucide-react";
+import BugTable from "../components/BugTable";
 
-function ProjectDetailPage({ project, bugs, onBack }) {
+function ProjectDetailPage({ project, bugs, onBack, setSelected }) {
   const projectBugs = bugs.filter(
     (bug) => String(bug.projectId) === String(project._id),
   );
@@ -42,6 +43,16 @@ function ProjectDetailPage({ project, bugs, onBack }) {
           {members.size} members
         </span>
       </div>
+      <article className="panel projectBugList">
+        <div className="projectBugListHeader">
+          <div>
+            <h3>Project bugs</h3>
+            <p>Issues reported for {project.name}.</p>
+          </div>
+          <span>{projectBugs.length} total</span>
+        </div>
+        <BugTable bugs={projectBugs} setSelected={setSelected} />
+      </article>
     </section>
   );
 }

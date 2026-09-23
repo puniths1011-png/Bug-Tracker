@@ -423,7 +423,7 @@ function App({ isAdminPage = false }) {
       />
     );
   } else if (page === "project-detail" && selectedProject) {
-    content = <ProjectDetailPage project={selectedProject} bugs={bugs} onBack={() => window.history.back()} />;
+    content = <ProjectDetailPage project={selectedProject} bugs={bugs} setSelected={setSelected} onBack={() => window.history.back()} />;
   } else if (page === "dashboard") {
     content = (
       <Dashboard
