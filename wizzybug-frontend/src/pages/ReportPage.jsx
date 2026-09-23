@@ -245,10 +245,14 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
             >
               <option value="">Leave unassigned</option>
               {users
-                .filter((u) => u.role === "developer")
+                .filter((u) =>
+                  ["admin", "developer", "tester"].includes(
+                    String(u.role || "").toLowerCase(),
+                  ),
+                )
                 .map((u) => (
                   <option key={u._id} value={u._id}>
-                    {u.name}
+                    {u.name} - {String(u.role || "").toLowerCase()}
                   </option>
                 ))}
             </select>

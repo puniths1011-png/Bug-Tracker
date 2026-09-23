@@ -78,6 +78,26 @@ export const getProjectById = async (req: AuthRequest, res: Response): Promise<v
   }
 };
 
+export const updateProject = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { description } = req.body;
+    const project = await Project.findByIdAndUpdate(
+      req.params.id,
+      { description: typeof description === 'string' ? description.trim() : '' },
+      { new: true, runValidators: true }
+    ).populate('members', 'name email');
+
+    if (!project) {
+      res.status(404).json({ message: 'Project not found' });
+      return;
+    }
+
+    res.json(project);
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
 export const deleteProject = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const project = await Project.findByIdAndDelete(req.params.id);

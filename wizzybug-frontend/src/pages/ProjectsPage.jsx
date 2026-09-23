@@ -1,6 +1,6 @@
 ﻿import React, { useMemo, useState, useEffect } from 'react';
 import * as Icons from 'lucide-react';
-const {LayoutDashboard,Bug,Plus,Users,User,Settings,LogOut,Search,Bell,ChevronDown,ArrowUpRight,Clock3,CircleCheck,TriangleAlert,Filter,Download,Menu,X,ChevronRight,Paperclip,Send,CalendarDays,BarChart3,FolderKanban,Activity,ShieldCheck,Eye,EyeOff,Moon,Sun,UserCog,Mail,ClipboardList,RefreshCcw,FolderPlus,ArrowLeft,Trash2} = Icons;
+const {LayoutDashboard,Bug,Plus,Users,User,Settings,LogOut,Search,Bell,ChevronDown,ArrowUpRight,Clock3,CircleCheck,TriangleAlert,Filter,Download,Menu,X,ChevronRight,Paperclip,Send,CalendarDays,BarChart3,FolderKanban,Activity,ShieldCheck,Eye,EyeOff,Moon,Sun,UserCog,Mail,ClipboardList,RefreshCcw,FolderPlus,ArrowLeft,Trash2,Pencil} = Icons;
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { API, apiFetch, setToken } from '../config/api';
@@ -20,6 +20,8 @@ function ProjectsPage({
   user,
   createProject,
   deleteProject,
+  updateProject,
+  openProject,
   setPage,
   setProjectFilter,
 }) {
@@ -29,6 +31,8 @@ function ProjectsPage({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState("");
+  const [editingProject, setEditingProject] = useState(null);
+  const [editDescription, setEditDescription] = useState("");
   const isAdmin = user?.role === "admin";
 
   const handleCreate = async (e) => {
@@ -57,6 +61,20 @@ function ProjectsPage({
       setError(err.message || "Could not remove project");
     } finally {
       setDeletingId("");
+    }
+  };
+
+  const handleEdit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      await updateProject(editingProject._id, { description: editDescription });
+      setEditingProject(null);
+    } catch (err) {
+      setError(err.message || "Could not update project");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -143,6 +161,29 @@ function ProjectsPage({
         </div>
       )}
 
+      {editingProject && (
+        <div className="overlay" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <form className="panel profileForm" onSubmit={handleEdit} style={{ width: "400px", padding: "30px" }}>
+            <div className="modalHeading">
+              <h3>Edit description</h3>
+              <button type="button" onClick={() => setEditingProject(null)} aria-label="Close edit dialog">
+                <X size={20} />
+              </button>
+            </div>
+            {error && <div className="formError">{error}</div>}
+            <label>
+              {editingProject.name}
+              <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={5} autoFocus />
+            </label>
+            <div className="formActions" style={{ marginTop: 15 }}>
+              <button className="primary" type="submit" disabled={saving} style={{ width: "100%" }}>
+                {saving ? "Saving..." : "Save description"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       <div className="projectGrid">
         {projects.map((p) => {
           const projBugs = bugs.filter(
@@ -164,9 +205,7 @@ function ProjectsPage({
             <article
               key={p._id}
               className="panel projectCard"
-              onClick={() => {
-                setProjectFilter(p._id);
-              }}
+              onClick={() => openProject(p._id)}
             >
               <div className="projectCardHead">
                 <span className="projectKey">
@@ -180,6 +219,22 @@ function ProjectsPage({
                   <i />
                   {p.status || "active"}
                 </span>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    className="projectEdit"
+                    aria-label={`Edit ${p.name} description`}
+                    title="Edit description"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setEditingProject(p);
+                      setEditDescription(p.description || "");
+                      setError("");
+                    }}
+                  >
+                    <Pencil size={15} />
+                  </button>
+                )}
                 {isAdmin && (
                   <button
                     type="button"

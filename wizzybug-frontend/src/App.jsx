@@ -65,6 +65,7 @@ import Detail from "./pages/Detail";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import ProjectsPage from "./pages/ProjectsPage";
+import ProjectDetailPage from "./pages/ProjectDetailPage";
 import ReportPage from "./pages/ReportPage";
 import UsersPage from "./pages/UsersPage";
 
@@ -99,6 +100,7 @@ function App({ isAdminPage = false }) {
   const [users, setUsers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [projectFilter, setProjectFilter] = useState(null);
   const [menu, setMenu] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
@@ -112,6 +114,7 @@ function App({ isAdminPage = false }) {
         page,
         projectFilter,
         selectedId: null,
+        selectedProjectId: null,
       },
       "",
       window.location.href,
@@ -123,11 +126,13 @@ function App({ isAdminPage = false }) {
         setSelectedId(null);
         setPage("dashboard");
         setProjectFilter(null);
+        setSelectedProjectId(null);
         return;
       }
       setPage(state.page);
       setProjectFilter(state.projectFilter || null);
       setSelectedId(state.selectedId || null);
+      setSelectedProjectId(state.selectedProjectId || null);
     };
 
     window.addEventListener("popstate", handlePopState);
@@ -137,7 +142,7 @@ function App({ isAdminPage = false }) {
   useEffect(() => {
     if (selectedId) return;
     window.history.replaceState(
-      { ...(window.history.state || {}), page, projectFilter, selectedId: null },
+      { ...(window.history.state || {}), page, projectFilter, selectedId: null, selectedProjectId: null },
       "",
       window.location.href,
     );
@@ -151,23 +156,39 @@ function App({ isAdminPage = false }) {
     profile: "My Profile",
     assign: "Assign Bugs",
     projects: "Projects",
+    "project-detail": "Project Details",
   };
   const selected = selectedId
     ? bugs.find((b) => String(b.rawId) === String(selectedId)) || null
     : null;
+  const selectedProject = selectedProjectId
+    ? projects.find((project) => String(project._id) === String(selectedProjectId))
+    : null;
   const navigateTo = (nextPage, nextProjectFilter = null) => {
     window.history.pushState(
-      { page: nextPage, projectFilter: nextProjectFilter, selectedId: null },
+      { page: nextPage, projectFilter: nextProjectFilter, selectedId: null, selectedProjectId: null },
       "",
       window.location.href,
     );
     setSelectedId(null);
+    setSelectedProjectId(null);
     setPage(nextPage);
     setProjectFilter(nextProjectFilter);
   };
   const navigatePage = (nextPage) => navigateTo(nextPage, null);
   const navigateProjectFilter = (nextProjectFilter) =>
     navigateTo("bugs", nextProjectFilter);
+  const openProject = (projectId) => {
+    window.history.pushState(
+      { page: "project-detail", projectFilter: null, selectedId: null, selectedProjectId: projectId },
+      "",
+      window.location.href,
+    );
+    setPage("project-detail");
+    setProjectFilter(null);
+    setSelectedId(null);
+    setSelectedProjectId(projectId);
+  };
   const setSelected = (b) => {
     if (b?.rawId) {
       window.history.pushState(
@@ -377,6 +398,14 @@ function App({ isAdminPage = false }) {
     if (projectFilter === projectId) setProjectFilter("");
   };
 
+  const updateProject = async (projectId, payload) => {
+    const data = await apiFetch(`/projects/${projectId}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+    setProjects((current) => current.map((project) => project._id === projectId ? data : project));
+  };
+
   const isAdmin = user?.role === "admin";
   let content;
   if (selected) {
@@ -393,6 +422,8 @@ function App({ isAdminPage = false }) {
         user={user}
       />
     );
+  } else if (page === "project-detail" && selectedProject) {
+    content = <ProjectDetailPage project={selectedProject} bugs={bugs} onBack={() => window.history.back()} />;
   } else if (page === "dashboard") {
     content = (
       <Dashboard
@@ -451,6 +482,8 @@ function App({ isAdminPage = false }) {
         user={user}
         createProject={createProject}
         deleteProject={deleteProject}
+        updateProject={updateProject}
+        openProject={openProject}
         setPage={navigatePage}
         setProjectFilter={navigateProjectFilter}
       />
