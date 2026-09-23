@@ -420,6 +420,28 @@ header p {
   position: relative;
 }
 
+.notificationButton {
+  overflow: visible;
+}
+
+.notificationBadge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  border: 2px solid var(--panel2);
+  box-shadow: 0 4px 10px rgba(255, 66, 66, 0.35);
+}
+
 .notificationMenu {
   position: absolute;
   top: calc(100% + 10px);
@@ -1028,15 +1050,15 @@ th {
 }
 
 th:first-child {
-  text-align: left;
+  text-align: center;
 }
 
 td {
   padding: 12px 17px;
   border-bottom: 1px solid var(--border);
   color: var(--text);
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 13.5px;
+  font-weight: 400;
   vertical-align: middle;
   text-align: center;
 }
@@ -1099,7 +1121,7 @@ tbody tr:hover {
 td:first-child b {
   display: block;
   color: var(--text);
-  font-size: 15px;
+  font-size: 13.5px;
   font-weight: 700;
   margin-bottom: 3px;
   max-width: 90ch;

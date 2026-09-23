@@ -28,8 +28,13 @@ function Header({
     return () => clearInterval(t);
   }, []);
 
-  const notifications = bugs
+  const notifications = [...bugs]
     .filter((bug) => isAssignedToUser(bug, user))
+    .sort(
+      (a, b) =>
+        new Date(b.updatedAt || b.createdAt).getTime() -
+        new Date(a.updatedAt || a.createdAt).getTime(),
+    )
     .slice(0, 8);
 
   return (
@@ -65,14 +70,16 @@ function Header({
         </label>
         <div className="notificationWrap">
           <button
-            className="iconBtn"
+            className="iconBtn notificationButton"
             type="button"
-            aria-label="Open notifications"
+            aria-label={`Open notifications (${notifications.length})`}
             aria-expanded={notificationsOpen}
             onClick={() => setNotificationsOpen((open) => !open)}
           >
             <Bell size={19} />
-            {notifications.length > 0 && <i />}
+            {notifications.length > 0 && (
+              <span className="notificationBadge">{notifications.length}</span>
+            )}
           </button>
           {notificationsOpen && (
             <div className="notificationMenu" role="dialog" aria-label="Notifications">
