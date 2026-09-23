@@ -24,7 +24,7 @@ router.route('/:id/screenshot')
 router.route('/:id/status')
   .put(protect, updateTicketStatus);
 
-// Any authenticated user can assign an unassigned bug; only admins can reassign it.
+// Any authenticated user can assign or reassign a bug.
 router.route('/:id/assign')
   .put(protect, assignTicket);
 

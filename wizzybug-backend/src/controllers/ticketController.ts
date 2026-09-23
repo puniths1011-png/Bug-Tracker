@@ -295,7 +295,7 @@ export const updateTicketStatus = async (req: AuthRequest, res: Response): Promi
   }
 };
 
-// Assign an unassigned ticket, or reassign an existing ticket as an admin.
+// Assign or reassign a ticket for any authenticated user.
 export const assignTicket = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { assignees, assignee } = req.body;
@@ -308,12 +308,6 @@ export const assignTicket = async (req: AuthRequest, res: Response): Promise<voi
 
     // Assignment is independent from the workflow status.
     const currentStatus = ticket.status;
-    const hasExistingAssignee = (ticket.assignees?.length ?? 0) > 0 || Boolean(ticket.assignee);
-    if (hasExistingAssignee && req.user?.role !== 'admin') {
-      res.status(403).json({ message: 'Only admins can reassign an assigned ticket' });
-      return;
-    }
-
     const normalizedAssignees = normalizeAssigneeIds(assignees ?? assignee);
     const assigneeDocs = normalizedAssignees.length
       ? await User.find({ _id: { $in: normalizedAssignees } })

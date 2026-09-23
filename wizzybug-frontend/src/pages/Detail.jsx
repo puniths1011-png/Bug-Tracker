@@ -85,8 +85,7 @@ function Detail({
     });
   }, [bug.rawId, bug.status, bug.fixDescription]);
 
-  const isAdmin = user?.role === "admin";
-  const canReassign = isAdmin || bug.assignee === "Unassigned";
+  const canReassign = true;
   const timeline = buildTimeline(bug);
 
   const handleSend = async () => {
@@ -534,7 +533,7 @@ function Detail({
                   )
                   .map((u) => (
                     <option key={u._id} value={u._id}>
-                      {u.role.charAt(0).toUpperCase() + u.role.slice(1)} - {u.name}
+                      {u.name} - {u.role.charAt(0).toUpperCase() + u.role.slice(1)}
                     </option>
                   ))}
               </select>
