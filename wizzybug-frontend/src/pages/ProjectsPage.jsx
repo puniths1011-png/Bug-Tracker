@@ -114,9 +114,9 @@ function ProjectsPage({
           }}
         >
           <form
-            className="panel profileForm"
+            className="panel profileForm projectModal"
             onSubmit={handleCreate}
-            style={{ width: "400px", padding: "30px" }}
+            style={{ padding: "30px" }}
           >
             <div
               style={{
@@ -143,18 +143,20 @@ function ProjectsPage({
             {error && <div className="formError">{error}</div>}
             <label>
               Project name
-              <input
+              <textarea
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                rows={2}
                 placeholder="e.g. Checkout Revamp"
               />
             </label>
             <label>
               Description
-              <input
+              <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                rows={4}
                 placeholder="Short description (optional)"
               />
             </label>
