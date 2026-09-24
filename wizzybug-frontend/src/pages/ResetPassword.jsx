@@ -1,9 +1,12 @@
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { apiFetch } from "../config/api";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [status, setStatus] = useState("");
   const token = new URLSearchParams(window.location.search).get("token");
 
@@ -27,8 +30,8 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="loginPage">
-      <div className="loginBox">
+    <div className="loginPage passwordPageLight">
+      <div className="loginBox passwordBoxLight">
         <h2>Reset Password</h2>
         <p>Choose a new password for your WizzyBug account.</p>
         {status && (
@@ -39,25 +42,45 @@ export default function ResetPassword() {
         <form onSubmit={handleSubmit}>
           <label>
             New Password
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              minLength={6}
-              maxLength={40}
-            />
+            <div className="password">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                minLength={6}
+                maxLength={40}
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => setShowPassword((visible) => !visible)}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </label>
           <label>
             Confirm Password
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              required
-              minLength={6}
-              maxLength={40}
-            />
+            <div className="password">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                required
+                minLength={6}
+                maxLength={40}
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                onClick={() => setShowConfirmPassword((visible) => !visible)}
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </label>
           <button
             className="primary"

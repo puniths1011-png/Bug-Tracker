@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { apiFetch, setToken } from "../config/api";
 
 export default function AcceptInvite() {
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState("");
   const token = new URLSearchParams(window.location.search).get("token");
 
@@ -33,8 +35,8 @@ export default function AcceptInvite() {
   };
 
   return (
-    <div className="loginPage">
-      <div className="loginBox">
+    <div className="loginPage passwordPageLight">
+      <div className="loginBox passwordBoxLight">
         <h2>Accept Invitation</h2>
         <p>Welcome to WizzyBug! Set a password to activate your account.</p>
         {status && (
@@ -45,14 +47,24 @@ export default function AcceptInvite() {
         <form onSubmit={handleAccept}>
           <label>
             New Password
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              minLength={6}
-              maxLength={40}
-            />
+            <div className="password">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                minLength={6}
+                maxLength={40}
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => setShowPassword((visible) => !visible)}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </label>
           <button
             className="primary"
