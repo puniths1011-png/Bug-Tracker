@@ -247,9 +247,11 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
         <label>
           Technical Member Name<b>*</b>
           <input
+            className="technicalMemberNameInput"
             name="technicalMemberName"
             value={user?.name || ""}
             readOnly
+            tabIndex={-1}
             required
           />
         </label>

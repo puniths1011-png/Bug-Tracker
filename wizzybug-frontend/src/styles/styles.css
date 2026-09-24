@@ -3061,6 +3061,10 @@ select {
   font-size: 13px !important;
 }
 
+.technicalMemberNameInput {
+  pointer-events: none;
+}
+
 .srOnly {
   position: absolute;
   width: 1px;
