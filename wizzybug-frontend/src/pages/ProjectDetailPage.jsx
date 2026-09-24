@@ -22,16 +22,18 @@ function ProjectDetailPage({ project, bugs, onBack, setSelected }) {
       </button>
       <div className="projectDetailHeader">
         <div>
-          <span className="projectKey">
-            {project.key || project.name.slice(0, 3).toUpperCase()}
-          </span>
+          <div className="projectDetailIdentity">
+            <span className="projectKey">
+              {project.key || project.name.slice(0, 3).toUpperCase()}
+            </span>
+            <span className="status open">
+              <i />
+              {project.status || "active"}
+            </span>
+          </div>
           <h2>{project.name}</h2>
           <p>{project.description || "No description yet."}</p>
         </div>
-        <span className="status open">
-          <i />
-          {project.status || "active"}
-        </span>
       </div>
       <div className="projectDetailStats">
         <span>

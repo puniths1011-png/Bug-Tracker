@@ -35,6 +35,17 @@ function ProjectsPage({
   const [editDescription, setEditDescription] = useState("");
   const isAdmin = user?.role === "admin";
 
+  useEffect(() => {
+    if (!showCreate && !editingProject) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [showCreate, editingProject]);
+
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!name.trim()) return;
@@ -201,6 +212,8 @@ function ProjectsPage({
             });
           });
           const open = projBugs.filter((b) => b.status !== "closed").length;
+          const cardDescription = p.description || "No description yet.";
+          const isDescriptionLong = cardDescription.length > 150;
           return (
             <article
               key={p._id}
@@ -208,55 +221,67 @@ function ProjectsPage({
               onClick={() => openProject(p._id)}
             >
               <div className="projectCardHead">
-                <span className="projectKey">
-                  {p.key || p.name.slice(0, 3).toUpperCase()}
-                </span>
-                <span
-                  className={
-                    "status " + (p.status === "archived" ? "closed" : "open")
-                  }
-                >
-                  <i />
-                  {p.status || "active"}
-                </span>
-                {isAdmin && (
-                  <button
-                    type="button"
-                    className="projectEdit"
-                    aria-label={`Edit ${p.name} description`}
-                    title="Edit description"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setEditingProject(p);
-                      setEditDescription(p.description || "");
-                      setError("");
-                    }}
+                <div className="projectCardIdentity">
+                  <span className="projectKey">
+                    {p.key || p.name.slice(0, 3).toUpperCase()}
+                  </span>
+                  <span
+                    className={
+                      "status " + (p.status === "archived" ? "closed" : "open")
+                    }
                   >
-                    <Pencil size={15} />
-                  </button>
-                )}
+                    <i />
+                    {p.status || "active"}
+                  </span>
+                </div>
                 {isAdmin && (
-                  <button
-                    type="button"
-                    className="projectDelete"
-                    aria-label={`Remove ${p.name}`}
-                    title="Remove project"
-                    disabled={deletingId === p._id}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleDelete(p);
-                    }}
-                  >
-                    <Trash2 size={15} />
-                  </button>
+                  <div className="projectCardActions">
+                    <button
+                      type="button"
+                      className="projectEdit"
+                      aria-label={`Edit ${p.name} description`}
+                      title="Edit description"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setEditingProject(p);
+                        setEditDescription(p.description || "");
+                        setError("");
+                      }}
+                    >
+                      <Pencil size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      className="projectDelete"
+                      aria-label={`Remove ${p.name}`}
+                      title="Remove project"
+                      disabled={deletingId === p._id}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleDelete(p);
+                      }}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
                 )}
               </div>
               <h3>{p.name}</h3>
-              <p>
-                {p.description && !isCodeLikeDescription(p.description)
-                  ? p.description
-                  : "No description yet."}
-              </p>
+              <div className="projectCardDescription">
+                <p>{cardDescription}</p>
+                {isDescriptionLong && (
+                  <button
+                    type="button"
+                    className="projectReadMore"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      openProject(p._id);
+                    }}
+                  >
+                    Read more
+                  </button>
+                )}
+              </div>
               <div className="projectCardFoot">
                 <span>
                   <Bug size={14} />

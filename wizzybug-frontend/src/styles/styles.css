@@ -949,6 +949,15 @@ header p {
   overflow-x: auto;
 }
 
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(13, 13, 19, 0.42);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
 .assignmentOverlay {
   position: fixed;
   inset: 0;
@@ -1059,13 +1068,22 @@ td {
   color: var(--text);
   font-size: 13.5px;
   font-weight: 400;
-  vertical-align: middle;
+  vertical-align: top;
   text-align: center;
 }
 
 .tableWrap td:not(:first-child),
 .tableWrap th:not(:first-child) {
   text-align: center;
+}
+
+.tableWrap th:nth-child(5),
+.tableWrap td:nth-child(5) {
+  text-align: left;
+}
+
+.tableWrap td:nth-child(5) .person {
+  justify-content: flex-start;
 }
 
 .tableWrap.compact th:first-child,
@@ -1976,6 +1994,18 @@ select {
   padding-left: 20px;
 }
 
+.userTable > table th:first-child {
+  text-align: center;
+}
+
+.userTable > table td:first-child {
+  text-align: left;
+}
+
+.userTable > table td:first-child .person {
+  justify-content: flex-start;
+}
+
 .role {
   padding: 4px 8px;
   border-radius: 5px;
@@ -2821,6 +2851,9 @@ select {
 .projectCard {
   cursor: pointer;
   padding: 18px;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
   transition:
     border-color 0.15s ease,
     transform 0.15s ease;
@@ -2841,6 +2874,20 @@ select {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 10px;
+}
+
+.projectCardIdentity,
+.projectCardActions {
+  display: flex;
+  align-items: center;
+}
+
+.projectCardIdentity {
+  gap: 10px;
+}
+
+.projectCardActions {
+  gap: 2px;
 }
 
 .projectDelete {
@@ -2897,13 +2944,41 @@ select {
   color: var(--muted);
   font-size: 14px;
   margin: 0;
-  min-height: 40px;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+.projectCardDescription {
+  height: 94px;
+  overflow: hidden;
+}
+
+.projectCardDescription p.expanded {
+  display: -webkit-box;
+}
+
+.projectReadMore {
+  margin-top: 5px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--purple2);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.projectReadMore:hover {
+  text-decoration: underline;
 }
 
 .projectCardFoot {
   display: flex;
   gap: 16px;
-  margin-top: 12px;
+  margin-top: auto;
   padding-top: 12px;
   border-top: 1px solid var(--border);
   color: var(--muted);
@@ -2950,6 +3025,12 @@ select {
 
 .projectDetailHeader h2 {
   margin: 14px 0 8px;
+}
+
+.projectDetailIdentity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .projectDetailHeader p {
