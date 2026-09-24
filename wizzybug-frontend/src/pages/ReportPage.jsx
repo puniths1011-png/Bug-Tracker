@@ -1,13 +1,61 @@
-﻿import React, { useMemo, useState } from 'react';
-import * as Icons from 'lucide-react';
-const {LayoutDashboard,Bug,Plus,Users,User,Settings,LogOut,Search,Bell,ChevronDown,ArrowUpRight,Clock3,CircleCheck,TriangleAlert,Filter,Download,Menu,X,ChevronRight,Paperclip,Send,CalendarDays,BarChart3,FolderKanban,Activity,ShieldCheck,Eye,EyeOff,Moon,Sun,UserCog,Mail,ClipboardList,RefreshCcw,FolderPlus,ArrowLeft} = Icons;
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import { API, apiFetch, setToken } from '../config/api';
-import { formatIST, formatISTLong, timeAgoIST, IST_TZ } from '../utils/date';
-import { STATUS_LABELS, STATUS_VALUES, PRIORITY_LABELS, SEVERITY_TO_PRIORITY } from '../utils/constants';
-import { Avatar, Logo, RoleBadge, Status } from '../components/Ui';
-import { initialsOf, isAssignedToUser, priorityLabel, statusLabel, buildTimeline } from '../utils/formatters';
+﻿import React, { useMemo, useState } from "react";
+import * as Icons from "lucide-react";
+const {
+  LayoutDashboard,
+  Bug,
+  Plus,
+  Users,
+  User,
+  Settings,
+  LogOut,
+  Search,
+  Bell,
+  ChevronDown,
+  ArrowUpRight,
+  Clock3,
+  CircleCheck,
+  TriangleAlert,
+  Filter,
+  Download,
+  Menu,
+  X,
+  ChevronRight,
+  Paperclip,
+  Send,
+  CalendarDays,
+  BarChart3,
+  FolderKanban,
+  Activity,
+  ShieldCheck,
+  Eye,
+  EyeOff,
+  Moon,
+  Sun,
+  UserCog,
+  Mail,
+  ClipboardList,
+  RefreshCcw,
+  FolderPlus,
+  ArrowLeft,
+} = Icons;
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+import { API, apiFetch, setToken } from "../config/api";
+import { formatIST, formatISTLong, timeAgoIST, IST_TZ } from "../utils/date";
+import {
+  STATUS_LABELS,
+  STATUS_VALUES,
+  PRIORITY_LABELS,
+  SEVERITY_TO_PRIORITY,
+} from "../utils/constants";
+import { Avatar, Logo, RoleBadge, Status } from "../components/Ui";
+import {
+  initialsOf,
+  isAssignedToUser,
+  priorityLabel,
+  statusLabel,
+  buildTimeline,
+} from "../utils/formatters";
 
 function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
   const [form, setForm] = useState({
@@ -27,7 +75,7 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
     reproductionRate: "",
     expectedResult: "",
     actualResult: "",
-    defectType: "",
+    otherDefectType: "",
     typeOfApplication: "",
     browser: "Chrome",
     browserVersion: "",
@@ -35,6 +83,7 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
   const [file, setFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [defectTypeMessage, setDefectTypeMessage] = useState("");
 
   const compressImageUpload = async (selectedFile) => {
     if (!selectedFile || !selectedFile.type?.startsWith("image/")) {
@@ -91,8 +140,12 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
     };
   };
 
-  const handleChange = (e) =>
+  const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    if (e.target.name === "defectType" || e.target.name === "otherDefectType") {
+      setDefectTypeMessage("");
+    }
+  };
   const isAdmin = user?.role === "admin";
 
   const submit = async (e) => {
@@ -101,6 +154,16 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
     if (!form.defectSummary) return;
     if (!form.project) {
       setError("Select a project before submitting.");
+      return;
+    }
+    if (!form.defectType) {
+      setDefectTypeMessage(
+        "Defect type is mandatory. Please select one option.",
+      );
+      return;
+    }
+    if (form.defectType === "Other" && !form.otherDefectType.trim()) {
+      setDefectTypeMessage("Please enter the defect type.");
       return;
     }
     if (!file) {
@@ -120,7 +183,9 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
             byteNumbers[i] = byteCharacters.charCodeAt(i);
           }
           const byteArray = new Uint8Array(byteNumbers);
-          imageFile = new File([byteArray], file.name, { type: compressed.mimeType });
+          imageFile = new File([byteArray], file.name, {
+            type: compressed.mimeType,
+          });
         }
       }
 
@@ -140,7 +205,10 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
         reproductionRate: form.reproductionRate,
         expectedResult: form.expectedResult,
         actualResult: form.actualResult,
-        defectType: form.defectType,
+        defectType:
+          form.defectType === "Other"
+            ? form.otherDefectType.trim()
+            : form.defectType,
         typeOfApplication: form.typeOfApplication,
         browser: form.browser,
         browserVersion: form.browserVersion,
@@ -180,9 +248,8 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
           Technical Member Name<b>*</b>
           <input
             name="technicalMemberName"
-            value={form.technicalMemberName}
-            onChange={handleChange}
-            placeholder="your Answer"
+            value={user?.name || ""}
+            readOnly
             required
           />
         </label>
@@ -386,6 +453,22 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
             </label>
           ))}
         </div>
+        {form.defectType === "Other" && (
+          <input
+            className="otherDefectTypeInput"
+            name="otherDefectType"
+            value={form.otherDefectType}
+            onChange={handleChange}
+            placeholder="Enter the defect type"
+            aria-label="Other defect type"
+            required
+          />
+        )}
+        {defectTypeMessage && (
+          <div className="formError" role="alert">
+            {defectTypeMessage}
+          </div>
+        )}
         <br />
 
         <div className="twoCol">
@@ -471,8 +554,13 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
         <div className="sectionTitle second">
           <span>2</span>
           <div>
-            <h3>Attachments <b>*</b></h3>
-            <p>Upload a screenshot or file that helps explain the issue. Required.</p>
+            <h3>
+              Attachments <b>*</b>
+            </h3>
+            <p>
+              Upload a screenshot or file that helps explain the issue.
+              Required.
+            </p>
           </div>
         </div>
         <label className="drop">
@@ -570,4 +658,3 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
 // Turns backend history + comment entries into one merged, time-sorted feed.
 
 export default ReportPage;
-

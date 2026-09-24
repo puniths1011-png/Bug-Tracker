@@ -1,16 +1,65 @@
-﻿import React, { useMemo, useState, useEffect } from 'react';
-import * as Icons from 'lucide-react';
-const {LayoutDashboard,Bug,Plus,Users,User,Settings,LogOut,Search,Bell,ChevronDown,ArrowUpRight,Clock3,CircleCheck,TriangleAlert,Filter,Download,Menu,X,ChevronRight,Paperclip,Send,CalendarDays,BarChart3,FolderKanban,Activity,ShieldCheck,Eye,EyeOff,Moon,Sun,UserCog,Mail,ClipboardList,RefreshCcw,FolderPlus,ArrowLeft} = Icons;
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx-js-style';
-import { API, apiFetch, setToken } from '../config/api';
-import { formatIST, formatISTLong, timeAgoIST, IST_TZ } from '../utils/date';
-import { STATUS_LABELS, STATUS_VALUES, PRIORITY_LABELS, SEVERITY_TO_PRIORITY } from '../utils/constants';
-import { Avatar, Logo, RoleBadge, Status } from '../components/Ui';
-import { initialsOf, isAssignedToUser, priorityLabel, statusLabel, buildTimeline, pdfText } from '../utils/formatters';
-import BugTable from '../components/BugTable';
-import Stats from '../components/Stats';
+﻿import React, { useMemo, useState, useEffect } from "react";
+import * as Icons from "lucide-react";
+const {
+  LayoutDashboard,
+  Bug,
+  Plus,
+  Users,
+  User,
+  Settings,
+  LogOut,
+  Search,
+  Bell,
+  ChevronDown,
+  ArrowUpRight,
+  Clock3,
+  CircleCheck,
+  TriangleAlert,
+  Filter,
+  Download,
+  Menu,
+  X,
+  ChevronRight,
+  Paperclip,
+  Send,
+  CalendarDays,
+  BarChart3,
+  FolderKanban,
+  Activity,
+  ShieldCheck,
+  Eye,
+  EyeOff,
+  Moon,
+  Sun,
+  UserCog,
+  Mail,
+  ClipboardList,
+  RefreshCcw,
+  FolderPlus,
+  ArrowLeft,
+} = Icons;
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx-js-style";
+import { API, apiFetch, setToken } from "../config/api";
+import { formatIST, formatISTLong, timeAgoIST, IST_TZ } from "../utils/date";
+import {
+  STATUS_LABELS,
+  STATUS_VALUES,
+  PRIORITY_LABELS,
+  SEVERITY_TO_PRIORITY,
+} from "../utils/constants";
+import { Avatar, Logo, RoleBadge, Status } from "../components/Ui";
+import {
+  initialsOf,
+  isAssignedToUser,
+  priorityLabel,
+  statusLabel,
+  buildTimeline,
+  pdfText,
+} from "../utils/formatters";
+import BugTable from "../components/BugTable";
+import Stats from "../components/Stats";
 
 function Trend({ bugs = [] }) {
   const days = useMemo(() => {
@@ -268,7 +317,8 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
       });
 
       reportHeaders.forEach((_, columnIndex) => {
-        worksheet[XLSX.utils.encode_cell({ r: 0, c: columnIndex })].s = headerStyle;
+        worksheet[XLSX.utils.encode_cell({ r: 0, c: columnIndex })].s =
+          headerStyle;
         for (let rowIndex = 1; rowIndex <= reportRows.length; rowIndex += 1) {
           worksheet[XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex })].s =
             dataStyle(rowIndex);
@@ -284,13 +334,18 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
         { wch: 24 },
         { wch: 24 },
       ];
-      worksheet["!autofilter"] = { ref: `A1:${XLSX.utils.encode_col(reportHeaders.length - 1)}${reportRows.length + 1}` };
+      worksheet["!autofilter"] = {
+        ref: `A1:${XLSX.utils.encode_col(reportHeaders.length - 1)}${reportRows.length + 1}`,
+      };
       XLSX.utils.book_append_sheet(workbook, worksheet, "Bug Report");
-      XLSX.writeFile(workbook, "wizzybug_bugs_report.xlsx", { compression: true });
+      XLSX.writeFile(workbook, "wizzybug_bugs_report.xlsx", {
+        compression: true,
+      });
       return;
     }
 
-    const escapeCell = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const escapeCell = (value) =>
+      `"${String(value ?? "").replace(/"/g, '""')}"`;
     const content = [reportHeaders, ...reportRows]
       .map((row) => row.map(escapeCell).join(","))
       .join("\r\n");
@@ -336,7 +391,11 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
                     else exportToDelimited(format);
                   }}
                 >
-                  {format === "pdf" ? "PDF" : format === "excel" ? "Excel" : "CSV"}
+                  {format === "pdf"
+                    ? "PDF"
+                    : format === "excel"
+                      ? "Excel"
+                      : "CSV"}
                 </button>
               ))}
             </div>
@@ -365,4 +424,3 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
 }
 
 export default Dashboard;
-

@@ -50,6 +50,7 @@ import {
 } from "./config/api";
 import {
   PRIORITY_LABELS,
+  SEVERITY_TO_PRIORITY,
   STATUS_LABELS,
   STATUS_VALUES,
 } from "./utils/constants";
@@ -65,15 +66,11 @@ import Detail from "./pages/Detail";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import ProjectsPage from "./pages/ProjectsPage";
-import ProjectDetailPage from "./pages/ProjectDetailPage";
 import ReportPage from "./pages/ReportPage";
 import UsersPage from "./pages/UsersPage";
 
 const initialBugs = [];
 const initialUsers = [];
-
-
-
 
 function App({ isAdminPage = false }) {
   const [theme, setTheme] = useState(() => {
@@ -100,53 +97,9 @@ function App({ isAdminPage = false }) {
   const [users, setUsers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
-  const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [projectFilter, setProjectFilter] = useState(null);
   const [menu, setMenu] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
-  const [toast, setToast] = useState("");
-
-  useEffect(() => {
-    const initialState = window.history.state;
-    window.history.replaceState(
-      {
-        ...(initialState || {}),
-        page,
-        projectFilter,
-        selectedId: null,
-        selectedProjectId: null,
-      },
-      "",
-      window.location.href,
-    );
-
-    const handlePopState = (event) => {
-      const state = event.state;
-      if (!state || !state.page) {
-        setSelectedId(null);
-        setPage("dashboard");
-        setProjectFilter(null);
-        setSelectedProjectId(null);
-        return;
-      }
-      setPage(state.page);
-      setProjectFilter(state.projectFilter || null);
-      setSelectedId(state.selectedId || null);
-      setSelectedProjectId(state.selectedProjectId || null);
-    };
-
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
-
-  useEffect(() => {
-    if (selectedId) return;
-    window.history.replaceState(
-      { ...(window.history.state || {}), page, projectFilter, selectedId: null, selectedProjectId: null },
-      "",
-      window.location.href,
-    );
-  }, [page, projectFilter, selectedId]);
 
   const titles = {
     dashboard: "Dashboard",
@@ -156,56 +109,11 @@ function App({ isAdminPage = false }) {
     profile: "My Profile",
     assign: "Assign Bugs",
     projects: "Projects",
-    "project-detail": "Project Details",
   };
   const selected = selectedId
-    ? bugs.find((b) => String(b.rawId) === String(selectedId)) || null
+    ? bugs.find((b) => b.rawId === selectedId) || null
     : null;
-  const selectedProject = selectedProjectId
-    ? projects.find((project) => String(project._id) === String(selectedProjectId))
-    : null;
-  const navigateTo = (nextPage, nextProjectFilter = null) => {
-    window.history.pushState(
-      { page: nextPage, projectFilter: nextProjectFilter, selectedId: null, selectedProjectId: null },
-      "",
-      window.location.href,
-    );
-    setSelectedId(null);
-    setSelectedProjectId(null);
-    setPage(nextPage);
-    setProjectFilter(nextProjectFilter);
-  };
-  const navigatePage = (nextPage) => navigateTo(nextPage, null);
-  const navigateProjectFilter = (nextProjectFilter) =>
-    navigateTo("bugs", nextProjectFilter);
-  const openProject = (projectId) => {
-    window.history.pushState(
-      { page: "project-detail", projectFilter: null, selectedId: null, selectedProjectId: projectId },
-      "",
-      window.location.href,
-    );
-    setPage("project-detail");
-    setProjectFilter(null);
-    setSelectedId(null);
-    setSelectedProjectId(projectId);
-  };
-  const setSelected = (b) => {
-    if (b?.rawId) {
-      window.history.pushState(
-        { page, projectFilter, selectedId: String(b.rawId) },
-        "",
-        window.location.href,
-      );
-      setSelectedId(String(b.rawId));
-      return;
-    }
-
-    if (selectedId && window.history.state?.selectedId === selectedId) {
-      window.history.back();
-    } else {
-      setSelectedId(null);
-    }
-  };
+  const setSelected = (b) => setSelectedId(b ? b.rawId : null);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -267,9 +175,6 @@ function App({ isAdminPage = false }) {
         onLogin={(u, token) => {
           setToken(token);
           setUser(u);
-          setPage("dashboard");
-          setSelectedId(null);
-          setProjectFilter(null);
           setLogged(true);
         }}
         isAdminPage={isAdminPage}
@@ -279,22 +184,18 @@ function App({ isAdminPage = false }) {
     );
 
   const addBug = async (b) => {
-    const mappedPriority = {
-      "P1-Immediate Fix": "critical",
-      "P2-High": "high",
-      "P3-Medium": "medium",
-      "P4-Low": "low",
-    }[b.priority] || "medium";
+    const mappedPriority = SEVERITY_TO_PRIORITY[b.severity] || "medium";
     const formData = new FormData();
     formData.append("title", b.title);
     formData.append("description", b.desc);
-    formData.append("severity", b.severity || "Minor");
     formData.append("priority", mappedPriority);
     formData.append("project", b.project);
     if (b.assignee) formData.append("assignee", b.assignee);
     if (b.assignees) {
       if (Array.isArray(b.assignees)) {
-        b.assignees.forEach((assignee) => formData.append("assignees", assignee));
+        b.assignees.forEach((assignee) =>
+          formData.append("assignees", assignee),
+        );
       } else {
         formData.append("assignees", b.assignees);
       }
@@ -309,7 +210,6 @@ function App({ isAdminPage = false }) {
     formData.append("reproductionRate", b.reproductionRate || "");
     formData.append("expectedResult", b.expectedResult || "");
     formData.append("actualResult", b.actualResult || "");
-    formData.append("defectType", b.defectType || "");
     formData.append("typeOfApplication", b.typeOfApplication || "");
     formData.append("browser", b.browser || "");
     formData.append("browserVersion", b.browserVersion || "");
@@ -318,12 +218,8 @@ function App({ isAdminPage = false }) {
       method: "POST",
       body: formData,
     });
-    const createdBug = formatBug(data);
-    setBugs((x) => [createdBug, ...x]);
-    setToast(`Defect ID: ${createdBug.id}`);
-    window.setTimeout(() => setToast(""), 5000);
+    setBugs((x) => [formatBug(data), ...x]);
     if (b.assignee) refreshUsers();
-    return createdBug;
   };
 
   const updateStatus = async (rawId, status) => {
@@ -350,28 +246,6 @@ function App({ isAdminPage = false }) {
     setBugs((x) => x.map((b) => (b.rawId === rawId ? formatBug(data) : b)));
   };
 
-  const updateBug = async (rawId, values) => {
-    const data = await apiFetch(`/tickets/${rawId}`, {
-      method: "PUT",
-      body: JSON.stringify({
-        title: values.title,
-        description: values.desc,
-        environment: values.environment,
-        moduleFeatureName: values.moduleFeatureName,
-        buildAppVersion: values.buildAppVersion,
-        releaseVersion: values.releaseVersion,
-        reproductionRate: values.reproductionRate,
-        expectedResult: values.expectedResult,
-        actualResult: values.actualResult,
-        defectType: values.defectType,
-        typeOfApplication: values.typeOfApplication,
-        browser: values.browser,
-        browserVersion: values.browserVersion,
-      }),
-    });
-    setBugs((x) => x.map((b) => (b.rawId === rawId ? formatBug(data) : b)));
-  };
-
   const assignBug = async (rawId, userIds) => {
     const payload = Array.isArray(userIds)
       ? { assignees: userIds }
@@ -391,21 +265,6 @@ function App({ isAdminPage = false }) {
     setProjects((x) => [data, ...x]);
   };
 
-  const deleteProject = async (projectId) => {
-    await apiFetch(`/projects/${projectId}`, { method: "DELETE" });
-    setProjects((x) => x.filter((project) => project._id !== projectId));
-    setBugs((x) => x.filter((bug) => bug.projectId !== projectId));
-    if (projectFilter === projectId) setProjectFilter("");
-  };
-
-  const updateProject = async (projectId, payload) => {
-    const data = await apiFetch(`/projects/${projectId}`, {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    });
-    setProjects((current) => current.map((project) => project._id === projectId ? data : project));
-  };
-
   const isAdmin = user?.role === "admin";
   let content;
   if (selected) {
@@ -415,21 +274,18 @@ function App({ isAdminPage = false }) {
         setSelected={setSelected}
         updateStatus={updateStatus}
         addComment={addComment}
-        updateBug={updateBug}
         saveFixNotes={saveFixNotes}
         assignBug={assignBug}
         users={users}
         user={user}
       />
     );
-  } else if (page === "project-detail" && selectedProject) {
-    content = <ProjectDetailPage project={selectedProject} bugs={bugs} setSelected={setSelected} onBack={() => window.history.back()} />;
   } else if (page === "dashboard") {
     content = (
       <Dashboard
         bugs={bugs}
         setSelected={setSelected}
-        setPage={navigatePage}
+        setPage={setPage}
         user={user}
       />
     );
@@ -443,14 +299,14 @@ function App({ isAdminPage = false }) {
         setGlobalSearch={setGlobalSearch}
         projects={projects}
         projectFilter={projectFilter}
-        setProjectFilter={navigateProjectFilter}
+        setProjectFilter={setProjectFilter}
       />
     );
   } else if (page === "report") {
     content = (
       <ReportPage
         addBug={addBug}
-        setPage={navigatePage}
+        setPage={setPage}
         projects={projects}
         users={users}
         user={user}
@@ -481,11 +337,8 @@ function App({ isAdminPage = false }) {
         bugs={bugs}
         user={user}
         createProject={createProject}
-        deleteProject={deleteProject}
-        updateProject={updateProject}
-        openProject={openProject}
-        setPage={navigatePage}
-        setProjectFilter={navigateProjectFilter}
+        setPage={setPage}
+        setProjectFilter={setProjectFilter}
       />
     );
   } else {
@@ -496,7 +349,10 @@ function App({ isAdminPage = false }) {
     <div className="app">
       <Sidebar
         page={page}
-        setPage={navigatePage}
+        setPage={(p) => {
+          setPage(p);
+          setSelectedId(null);
+        }}
         open={menu}
         setOpen={setMenu}
         onLogout={() => {
@@ -506,17 +362,12 @@ function App({ isAdminPage = false }) {
           setBugs([]);
           setUsers([]);
           setProjects([]);
-          setPage("dashboard");
-          setPage("dashboard");
         }}
         user={user}
         bugs={bugs}
         projects={projects}
         projectFilter={projectFilter}
-        setProjectFilter={navigateProjectFilter}
-        onDashboard={() => {
-          navigatePage("dashboard");
-        }}
+        setProjectFilter={setProjectFilter}
         theme={theme}
         toggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
       />
@@ -524,19 +375,16 @@ function App({ isAdminPage = false }) {
         <Header
           title={selected ? "Bug details" : titles[page]}
           onMenu={() => setMenu(true)}
-          setPage={navigatePage}
+          setPage={setPage}
           globalSearch={globalSearch}
           setGlobalSearch={setGlobalSearch}
-          bugs={bugs}
-          user={user}
-          setSelected={setSelected}
           theme={theme}
           toggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
         />
         <div className="content">
           {loadingData && bugs.length === 0 ? (
             <div className="muted" style={{ padding: 40, textAlign: "center" }}>
-              Loading your workspace...
+              Loading your workspaceâ€¦
             </div>
           ) : (
             content
@@ -544,18 +392,8 @@ function App({ isAdminPage = false }) {
         </div>
       </main>
       {menu && <div className="overlay" onClick={() => setMenu(false)} />}
-      {toast && (
-        <div className="toast success" role="status">
-          <CircleCheck size={22} />
-          <div>
-            <strong>Bug submitted successfully</strong>
-            <span>{toast}</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
 export default App;
-

@@ -1482,14 +1482,14 @@ select {
   display: flex;
   flex-direction: column;
   gap: 7px;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
   font-size: 13.5px;
   font-weight: 700;
   color: var(--text);
 }
 
 .reportForm label b {
-  color: var(--purple);
+  color: #eb4d5a;
   font-weight: 700;
 }
 
@@ -1525,7 +1525,7 @@ select {
 .reportForm .twoCol {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0;
+  gap: 10px;
   align-items: start;
 }
 
@@ -2007,6 +2007,9 @@ select {
 }
 
 .role {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: top;
   padding: 4px 8px;
   border-radius: 5px;
   font-size: 12px;
@@ -2112,11 +2115,34 @@ select {
   overflow-y: auto;
 }
 
+.projectModal input,
 .projectModal textarea {
   width: 100%;
   min-width: 0;
   resize: vertical;
   overflow-wrap: anywhere;
+  padding-inline-start: 1ch;
+}
+
+.projectModal .formActions .primary {
+  justify-content: center;
+}
+
+.projectModalHeader {
+  position: relative;
+  justify-content: center !important;
+}
+
+.projectModalHeader h3 {
+  white-space: nowrap;
+  text-align: center;
+}
+
+.projectModalHeader button {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .auth {
@@ -2266,6 +2292,10 @@ select {
   display: block;
   width: 100%;
   box-sizing: border-box;
+}
+
+.reportForm .twoCol > label > select {
+  margin-top: 7px;
 }
 
 .authRight input {
@@ -2655,7 +2685,8 @@ select {
   display: flex;
   flex-wrap: wrap;
   gap: 12px 20px;
-  margin: 8px 0 4px;
+  margin: 8px 0 12px;
+  align-items: center;
 }
 
 /* Sidebar project submenu */
@@ -3002,6 +3033,44 @@ select {
   display: flex;
   align-items: center;
   gap: 5px;
+}
+
+.projectMemberSelect {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.projectMemberSelect select {
+  max-width: 230px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  background: var(--panel2);
+  font-size: 13px;
+}
+
+.otherDefectTypeInput {
+  width: 100% !important;
+  box-sizing: border-box;
+  min-height: 34px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  padding: 7px 10px !important;
+  font-size: 13px !important;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .projectDetailPage {

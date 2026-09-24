@@ -17,6 +17,7 @@ const isCodeLikeDescription = (description = "") => {
 function ProjectsPage({
   projects,
   bugs,
+  users = [],
   user,
   createProject,
   deleteProject,
@@ -119,6 +120,7 @@ function ProjectsPage({
             style={{ padding: "30px" }}
           >
             <div
+              className="projectModalHeader"
               style={{
                 display: "flex",
                 justifyContent: "space-between",
@@ -143,11 +145,10 @@ function ProjectsPage({
             {error && <div className="formError">{error}</div>}
             <label>
               Project name
-              <textarea
+              <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                rows={2}
                 placeholder="e.g. Checkout Revamp"
               />
             </label>

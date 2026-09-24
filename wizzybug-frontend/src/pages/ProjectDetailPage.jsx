@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { ArrowLeft, Bug, Users } from "lucide-react";
 import BugTable from "../components/BugTable";
 
-function ProjectDetailPage({ project, bugs, onBack, setSelected }) {
+function ProjectDetailPage({ project, bugs, users = [], onBack, setSelected }) {
+  const [selectedMemberId, setSelectedMemberId] = useState("");
   const projectBugs = bugs.filter(
     (bug) => String(bug.projectId) === String(project._id),
   );
@@ -13,6 +14,21 @@ function ProjectDetailPage({ project, bugs, onBack, setSelected }) {
       .filter(Boolean)
       .map(String),
   );
+  projectBugs.forEach((bug) => {
+    (bug.assigneeIds || []).filter(Boolean).forEach((assigneeId) => {
+      members.add(String(assigneeId));
+    });
+  });
+  const projectMembers = Array.from(members).map((memberId) => {
+    const projectMember = (project.members || []).find(
+      (member) => String(member?._id || member) === memberId,
+    );
+    return users.find((member) => String(member?._id) === memberId) || projectMember || {
+      _id: memberId,
+      name: "Unnamed member",
+      role: "Member",
+    };
+  });
 
   return (
     <section className="projectDetailPage">
@@ -40,10 +56,26 @@ function ProjectDetailPage({ project, bugs, onBack, setSelected }) {
           <Bug size={16} />
           {openBugs} open bugs
         </span>
-        <span>
+        <label className="projectMemberSelect">
           <Users size={16} />
-          {members.size} members
-        </span>
+          <span className="srOnly">Project members</span>
+          <select
+            value={selectedMemberId}
+            onChange={(event) => setSelectedMemberId(event.target.value)}
+            disabled={!projectMembers.length}
+          >
+            <option value="">
+              {projectMembers.length
+                ? `${projectMembers.length} members`
+                : "No members"}
+            </option>
+            {projectMembers.map((member) => (
+              <option key={member._id} value={member._id}>
+                {member.name || "Unnamed member"} - {member.role || "Member"}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
       <article className="panel projectBugList">
         <div className="projectBugListHeader">
