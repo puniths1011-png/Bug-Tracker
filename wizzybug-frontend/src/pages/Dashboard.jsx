@@ -3,6 +3,7 @@ import * as Icons from 'lucide-react';
 const {LayoutDashboard,Bug,Plus,Users,User,Settings,LogOut,Search,Bell,ChevronDown,ArrowUpRight,Clock3,CircleCheck,TriangleAlert,Filter,Download,Menu,X,ChevronRight,Paperclip,Send,CalendarDays,BarChart3,FolderKanban,Activity,ShieldCheck,Eye,EyeOff,Moon,Sun,UserCog,Mail,ClipboardList,RefreshCcw,FolderPlus,ArrowLeft} = Icons;
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx-js-style';
 import { API, apiFetch, setToken } from '../config/api';
 import { formatIST, formatISTLong, timeAgoIST, IST_TZ } from '../utils/date';
 import { STATUS_LABELS, STATUS_VALUES, PRIORITY_LABELS, SEVERITY_TO_PRIORITY } from '../utils/constants';
@@ -242,51 +243,56 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
 
   const exportToDelimited = (format) => {
     if (format === "excel") {
-      const escapeHtml = (value) =>
-        String(value ?? "")
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/\r?\n/g, "<br>");
-      const headerCells = reportHeaders
-        .map((header) => `<th>${escapeHtml(header)}</th>`)
-        .join("");
-      const bodyRows = reportRows
-        .map(
-          (row) =>
-            `<tr>${row.map((value) => `<td>${escapeHtml(value)}</td>`).join("")}</tr>`,
-        )
-        .join("");
-      const columnWidths = ["90", "280", "120", "140", "150", "150", "150", "180"]
-        .map((width) => `<col width="${width}">`)
-        .join("");
-      const workbook = `\uFEFF<html><head><meta charset="utf-8"><style>
-        body { font-family: Arial, sans-serif; color: #2f241e; }
-        h1 { color: #5532e5; font-size: 18px; }
-        p { color: #735f54; }
-        table { border-collapse: collapse; table-layout: fixed; }
-        th { background: #5b46be; color: #ffffff; font-weight: bold; text-align: center; padding: 8px; border: 1px solid #40328c; }
-        td { padding: 7px; border: 1px solid #d9c9f2; vertical-align: top; white-space: normal; word-wrap: break-word; }
-        tr:nth-child(even) td { background: #f5f3fc; }
-      </style></head><body>
-        <h1>WizzyBug Bug Report</h1>
-        <p>Generated ${escapeHtml(formatIST(new Date()))} IST</p>
-        <table><colgroup>${columnWidths}</colgroup><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>
-      </body></html>`;
-      downloadBlob(workbook, "application/vnd.ms-excel", "wizzybug_bugs_report.xls");
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.aoa_to_sheet([reportHeaders, ...reportRows]);
+      const headerStyle = {
+        fill: { fgColor: { rgb: "5B46BE" } },
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        alignment: { horizontal: "center", vertical: "center", wrapText: true },
+        border: {
+          top: { style: "thin", color: { rgb: "40328C" } },
+          bottom: { style: "thin", color: { rgb: "40328C" } },
+          left: { style: "thin", color: { rgb: "40328C" } },
+          right: { style: "thin", color: { rgb: "40328C" } },
+        },
+      };
+      const dataStyle = (rowIndex) => ({
+        fill: { fgColor: { rgb: rowIndex % 2 ? "F5F3FC" : "FFFFFF" } },
+        alignment: { vertical: "top", wrapText: true },
+        border: {
+          top: { style: "thin", color: { rgb: "D9C9F2" } },
+          bottom: { style: "thin", color: { rgb: "D9C9F2" } },
+          left: { style: "thin", color: { rgb: "D9C9F2" } },
+          right: { style: "thin", color: { rgb: "D9C9F2" } },
+        },
+      });
+
+      reportHeaders.forEach((_, columnIndex) => {
+        worksheet[XLSX.utils.encode_cell({ r: 0, c: columnIndex })].s = headerStyle;
+        for (let rowIndex = 1; rowIndex <= reportRows.length; rowIndex += 1) {
+          worksheet[XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex })].s =
+            dataStyle(rowIndex);
+        }
+      });
+      worksheet["!cols"] = [
+        { wch: 14 },
+        { wch: 48 },
+        { wch: 16 },
+        { wch: 20 },
+        { wch: 24 },
+        { wch: 24 },
+        { wch: 24 },
+        { wch: 24 },
+      ];
+      worksheet["!autofilter"] = { ref: `A1:${XLSX.utils.encode_col(reportHeaders.length - 1)}${reportRows.length + 1}` };
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Bug Report");
+      XLSX.writeFile(workbook, "wizzybug_bugs_report.xlsx", { compression: true });
       return;
     }
 
-    const escapeCell = (value) => {
-      const text = String(value ?? "")
-        .replace(/[\r\n\t]+/g, " ")
-        .replace(/"/g, '""');
-      return `"${text}"`;
-    };
-  const delimiter = ",";
+    const escapeCell = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
     const content = [reportHeaders, ...reportRows]
-      .map((row) => row.map(escapeCell).join(delimiter))
+      .map((row) => row.map(escapeCell).join(","))
       .join("\r\n");
     downloadBlob(`\uFEFF${content}`, "text/csv;charset=utf-8", "wizzybug_bugs_report.csv");
   };
