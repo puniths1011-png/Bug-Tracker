@@ -142,6 +142,37 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
   const [exportFormat, setExportFormat] = useState("pdf");
   const [exportOpen, setExportOpen] = useState(false);
 
+  const reportHeaders = [
+    "BUG ID",
+    "TITLE",
+    "SEVERITY",
+    "STATUS",
+    "PROJECT",
+    "REPORTER",
+    "ASSIGNEE",
+    "CREATED (IST)",
+  ];
+
+  const reportRows = bugs.map((b) => [
+    b.id,
+    b.title,
+    b.severity,
+    statusLabel(b.status),
+    b.project,
+    b.reporter,
+    b.assignee,
+    formatIST(b.createdAt),
+  ]);
+
+  const downloadBlob = (content, type, filename) => {
+    const url = URL.createObjectURL(new Blob([content], { type }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const exportToPDF = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -158,29 +189,10 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
       align: "center",
     });
 
-    const tableColumn = [
-      "BUG ID",
-      "TITLE",
-      "SEVERITY",
-      "STATUS",
-      "PROJECT",
-      "REPORTER",
-      "ASSIGNEE",
-      "CREATED (IST)",
-    ];
-    const tableRows = bugs.map((b) => [
-      pdfText(b.id),
-      pdfText(b.title),
-      pdfText(b.severity),
-      pdfText(statusLabel(b.status)),
-      pdfText(b.project),
-      pdfText(b.reporter),
-      pdfText(b.assignee),
-      pdfText(formatIST(b.createdAt)),
-    ]);
+    const tableRows = reportRows.map((row) => row.map(pdfText));
 
     autoTable(doc, {
-      head: [tableColumn],
+      head: [reportHeaders],
       body: tableRows,
       startY: 31,
       theme: "grid",
@@ -199,6 +211,9 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
         cellPadding: 2.5,
         overflow: "linebreak",
         valign: "top",
+      },
+      alternateRowStyles: {
+        fillColor: [245, 243, 252],
       },
       columnStyles: {
         0: { cellWidth: 14, halign: "center" },
@@ -226,34 +241,51 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
   };
 
   const exportToDelimited = (format) => {
-    const headers = ["BUG ID", "TITLE", "SEVERITY", "STATUS", "PROJECT", "REPORTER", "ASSIGNEE", "CREATED (IST)"];
-    const rows = bugs.map((b) => [
-      b.id,
-      b.title,
-      b.severity,
-      statusLabel(b.status),
-      b.project,
-      b.reporter,
-      b.assignee,
-      formatIST(b.createdAt),
-    ]);
-    const delimiter = format === "excel" ? "\t" : ",";
+    if (format === "excel") {
+      const escapeHtml = (value) =>
+        String(value ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/\r?\n/g, "<br>");
+      const headerCells = reportHeaders
+        .map((header) => `<th>${escapeHtml(header)}</th>`)
+        .join("");
+      const bodyRows = reportRows
+        .map(
+          (row) =>
+            `<tr>${row.map((value) => `<td>${escapeHtml(value)}</td>`).join("")}</tr>`,
+        )
+        .join("");
+      const workbook = `\uFEFF<html><head><meta charset="utf-8"><style>
+        body { font-family: Arial, sans-serif; color: #2f241e; }
+        h1 { color: #5532e5; font-size: 18px; }
+        p { color: #735f54; }
+        table { border-collapse: collapse; width: 100%; }
+        th { background: #5b46be; color: #ffffff; font-weight: bold; text-align: center; padding: 8px; border: 1px solid #40328c; }
+        td { padding: 7px; border: 1px solid #d9c9f2; vertical-align: top; }
+        tr:nth-child(even) td { background: #f5f3fc; }
+      </style></head><body>
+        <h1>WizzyBug Bug Report</h1>
+        <p>Generated ${escapeHtml(formatIST(new Date()))} IST</p>
+        <table><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>
+      </body></html>`;
+      downloadBlob(workbook, "application/vnd.ms-excel", "wizzybug_bugs_report.xls");
+      return;
+    }
+
     const escapeCell = (value) => {
-      const text = String(value ?? "").replace(/"/g, '""');
-      return format === "excel" ? text : `"${text}"`;
+      const text = String(value ?? "")
+        .replace(/[\r\n\t]+/g, " ")
+        .replace(/"/g, '""');
+      return `"${text}"`;
     };
-    const content = [headers, ...rows]
+  const delimiter = ",";
+    const content = [reportHeaders, ...reportRows]
       .map((row) => row.map(escapeCell).join(delimiter))
       .join("\r\n");
-    const blob = new Blob(["\uFEFF", content], {
-      type: format === "excel" ? "application/vnd.ms-excel;charset=utf-8" : "text/csv;charset=utf-8",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = format === "excel" ? "wizzybug_bugs_report.xls" : "wizzybug_bugs_report.csv";
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(`\uFEFF${content}`, "text/csv;charset=utf-8", "wizzybug_bugs_report.csv");
   };
 
   const exportReport = () => {
