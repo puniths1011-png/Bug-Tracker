@@ -258,18 +258,21 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
             `<tr>${row.map((value) => `<td>${escapeHtml(value)}</td>`).join("")}</tr>`,
         )
         .join("");
+      const columnWidths = ["90", "280", "120", "140", "150", "150", "150", "180"]
+        .map((width) => `<col width="${width}">`)
+        .join("");
       const workbook = `\uFEFF<html><head><meta charset="utf-8"><style>
         body { font-family: Arial, sans-serif; color: #2f241e; }
         h1 { color: #5532e5; font-size: 18px; }
         p { color: #735f54; }
-        table { border-collapse: collapse; width: 100%; }
+        table { border-collapse: collapse; table-layout: fixed; }
         th { background: #5b46be; color: #ffffff; font-weight: bold; text-align: center; padding: 8px; border: 1px solid #40328c; }
-        td { padding: 7px; border: 1px solid #d9c9f2; vertical-align: top; }
+        td { padding: 7px; border: 1px solid #d9c9f2; vertical-align: top; white-space: normal; word-wrap: break-word; }
         tr:nth-child(even) td { background: #f5f3fc; }
       </style></head><body>
         <h1>WizzyBug Bug Report</h1>
         <p>Generated ${escapeHtml(formatIST(new Date()))} IST</p>
-        <table><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>
+        <table><colgroup>${columnWidths}</colgroup><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>
       </body></html>`;
       downloadBlob(workbook, "application/vnd.ms-excel", "wizzybug_bugs_report.xls");
       return;
