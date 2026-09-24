@@ -199,8 +199,12 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
               My Role
               <select
                 name="role"
-                defaultValue={isAdminPage ? "admin" : "developer"}
+                defaultValue=""
+                required
               >
+                <option value="" disabled>
+                  Select role
+                </option>
                 <option value="admin">Admin</option>
                 <option value="developer">Developer</option>
                 <option value="tester">Tester</option>
