@@ -3062,7 +3062,15 @@ select {
 }
 
 .technicalMemberNameInput {
-  pointer-events: none;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 45px;
+  padding: 11px;
+  border: 1px solid var(--field-border);
+  border-radius: 7px;
+  background: var(--field-bg);
+  color: var(--field-text);
 }
 
 .srOnly {
