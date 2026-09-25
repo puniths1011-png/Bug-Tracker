@@ -554,24 +554,45 @@ function Detail({
                 <div className="twoCol">
                   <fieldset className="editRadioField">
                     <legend>Defect Type</legend>
-                    <div className="radioGroup">
-                      {defectTypeOptions.map((type) => (
-                        <label key={type}>
-                          <input
-                            type="radio"
-                            name="editDefectType"
-                            value={type}
-                            checked={editForm.defectType === type}
-                            onChange={(e) =>
-                              setEditForm({
-                                ...editForm,
-                                defectType: e.target.value,
-                              })
-                            }
-                          />
-                          {type}
-                        </label>
-                      ))}
+                    <div className="editDefectTypeRadioGroup">
+                      <div className="editDefectTypeRow">
+                        {defectTypeOptions.slice(0, 6).map((type) => (
+                          <label key={type}>
+                            <input
+                              type="radio"
+                              name="editDefectType"
+                              value={type}
+                              checked={editForm.defectType === type}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm,
+                                  defectType: e.target.value,
+                                })
+                              }
+                            />
+                            {type}
+                          </label>
+                        ))}
+                      </div>
+                      <div className="editDefectTypeRow">
+                        {defectTypeOptions.slice(6).map((type) => (
+                          <label key={type}>
+                            <input
+                              type="radio"
+                              name="editDefectType"
+                              value={type}
+                              checked={editForm.defectType === type}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm,
+                                  defectType: e.target.value,
+                                })
+                              }
+                            />
+                            {type}
+                          </label>
+                        ))}
+                      </div>
                     </div>
                     {editForm.defectType === "Other" && (
                       <input
@@ -825,7 +846,9 @@ function Detail({
               className={
                 "severity " +
                 severityClass(
-                  bug.priority || SEVERITY_TO_PRIORITY[bug.severity] || "medium",
+                  bug.priority ||
+                    SEVERITY_TO_PRIORITY[bug.severity] ||
+                    "medium",
                 )
               }
             >

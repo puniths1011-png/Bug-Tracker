@@ -2706,6 +2706,34 @@ select {
   font-weight: 600;
 }
 
+.editDefectTypeRadioGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 8px 0 12px;
+  width: 100%;
+}
+
+.editDefectTypeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  align-items: center;
+}
+
+.editDefectTypeRow label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-weight: normal;
+  white-space: nowrap;
+}
+
+.editDefectTypeRow input {
+  margin: 0;
+}
+
 .editRadioField .radioGroup label {
   display: inline-flex;
   align-items: center;
