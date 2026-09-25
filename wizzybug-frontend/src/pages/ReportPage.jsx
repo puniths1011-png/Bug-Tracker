@@ -57,10 +57,17 @@ import {
   buildTimeline,
 } from "../utils/formatters";
 
-function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
+function ReportPage({
+  addBug,
+  setPage,
+  projects = [],
+  users = [],
+  user,
+  selectedProjectId = "",
+}) {
   const [form, setForm] = useState({
     technicalMemberName: user?.name || "",
-    project: "",
+    project: selectedProjectId || "",
     assignee: "",
     assignees: [],
     moduleFeatureName: "",

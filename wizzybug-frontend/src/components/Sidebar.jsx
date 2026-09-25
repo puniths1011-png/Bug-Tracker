@@ -20,6 +20,7 @@ function Sidebar({
   projects = [],
   projectFilter,
   setProjectFilter,
+  selectedProjectId,
   onProjectClick,
   theme,
   toggleTheme,
@@ -88,7 +89,11 @@ function Sidebar({
               <button
                 key={p._id}
                 className={
-                  "projectSubBtn " + (projectFilter === p._id ? "active" : "")
+                  "projectSubBtn " +
+                  (String(selectedProjectId) === String(p._id) ||
+                  String(projectFilter) === String(p._id)
+                    ? "active"
+                    : "")
                 }
                 onClick={() => {
                   onProjectClick(p._id);

@@ -464,10 +464,7 @@ function Detail({
             ) : null}
           </article>
           <article className="panel comments">
-            <h3>
-              History and Comments
-              <span>{timeline.length}</span>
-            </h3>
+            <h3>History and Comments</h3>
             <div className="timeline">
               {timeline.map((t, i) => (
                 <div key={i}>

@@ -291,7 +291,7 @@ function App({ isAdminPage = false }) {
         user={user}
       />
     );
-  } else if (selectedProject) {
+  } else if (selectedProject && page !== "report") {
     content = (
       <ProjectDetailPage
         project={selectedProject}
@@ -331,6 +331,7 @@ function App({ isAdminPage = false }) {
         projects={projects}
         users={users}
         user={user}
+        selectedProjectId={selectedProjectId}
       />
     );
   } else if (page === "assign" && isAdmin) {
@@ -374,7 +375,7 @@ function App({ isAdminPage = false }) {
         setPage={(p) => {
           setPage(p);
           setSelectedId(null);
-          setSelectedProjectId(null);
+          if (p !== "report") setSelectedProjectId(null);
         }}
         open={menu}
         setOpen={setMenu}
@@ -391,6 +392,7 @@ function App({ isAdminPage = false }) {
         projects={projects}
         projectFilter={projectFilter}
         setProjectFilter={setProjectFilter}
+        selectedProjectId={selectedProjectId}
         onProjectClick={openProject}
         theme={theme}
         toggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -399,7 +401,11 @@ function App({ isAdminPage = false }) {
         <Header
           title={selected ? "Bug details" : titles[page]}
           onMenu={() => setMenu(true)}
-          setPage={setPage}
+          setPage={(p) => {
+            setPage(p);
+            setSelectedId(null);
+            if (p !== "report") setSelectedProjectId(null);
+          }}
           globalSearch={globalSearch}
           setGlobalSearch={setGlobalSearch}
           theme={theme}
