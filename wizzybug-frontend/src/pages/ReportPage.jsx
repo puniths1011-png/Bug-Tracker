@@ -249,6 +249,7 @@ function ReportPage({ addBug, setPage, projects = [], users = [], user }) {
           <div
             className="technicalMemberNameInput"
             aria-label="Technical Member Name"
+            aria-readonly="true"
           >
             {user?.name || ""}
           </div>

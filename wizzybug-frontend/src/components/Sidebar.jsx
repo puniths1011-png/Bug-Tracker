@@ -20,6 +20,7 @@ function Sidebar({
   projects = [],
   projectFilter,
   setProjectFilter,
+  onProjectClick,
   theme,
   toggleTheme,
   onDashboard,
@@ -90,7 +91,7 @@ function Sidebar({
                   "projectSubBtn " + (projectFilter === p._id ? "active" : "")
                 }
                 onClick={() => {
-                  setProjectFilter && setProjectFilter(p._id);
+                  onProjectClick(p._id);
                   setOpen(false);
                 }}
               >

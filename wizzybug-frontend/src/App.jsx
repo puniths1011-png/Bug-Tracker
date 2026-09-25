@@ -66,6 +66,7 @@ import Detail from "./pages/Detail";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import ProjectsPage from "./pages/ProjectsPage";
+import ProjectDetailPage from "./pages/ProjectDetailPage";
 import ReportPage from "./pages/ReportPage";
 import UsersPage from "./pages/UsersPage";
 
@@ -97,6 +98,7 @@ function App({ isAdminPage = false }) {
   const [users, setUsers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [projectFilter, setProjectFilter] = useState(null);
   const [menu, setMenu] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
@@ -113,7 +115,16 @@ function App({ isAdminPage = false }) {
   const selected = selectedId
     ? bugs.find((b) => b.rawId === selectedId) || null
     : null;
+  const selectedProject = selectedProjectId
+    ? projects.find((project) => String(project._id) === String(selectedProjectId)) || null
+    : null;
   const setSelected = (b) => setSelectedId(b ? b.rawId : null);
+  const openProject = (projectId) => {
+    setSelectedId(null);
+    setProjectFilter(null);
+    setSelectedProjectId(projectId);
+    setPage("projects");
+  };
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -280,6 +291,16 @@ function App({ isAdminPage = false }) {
         user={user}
       />
     );
+  } else if (selectedProject) {
+    content = (
+      <ProjectDetailPage
+        project={selectedProject}
+        bugs={bugs}
+        users={users}
+        onBack={() => setSelectedProjectId(null)}
+        setSelected={setSelected}
+      />
+    );
   } else if (page === "dashboard") {
     content = (
       <Dashboard
@@ -337,6 +358,7 @@ function App({ isAdminPage = false }) {
         bugs={bugs}
         user={user}
         createProject={createProject}
+        openProject={openProject}
         setPage={setPage}
         setProjectFilter={setProjectFilter}
       />
@@ -352,6 +374,7 @@ function App({ isAdminPage = false }) {
         setPage={(p) => {
           setPage(p);
           setSelectedId(null);
+          setSelectedProjectId(null);
         }}
         open={menu}
         setOpen={setMenu}
@@ -368,6 +391,7 @@ function App({ isAdminPage = false }) {
         projects={projects}
         projectFilter={projectFilter}
         setProjectFilter={setProjectFilter}
+        onProjectClick={openProject}
         theme={theme}
         toggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
       />
