@@ -116,7 +116,9 @@ function App({ isAdminPage = false }) {
     ? bugs.find((b) => b.rawId === selectedId) || null
     : null;
   const selectedProject = selectedProjectId
-    ? projects.find((project) => String(project._id) === String(selectedProjectId)) || null
+    ? projects.find(
+        (project) => String(project._id) === String(selectedProjectId),
+      ) || null
     : null;
   const setSelected = (b) => setSelectedId(b ? b.rawId : null);
   const openProject = (projectId) => {
@@ -241,6 +243,46 @@ function App({ isAdminPage = false }) {
     setBugs((x) => x.map((b) => (b.rawId === rawId ? formatBug(data) : b)));
   };
 
+  const updateBug = async (rawId, values) => {
+    const formData = new FormData();
+    formData.append("title", values.title || "");
+    formData.append("description", values.desc || "");
+    formData.append("severity", values.severity || "Minor");
+    formData.append("priority", values.priority || "medium");
+    formData.append("environment", values.environment || "");
+    formData.append("moduleFeatureName", values.moduleFeatureName || "");
+    formData.append("buildAppVersion", values.buildAppVersion || "");
+    formData.append("releaseVersion", values.releaseVersion || "");
+    formData.append("reproductionRate", values.reproductionRate || "");
+    formData.append("expectedResult", values.expectedResult || "");
+    formData.append("actualResult", values.actualResult || "");
+    formData.append("defectType", values.defectType || "");
+    formData.append("typeOfApplication", values.typeOfApplication || "");
+    formData.append("browser", values.browser || "");
+    formData.append("browserVersion", values.browserVersion || "");
+    if (values.attachment) formData.append("image", values.attachment);
+
+    const data = await apiFetch(`/tickets/${rawId}`, {
+      method: "PUT",
+      body: formData,
+    });
+    const updatedBug = formatBug(data);
+    setBugs((x) =>
+      x.map((b) =>
+        b.rawId === rawId
+          ? {
+              ...b,
+              ...updatedBug,
+              severity: values.severity || updatedBug.severity,
+              priority: values.priority || updatedBug.priority,
+              reproductionRate:
+                values.reproductionRate || updatedBug.reproductionRate,
+            }
+          : b,
+      ),
+    );
+  };
+
   const addComment = async (rawId, text) => {
     const data = await apiFetch(`/tickets/${rawId}/comments`, {
       method: "POST",
@@ -285,6 +327,7 @@ function App({ isAdminPage = false }) {
         setSelected={setSelected}
         updateStatus={updateStatus}
         addComment={addComment}
+        updateBug={updateBug}
         saveFixNotes={saveFixNotes}
         assignBug={assignBug}
         users={users}
@@ -414,7 +457,7 @@ function App({ isAdminPage = false }) {
         <div className="content">
           {loadingData && bugs.length === 0 ? (
             <div className="muted" style={{ padding: 40, textAlign: "center" }}>
-              Loading your workspaceâ€¦
+              Loading your workspace
             </div>
           ) : (
             content

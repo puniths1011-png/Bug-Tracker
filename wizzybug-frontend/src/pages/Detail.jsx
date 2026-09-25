@@ -1,13 +1,88 @@
-﻿import React, { useMemo, useState, useEffect } from 'react';
-import * as Icons from 'lucide-react';
-const {LayoutDashboard,Bug,Plus,Users,User,Settings,LogOut,Search,Bell,ChevronDown,ArrowUpRight,Clock3,CircleCheck,TriangleAlert,Filter,Download,Menu,X,ChevronRight,Paperclip,Send,CalendarDays,BarChart3,FolderKanban,Activity,ShieldCheck,Eye,EyeOff,Moon,Sun,UserCog,Mail,ClipboardList,RefreshCcw,FolderPlus,ArrowLeft,Pencil} = Icons;
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import { API, apiFetch, setToken } from '../config/api';
-import { formatIST, formatISTLong, timeAgoIST, IST_TZ } from '../utils/date';
-import { STATUS_LABELS, STATUS_VALUES, PRIORITY_LABELS, SEVERITY_TO_PRIORITY } from '../utils/constants';
-import { Avatar, Logo, RoleBadge, Status } from '../components/Ui';
-import { initialsOf, isAssignedToUser, priorityLabel, statusLabel, pdfText, severityClass } from '../utils/formatters';
+﻿import React, { useMemo, useState, useEffect } from "react";
+import * as Icons from "lucide-react";
+const {
+  LayoutDashboard,
+  Bug,
+  Plus,
+  Users,
+  User,
+  Settings,
+  LogOut,
+  Search,
+  Bell,
+  ChevronDown,
+  ArrowUpRight,
+  Clock3,
+  CircleCheck,
+  TriangleAlert,
+  Filter,
+  Download,
+  Menu,
+  X,
+  ChevronRight,
+  Paperclip,
+  Send,
+  CalendarDays,
+  BarChart3,
+  FolderKanban,
+  Activity,
+  ShieldCheck,
+  Eye,
+  EyeOff,
+  Moon,
+  Sun,
+  UserCog,
+  Mail,
+  ClipboardList,
+  RefreshCcw,
+  FolderPlus,
+  ArrowLeft,
+  Pencil,
+} = Icons;
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+import { API, apiFetch, setToken } from "../config/api";
+import { formatIST, formatISTLong, timeAgoIST, IST_TZ } from "../utils/date";
+import {
+  STATUS_LABELS,
+  STATUS_VALUES,
+  PRIORITY_LABELS,
+  SEVERITY_LABELS,
+  SEVERITY_TO_PRIORITY,
+} from "../utils/constants";
+import { Avatar, Logo, RoleBadge, Status } from "../components/Ui";
+import {
+  initialsOf,
+  isAssignedToUser,
+  priorityLabel,
+  statusLabel,
+  pdfText,
+  severityClass,
+} from "../utils/formatters";
+
+const environmentOptions = [
+  "Development",
+  "QA",
+  "UAT",
+  "Staging",
+  "Production",
+];
+const reproductionRateOptions = ["100%", "75%", "50%", "25%", "Random"];
+const defectTypeOptions = [
+  "Functional",
+  "UI/UX",
+  "Performance",
+  "Security",
+  "Integration",
+  "Data Validation",
+  "Accessibility",
+  "API",
+  "Mobile",
+  "Database",
+  "Regression",
+  "Enhancement Request",
+  "Other",
+];
 
 function buildTimeline(bug) {
   const historyItems = (bug.history || []).map((h) => ({
@@ -49,14 +124,22 @@ function Detail({
   const [reassignOpen, setReassignOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [attachment, setAttachment] = useState(null);
+  const [otherDefectType, setOtherDefectType] = useState("");
   const [editForm, setEditForm] = useState({
     title: bug.title || "",
     desc: bug.desc || "",
+    severity: bug.severity || "Minor",
+    priority: bug.priority || SEVERITY_TO_PRIORITY[bug.severity] || "medium",
     moduleFeatureName: bug.moduleFeatureName || "",
     environment: bug.environment || "",
     buildAppVersion: bug.buildAppVersion || "",
     releaseVersion: bug.releaseVersion || "",
-    defectType: bug.defectType || "",
+    defectType: defectTypeOptions.includes(bug.defectType)
+      ? bug.defectType
+      : bug.defectType
+        ? "Other"
+        : "",
     reproductionRate: bug.reproductionRate || "",
     expectedResult: bug.expectedResult || "",
     actualResult: bug.actualResult || "",
@@ -71,6 +154,8 @@ function Detail({
     setEditForm({
       title: bug.title || "",
       desc: bug.desc || "",
+      severity: bug.severity || "Minor",
+      priority: bug.priority || SEVERITY_TO_PRIORITY[bug.severity] || "medium",
       moduleFeatureName: bug.moduleFeatureName || "",
       environment: bug.environment || "",
       buildAppVersion: bug.buildAppVersion || "",
@@ -83,7 +168,11 @@ function Detail({
       browser: bug.browser || "",
       browserVersion: bug.browserVersion || "",
     });
-  }, [bug.rawId, bug.status, bug.fixDescription]);
+    setOtherDefectType(
+      defectTypeOptions.includes(bug.defectType) ? "" : bug.defectType || "",
+    );
+    setAttachment(null);
+  }, [bug]);
 
   const canReassign = true;
   const timeline = buildTimeline(bug);
@@ -129,7 +218,14 @@ function Detail({
     if (!editForm.title.trim()) return;
     setBusy(true);
     try {
-      await updateBug(bug.rawId, editForm);
+      await updateBug(bug.rawId, {
+        ...editForm,
+        defectType:
+          editForm.defectType === "Other"
+            ? otherDefectType.trim()
+            : editForm.defectType,
+        attachment,
+      });
       setEditing(false);
     } catch (e) {
       alert(e.message || "Could not update bug details");
@@ -201,7 +297,9 @@ function Detail({
         ["MODULE / FEATURE", pdfText(bug.moduleFeatureName || "-")],
         [
           "BROWSER",
-          pdfText([bug.browser, bug.browserVersion].filter(Boolean).join(" ") || "-"),
+          pdfText(
+            [bug.browser, bug.browserVersion].filter(Boolean).join(" ") || "-",
+          ),
         ],
       ],
     });
@@ -226,7 +324,12 @@ function Detail({
           fontStyle: "bold",
           halign: "center",
         },
-        styles: { fontSize: 9, cellPadding: 4, overflow: "linebreak", valign: "top" },
+        styles: {
+          fontSize: 9,
+          cellPadding: 4,
+          overflow: "linebreak",
+          valign: "top",
+        },
         columnStyles: {
           0: { cellWidth: 45, fontStyle: "bold" },
           1: { cellWidth: pageWidth - margin * 2 - 45 },
@@ -249,7 +352,12 @@ function Detail({
           fontStyle: "bold",
           halign: "center",
         },
-        styles: { fontSize: 8, cellPadding: 3, overflow: "linebreak", valign: "top" },
+        styles: {
+          fontSize: 8,
+          cellPadding: 3,
+          overflow: "linebreak",
+          valign: "top",
+        },
         columnStyles: { 0: { cellWidth: 38 }, 1: { cellWidth: 35 } },
         body: timeline.map((t) => [
           pdfText(formatIST(t.createdAt)),
@@ -295,7 +403,10 @@ function Detail({
           </p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="outline" onClick={() => setEditing((value) => !value)}>
+          <button
+            className="outline"
+            onClick={() => setEditing((value) => !value)}
+          >
             <Pencil size={17} />
             {editing ? "Cancel Edit" : "Edit Defect"}
           </button>
@@ -311,48 +422,178 @@ function Detail({
             {editing ? (
               <form onSubmit={handleSaveEdit}>
                 <label>
-                  Defect name<b>*</b>
+                  Defect name *<b></b>
                   <input
                     value={editForm.title}
-                    onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, title: e.target.value })
+                    }
                     required
                   />
                 </label>
                 <label>
-                  Description
+                  Steps to reproduce *<b></b>
                   <textarea
                     value={editForm.desc}
-                    onChange={(e) => setEditForm({ ...editForm, desc: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, desc: e.target.value })
+                    }
                   />
+                </label>
+                <label>
+                  Priority
+                  <select
+                    value={editForm.priority}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, priority: e.target.value })
+                    }
+                  >
+                    {Object.keys(PRIORITY_LABELS).map((priority) => (
+                      <option key={priority} value={priority}>
+                        {PRIORITY_LABELS[priority]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Reproduction Rate
+                  <select
+                    value={editForm.reproductionRate}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        reproductionRate: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="">Select reproduction rate</option>
+                    {reproductionRateOptions.map((rate) => (
+                      <option key={rate} value={rate}>
+                        {rate}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Severity
+                  <select
+                    value={editForm.severity}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, severity: e.target.value })
+                    }
+                  >
+                    {SEVERITY_LABELS.map((severity) => (
+                      <option key={severity} value={severity}>
+                        {severity}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <div className="twoCol">
                   <label>
                     Module / Feature
-                    <input value={editForm.moduleFeatureName} onChange={(e) => setEditForm({ ...editForm, moduleFeatureName: e.target.value })} />
+                    <input
+                      value={editForm.moduleFeatureName}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          moduleFeatureName: e.target.value,
+                        })
+                      }
+                    />
                   </label>
-                  <label>
-                    Environment
-                    <input value={editForm.environment} onChange={(e) => setEditForm({ ...editForm, environment: e.target.value })} />
-                  </label>
+                  <fieldset className="editRadioField">
+                    <legend>Environment</legend>
+                    <div className="radioGroup">
+                      {environmentOptions.map((environment) => (
+                        <label key={environment}>
+                          <input
+                            type="radio"
+                            name="editEnvironment"
+                            value={environment}
+                            checked={editForm.environment === environment}
+                            onChange={(e) =>
+                              setEditForm({
+                                ...editForm,
+                                environment: e.target.value,
+                              })
+                            }
+                          />
+                          {environment}
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
                 </div>
                 <div className="twoCol">
                   <label>
                     Build / App Version
-                    <input value={editForm.buildAppVersion} onChange={(e) => setEditForm({ ...editForm, buildAppVersion: e.target.value })} />
+                    <input
+                      value={editForm.buildAppVersion}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          buildAppVersion: e.target.value,
+                        })
+                      }
+                    />
                   </label>
                   <label>
                     Release Version
-                    <input value={editForm.releaseVersion} onChange={(e) => setEditForm({ ...editForm, releaseVersion: e.target.value })} />
+                    <input
+                      value={editForm.releaseVersion}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          releaseVersion: e.target.value,
+                        })
+                      }
+                    />
                   </label>
                 </div>
                 <div className="twoCol">
-                  <label>
-                    Defect Type
-                    <input value={editForm.defectType} onChange={(e) => setEditForm({ ...editForm, defectType: e.target.value })} />
-                  </label>
+                  <fieldset className="editRadioField">
+                    <legend>Defect Type</legend>
+                    <div className="radioGroup">
+                      {defectTypeOptions.map((type) => (
+                        <label key={type}>
+                          <input
+                            type="radio"
+                            name="editDefectType"
+                            value={type}
+                            checked={editForm.defectType === type}
+                            onChange={(e) =>
+                              setEditForm({
+                                ...editForm,
+                                defectType: e.target.value,
+                              })
+                            }
+                          />
+                          {type}
+                        </label>
+                      ))}
+                    </div>
+                    {editForm.defectType === "Other" && (
+                      <input
+                        className="otherDefectTypeInput"
+                        value={otherDefectType}
+                        onChange={(e) => setOtherDefectType(e.target.value)}
+                        placeholder="Enter the defect type"
+                        aria-label="Other defect type"
+                      />
+                    )}
+                  </fieldset>
                   <label>
                     Reproduction Rate
-                    <input value={editForm.reproductionRate} onChange={(e) => setEditForm({ ...editForm, reproductionRate: e.target.value })} />
+                    <input
+                      value={editForm.reproductionRate}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          reproductionRate: e.target.value,
+                        })
+                      }
+                    />
                   </label>
                 </div>
                 <div className="twoCol">
@@ -360,39 +601,87 @@ function Detail({
                     Expected result
                     <textarea
                       value={editForm.expectedResult}
-                      onChange={(e) => setEditForm({ ...editForm, expectedResult: e.target.value })}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          expectedResult: e.target.value,
+                        })
+                      }
                     />
                   </label>
                   <label>
                     Actual result
                     <textarea
                       value={editForm.actualResult}
-                      onChange={(e) => setEditForm({ ...editForm, actualResult: e.target.value })}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          actualResult: e.target.value,
+                        })
+                      }
                     />
                   </label>
                 </div>
                 <div className="twoCol">
                   <label>
                     Type of Application
-                    <input value={editForm.typeOfApplication} onChange={(e) => setEditForm({ ...editForm, typeOfApplication: e.target.value })} />
+                    <input
+                      value={editForm.typeOfApplication}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          typeOfApplication: e.target.value,
+                        })
+                      }
+                    />
                   </label>
                   <label>
                     Browser
-                    <input value={editForm.browser} onChange={(e) => setEditForm({ ...editForm, browser: e.target.value })} />
+                    <input
+                      value={editForm.browser}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, browser: e.target.value })
+                      }
+                    />
                   </label>
                 </div>
                 <label>
                   Browser Version
-                  <input value={editForm.browserVersion} onChange={(e) => setEditForm({ ...editForm, browserVersion: e.target.value })} />
+                  <input
+                    value={editForm.browserVersion}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        browserVersion: e.target.value,
+                      })
+                    }
+                  />
+                </label>
+                <label>
+                  Attachment
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+                  />
+                  <small>
+                    {attachment
+                      ? `Selected: ${attachment.name}`
+                      : bug.imageUrl || bug.hasScreenshot
+                        ? "Choose a new image to replace the current attachment."
+                        : "Optional image attachment."}
+                  </small>
                 </label>
                 <button className="primary" type="submit" disabled={busy}>
                   {busy ? "Saving..." : "Save Defect"}
                 </button>
               </form>
-            ) : <>
-              <h3>Description</h3>
-              <p>{bug.desc}</p>
-            </>}
+            ) : (
+              <>
+                <h3>Steps to reproduce</h3>
+                <p>{bug.desc}</p>
+              </>
+            )}
             {!editing && (
               <div className="detailReportFields">
                 {[
@@ -403,13 +692,18 @@ function Detail({
                   ["Defect Type", bug.defectType],
                   ["Reproduction Rate", bug.reproductionRate],
                   ["Type of Application", bug.typeOfApplication],
-                  ["Browser", [bug.browser, bug.browserVersion].filter(Boolean).join(" ")],
-                ].filter(([, value]) => value).map(([label, value]) => (
-                  <div key={label}>
-                    <h3>{label}</h3>
-                    <p>{value}</p>
-                  </div>
-                ))}
+                  [
+                    "Browser",
+                    [bug.browser, bug.browserVersion].filter(Boolean).join(" "),
+                  ],
+                ]
+                  .filter(([, value]) => value)
+                  .map(([label, value]) => (
+                    <div key={label}>
+                      <h3>{label}</h3>
+                      <p>{value}</p>
+                    </div>
+                  ))}
               </div>
             )}
             {!editing && (bug.expectedResult || bug.actualResult) && (
@@ -526,6 +820,21 @@ function Detail({
             </span>
           </label>
           <label>
+            Priority
+            <span
+              className={
+                "severity " +
+                severityClass(
+                  bug.priority || SEVERITY_TO_PRIORITY[bug.severity] || "medium",
+                )
+              }
+            >
+              {priorityLabel(
+                bug.priority || SEVERITY_TO_PRIORITY[bug.severity] || "medium",
+              )}
+            </span>
+          </label>
+          <label>
             Assignee
             <span className="person">
               <Avatar
@@ -570,7 +879,8 @@ function Detail({
                   )
                   .map((u) => (
                     <option key={u._id} value={u._id}>
-                      {u.name} - {u.role.charAt(0).toUpperCase() + u.role.slice(1)}
+                      {u.name} -{" "}
+                      {u.role.charAt(0).toUpperCase() + u.role.slice(1)}
                     </option>
                   ))}
               </select>
@@ -619,4 +929,3 @@ function Detail({
 }
 
 export default Detail;
-
