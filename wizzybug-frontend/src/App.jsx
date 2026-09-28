@@ -1,5 +1,5 @@
 ﻿import React, { useMemo, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Bug,
@@ -73,7 +73,26 @@ import UsersPage from "./pages/UsersPage";
 const initialBugs = [];
 const initialUsers = [];
 
+function parseAppRoute(pathname, isAdminPage) {
+  const appPath = isAdminPage ? pathname.replace(/^\/admin/, "") : pathname;
+  const segments = appPath.split("/").filter(Boolean);
+
+  if (segments[0] === "projects" && segments[1]) {
+    return { page: "projects", projectId: segments[1], bugId: null };
+  }
+  if (segments[0] === "bugs" && segments[1]) {
+    return { page: "bugs", projectId: null, bugId: segments[1] };
+  }
+
+  const validPages = ["dashboard", "bugs", "report", "users", "profile", "assign", "projects"];
+  const page = validPages.includes(segments[0]) ? segments[0] : "dashboard";
+  return { page, projectId: null, bugId: null };
+}
+
 function App({ isAdminPage = false }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const initialRoute = parseAppRoute(location.pathname, isAdminPage);
   const [theme, setTheme] = useState(() => {
     if (typeof window === "undefined") return "light";
     return localStorage.getItem("theme") || "light";
@@ -93,12 +112,12 @@ function App({ isAdminPage = false }) {
     }
   });
   const [globalSearch, setGlobalSearch] = useState("");
-  const [page, setPage] = useState("dashboard");
+  const [page, setPage] = useState(initialRoute.page);
   const [bugs, setBugs] = useState([]);
   const [users, setUsers] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [selectedId, setSelectedId] = useState(null);
-  const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [selectedId, setSelectedId] = useState(initialRoute.bugId);
+  const [selectedProjectId, setSelectedProjectId] = useState(initialRoute.projectId);
   const [projectFilter, setProjectFilter] = useState(null);
   const [menu, setMenu] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
@@ -120,13 +139,32 @@ function App({ isAdminPage = false }) {
         (project) => String(project._id) === String(selectedProjectId),
       ) || null
     : null;
-  const setSelected = (b) => setSelectedId(b ? b.rawId : null);
+  const appPath = (path) => `${isAdminPage ? "/admin" : ""}${path}`;
+  const pagePath = (nextPage) => appPath(`/${nextPage}`);
+  const navigatePage = (nextPage) => {
+    setPage(nextPage);
+    setSelectedId(null);
+    if (nextPage !== "report") setSelectedProjectId(null);
+    navigate(pagePath(nextPage));
+  };
+  const setSelected = (bug) => {
+    setSelectedId(bug ? bug.rawId : null);
+    navigate(bug ? appPath(`/bugs/${bug.rawId}`) : pagePath(page));
+  };
   const openProject = (projectId) => {
     setSelectedId(null);
     setProjectFilter(null);
     setSelectedProjectId(projectId);
     setPage("projects");
+    navigate(appPath(`/projects/${projectId}`));
   };
+
+  useEffect(() => {
+    const route = parseAppRoute(location.pathname, isAdminPage);
+    setPage(route.page);
+    setSelectedId(route.bugId);
+    setSelectedProjectId(route.projectId);
+  }, [isAdminPage, location.pathname]);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -376,7 +414,7 @@ function App({ isAdminPage = false }) {
       <Dashboard
         bugs={bugs}
         setSelected={setSelected}
-        setPage={setPage}
+        setPage={navigatePage}
         user={user}
       />
     );
@@ -397,7 +435,7 @@ function App({ isAdminPage = false }) {
     content = (
       <ReportPage
         addBug={addBug}
-        setPage={setPage}
+        setPage={navigatePage}
         projects={projects}
         users={users}
         user={user}
@@ -430,7 +468,7 @@ function App({ isAdminPage = false }) {
         user={user}
         createProject={createProject}
         openProject={openProject}
-        setPage={setPage}
+        setPage={navigatePage}
         setProjectFilter={setProjectFilter}
       />
     );
@@ -442,11 +480,7 @@ function App({ isAdminPage = false }) {
     <div className="app">
       <Sidebar
         page={page}
-        setPage={(p) => {
-          setPage(p);
-          setSelectedId(null);
-          if (p !== "report") setSelectedProjectId(null);
-        }}
+        setPage={navigatePage}
         open={menu}
         setOpen={setMenu}
         onLogout={() => {
@@ -471,11 +505,7 @@ function App({ isAdminPage = false }) {
         <Header
           title={selected ? "Bug details" : titles[page]}
           onMenu={() => setMenu(true)}
-          setPage={(p) => {
-            setPage(p);
-            setSelectedId(null);
-            if (p !== "report") setSelectedProjectId(null);
-          }}
+          setPage={navigatePage}
           globalSearch={globalSearch}
           setGlobalSearch={setGlobalSearch}
           theme={theme}
