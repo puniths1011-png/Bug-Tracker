@@ -1815,17 +1815,28 @@ select {
   margin-top: 23px;
 }
 
+.attachmentList {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+
 .attachment {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
   border: 1px solid var(--border);
   padding: 10px;
   border-radius: 7px;
-  margin-top: 18px;
+  margin: 0;
 }
 
-.attachment > div {
+.attachmentPendingUpload {
+  border-style: dashed;
+}
+
+.attachment > div:not(.attachmentActions) {
   background: #3d2937;
   color: #ff7898;
   padding: 10px 7px;
@@ -1838,10 +1849,33 @@ select {
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-width: 0;
+}
+
+.attachment span b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachmentFileIcon {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+.attachmentUploadError {
+  color: var(--red);
 }
 
 .attachment small {
   color: var(--muted);
+}
+
+.attachmentActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .timeline {
@@ -2120,6 +2154,12 @@ select {
 
 .descriptionEditor {
   padding: 8px 10px;
+}
+
+.projectDescriptionActions {
+  display: flex;
+  justify-content: center;
+  margin-top: 15px;
 }
 
 .projectModal {
@@ -2791,7 +2831,7 @@ select {
 
 .editDefectTypeRow label {
   display: inline-flex;
-  flex-direction: row-reverse;
+  flex-direction: row;
   align-items: center;
   gap: 7px;
   margin: 0;
@@ -2803,9 +2843,24 @@ select {
   margin: 0;
 }
 
+.contentCard form .twoCol .editRadioField label {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  font-weight: normal;
+}
+
+.contentCard form .twoCol .editRadioField input[type="radio"] {
+  width: auto;
+  margin: 0;
+  padding: 0;
+}
+
 .editRadioField .radioGroup label {
   display: inline-flex;
-  flex-direction: row-reverse;
+  flex-direction: row;
   align-items: center;
   gap: 7px;
   margin: 0;

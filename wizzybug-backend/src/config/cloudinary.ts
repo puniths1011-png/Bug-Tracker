@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { randomUUID } from 'crypto';
 import { v2 as cloudinary, type UploadApiResponse, type DeleteApiResponse } from 'cloudinary';
 
 dotenv.config();
@@ -26,7 +27,13 @@ export const uploadToCloudinary = (
   filename: string,
 ): Promise<UploadApiResponse> => {
   return new Promise((resolve, reject) => {
-    const publicId = `${Date.now()}_${filename.replace(/\.[^/.]+$/, '')}`;
+    const safeName = filename
+      .replace(/\.[^/.]+$/, '')
+      .normalize('NFKD')
+      .replace(/[^a-zA-Z0-9_-]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 80) || 'attachment';
+    const publicId = `${Date.now()}_${randomUUID()}_${safeName}`;
     const stream = cloudinary.uploader.upload_stream(
       {
         public_id: publicId,

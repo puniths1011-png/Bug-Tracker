@@ -238,6 +238,7 @@ export const updateTicket = async (
       project,
       assignee,
       assignees,
+      deleteAttachmentIds,
       environment,
       moduleFeatureName,
       buildAppVersion,
@@ -256,22 +257,65 @@ export const updateTicket = async (
       ? normalizeAssigneeIds(assignees ?? assignee)
       : null;
 
-    if (req.file) {
-      if (ticket.imagePublicId) {
-        try {
-          await deleteFromCloudinary(ticket.imagePublicId);
-        } catch (err) {
-          console.error("[updateTicket] Cloudinary delete failed:", err);
-        }
-      }
+    const uploadedFiles = req.files as
+      | { [fieldname: string]: Express.Multer.File[] }
+      | undefined;
+    const newFiles = [
+      ...(uploadedFiles?.images || []),
+      ...(uploadedFiles?.image || []),
+    ];
 
-      const uploadResult = await uploadToCloudinary(
-        req.file.buffer,
-        req.file.originalname,
+    const attachmentIdsToDelete = (() => {
+      try {
+        const value =
+          typeof deleteAttachmentIds === "string"
+            ? JSON.parse(deleteAttachmentIds)
+            : deleteAttachmentIds;
+        return Array.isArray(value) ? value.map(String) : [];
+      } catch {
+        return [];
+      }
+    })();
+
+    for (const attachmentId of attachmentIdsToDelete) {
+      const attachment = ticket.attachments.find(
+        (item) => String(item._id) === attachmentId,
       );
-      ticket.imageUrl = uploadResult.secure_url;
-      ticket.imagePublicId = uploadResult.public_id;
-      ticket.screenshot = undefined;
+      if (attachment) {
+        await deleteFromCloudinary(attachment.publicId);
+        ticket.attachments = ticket.attachments.filter(
+          (item) => String(item._id) !== attachmentId,
+        ) as typeof ticket.attachments;
+      } else if (attachmentId === "legacy-image" && ticket.imageUrl) {
+        if (ticket.imagePublicId) {
+          await deleteFromCloudinary(ticket.imagePublicId);
+        }
+        ticket.imageUrl = undefined;
+        ticket.imagePublicId = undefined;
+      } else if (attachmentId === "legacy-screenshot" && ticket.screenshot) {
+        ticket.screenshot = undefined;
+      }
+    }
+
+    for (const file of newFiles) {
+      let uploadResult;
+      try {
+        uploadResult = await uploadToCloudinary(file.buffer, file.originalname);
+      } catch (error) {
+        console.error("[updateTicket] Attachment upload failed:", error);
+        res.status(502).json({
+          message: "Attachment upload failed. Please check the file and try again.",
+        });
+        return;
+      }
+      ticket.attachments.push({
+        fileName: file.originalname,
+        contentType: file.mimetype || "application/octet-stream",
+        secureUrl: uploadResult.secure_url,
+        publicId: uploadResult.public_id,
+        resourceType:
+          uploadResult.resource_type || file.mimetype.split("/")[0] || "raw",
+      });
     }
 
     if (title) ticket.title = title;

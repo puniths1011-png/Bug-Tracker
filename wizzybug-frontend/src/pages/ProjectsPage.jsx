@@ -1,17 +1,71 @@
-﻿import React, { useMemo, useState, useEffect } from 'react';
-import * as Icons from 'lucide-react';
-const {LayoutDashboard,Bug,Plus,Users,User,Settings,LogOut,Search,Bell,ChevronDown,ArrowUpRight,Clock3,CircleCheck,TriangleAlert,Filter,Download,Menu,X,ChevronRight,Paperclip,Send,CalendarDays,BarChart3,FolderKanban,Activity,ShieldCheck,Eye,EyeOff,Moon,Sun,UserCog,Mail,ClipboardList,RefreshCcw,FolderPlus,ArrowLeft,Trash2,Pencil} = Icons;
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import { API, apiFetch, setToken } from '../config/api';
-import { formatIST, formatISTLong, timeAgoIST, IST_TZ } from '../utils/date';
-import { STATUS_LABELS, STATUS_VALUES, PRIORITY_LABELS, SEVERITY_TO_PRIORITY } from '../utils/constants';
-import { Avatar, Logo, RoleBadge, Status } from '../components/Ui';
-import { initialsOf, isAssignedToUser, priorityLabel, statusLabel, buildTimeline } from '../utils/formatters';
+﻿import React, { useMemo, useState, useEffect } from "react";
+import * as Icons from "lucide-react";
+const {
+  LayoutDashboard,
+  Bug,
+  Plus,
+  Users,
+  User,
+  Settings,
+  LogOut,
+  Search,
+  Bell,
+  ChevronDown,
+  ArrowUpRight,
+  Clock3,
+  CircleCheck,
+  TriangleAlert,
+  Filter,
+  Download,
+  Menu,
+  X,
+  ChevronRight,
+  Paperclip,
+  Send,
+  CalendarDays,
+  BarChart3,
+  FolderKanban,
+  Activity,
+  ShieldCheck,
+  Eye,
+  EyeOff,
+  Moon,
+  Sun,
+  UserCog,
+  Mail,
+  ClipboardList,
+  RefreshCcw,
+  FolderPlus,
+  ArrowLeft,
+  Trash2,
+  Pencil,
+} = Icons;
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+import { API, apiFetch, setToken } from "../config/api";
+import { formatIST, formatISTLong, timeAgoIST, IST_TZ } from "../utils/date";
+import {
+  STATUS_LABELS,
+  STATUS_VALUES,
+  PRIORITY_LABELS,
+  SEVERITY_TO_PRIORITY,
+} from "../utils/constants";
+import { Avatar, Logo, RoleBadge, Status } from "../components/Ui";
+import {
+  initialsOf,
+  isAssignedToUser,
+  priorityLabel,
+  statusLabel,
+  buildTimeline,
+} from "../utils/formatters";
 
 const isCodeLikeDescription = (description = "") => {
-  const codeSignals = /\b(let|const|var|if|else|switch|case|break|console\.log)\b|\/\//g;
-  return description.split(/\r?\n/).length > 1 && (description.match(codeSignals) || []).length >= 2;
+  const codeSignals =
+    /\b(let|const|var|if|else|switch|case|break|console\.log)\b|\/\//g;
+  return (
+    description.split(/\r?\n/).length > 1 &&
+    (description.match(codeSignals) || []).length >= 2
+  );
 };
 
 function ProjectsPage({
@@ -168,12 +222,11 @@ function ProjectsPage({
                 placeholder="Short description (optional)"
               />
             </label>
-            <div className="formActions" style={{ marginTop: 15 }}>
+            <div className="projectDescriptionActions">
               <button
                 className="primary"
                 type="submit"
                 disabled={saving}
-                style={{ width: "100%" }}
               >
                 {saving ? "Creating..." : "Create project"}
               </button>
@@ -183,11 +236,26 @@ function ProjectsPage({
       )}
 
       {editingProject && (
-        <div className="overlay" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <form className="panel profileForm" onSubmit={handleEdit} style={{ width: "400px", padding: "30px" }}>
+        <div
+          className="overlay"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <form
+            className="panel profileForm"
+            onSubmit={handleEdit}
+            style={{ width: "400px", padding: "30px" }}
+          >
             <div className="modalHeading">
               <h3>Edit description</h3>
-              <button type="button" onClick={() => setEditingProject(null)} aria-label="Close edit dialog">
+              <button
+                type="button"
+                onClick={() => setEditingProject(null)}
+                aria-label="Close edit dialog"
+              >
                 <X size={20} />
               </button>
             </div>
@@ -203,7 +271,12 @@ function ProjectsPage({
               />
             </label>
             <div className="formActions" style={{ marginTop: 15 }}>
-              <button className="primary" type="submit" disabled={saving} style={{ width: "100%" }}>
+              <button
+                className="primary"
+                type="submit"
+                disabled={saving}
+                style={{ width: "100%" }}
+              >
                 {saving ? "Saving..." : "Save description"}
               </button>
             </div>
@@ -243,8 +316,8 @@ function ProjectsPage({
               </button>
             </div>
             <p id="delete-project-message">
-              Remove <strong>{projectToDelete.name}</strong> and all of its bugs?
-              This action cannot be undone.
+              Remove <strong>{projectToDelete.name}</strong> and all of its
+              bugs? This action cannot be undone.
             </p>
             {error && <div className="formError">{error}</div>}
             <div className="deleteConfirmActions">
@@ -387,4 +460,3 @@ function ProjectsPage({
 }
 
 export default ProjectsPage;
-

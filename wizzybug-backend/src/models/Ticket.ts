@@ -15,6 +15,15 @@ export interface ITicketComment {
   createdAt: Date;
 }
 
+export interface ITicketAttachment {
+  _id?: mongoose.Types.ObjectId;
+  fileName: string;
+  contentType: string;
+  secureUrl: string;
+  publicId: string;
+  resourceType: string;
+}
+
 export interface ITicket extends Document {
   defectId: string;
   title: string;
@@ -29,6 +38,7 @@ export interface ITicket extends Document {
   screenshot?: { data: Buffer, contentType: String };
   imageUrl?: string;
   imagePublicId?: string;
+  attachments: ITicketAttachment[];
   fixDescription?: string;
   environment?: string;
   moduleFeatureName?: string;
@@ -60,6 +70,14 @@ const CommentSchema = new Schema<ITicketComment>({
   createdAt: { type: Date, default: Date.now }
 }, { _id: false });
 
+const AttachmentSchema = new Schema<ITicketAttachment>({
+  fileName: { type: String, required: true },
+  contentType: { type: String, required: true },
+  secureUrl: { type: String, required: true },
+  publicId: { type: String, required: true },
+  resourceType: { type: String, required: true },
+});
+
 const TicketSchema: Schema = new Schema({
   defectId: { type: String, unique: true, sparse: true, index: true },
   title: { type: String, required: true },
@@ -74,6 +92,7 @@ const TicketSchema: Schema = new Schema({
   screenshot: { data: Buffer, contentType: String },
   imageUrl: { type: String },
   imagePublicId: { type: String },
+  attachments: { type: [AttachmentSchema], default: [] },
   fixDescription: { type: String },
   environment: { type: String },
   moduleFeatureName: { type: String },

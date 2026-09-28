@@ -60,6 +60,31 @@ export function formatBug(ticket) {
       ? [ticket.assignee]
       : [];
   const assigneeNames = assignees.map((assignee) => assignee?.name || assignee).filter(Boolean);
+  const attachments = (ticket.attachments || []).map((attachment) => ({
+    id: String(attachment._id || attachment.id),
+    fileName: attachment.fileName || "Attachment",
+    contentType: attachment.contentType || "application/octet-stream",
+    url: attachment.secureUrl || attachment.url,
+  }));
+  if (ticket.imageUrl) {
+    const fileName = decodeURIComponent(
+      ticket.imageUrl.split("/").pop()?.split("?")[0] || "uploaded-image",
+    );
+    attachments.unshift({
+      id: "legacy-image",
+      fileName,
+      contentType: "image/*",
+      url: ticket.imageUrl,
+    });
+  }
+  if (ticket.screenshot) {
+    attachments.unshift({
+      id: "legacy-screenshot",
+      fileName: "screenshot.png",
+      contentType: ticket.screenshot.contentType || "image/png",
+      url: null,
+    });
+  }
 
   return {
     id: ticket.defectId || (ticket._id
@@ -86,8 +111,9 @@ export function formatBug(ticket) {
     comments: (ticket.comments || []).length,
     commentList: ticket.comments || [],
     history: ticket.history || [],
-    hasScreenshot: !!ticket.screenshot || !!ticket.imageUrl,
+    hasScreenshot: !!ticket.screenshot || !!ticket.imageUrl || attachments.length > 0,
     imageUrl: ticket.imageUrl || null,
+    attachments,
     fixDescription: ticket.fixDescription || "",
     environment: ticket.environment,
     moduleFeatureName: ticket.moduleFeatureName,

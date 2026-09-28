@@ -21,6 +21,10 @@ const {
   X,
   ChevronRight,
   Paperclip,
+  File: FileIcon,
+  FileImage,
+  FileVideo,
+  FileText,
   Send,
   CalendarDays,
   BarChart3,
@@ -124,7 +128,8 @@ function Detail({
   const [reassignOpen, setReassignOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [attachment, setAttachment] = useState(null);
+  const [attachmentsToUpload, setAttachmentsToUpload] = useState([]);
+  const [attachmentUploadError, setAttachmentUploadError] = useState("");
   const [otherDefectType, setOtherDefectType] = useState("");
   const [editForm, setEditForm] = useState({
     title: bug.title || "",
@@ -171,7 +176,8 @@ function Detail({
     setOtherDefectType(
       defectTypeOptions.includes(bug.defectType) ? "" : bug.defectType || "",
     );
-    setAttachment(null);
+    setAttachmentsToUpload([]);
+    setAttachmentUploadError("");
   }, [bug]);
 
   const canReassign = true;
@@ -224,7 +230,7 @@ function Detail({
           editForm.defectType === "Other"
             ? otherDefectType.trim()
             : editForm.defectType,
-        attachment,
+        attachmentsToUpload,
       });
       setEditing(false);
     } catch (e) {
@@ -679,19 +685,34 @@ function Detail({
                   />
                 </label>
                 <label>
-                  Attachment
+                  Add attachments
                   <input
                     type="file"
-                    accept="image/*"
-                    onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+                    accept="image/*,video/*,.pdf,.txt"
+                    multiple
+                    onChange={(e) => {
+                      const selectedFiles = Array.from(e.target.files || []);
+                      const validFiles = selectedFiles.filter(
+                        (file) => file.size <= 10 * 1024 * 1024,
+                      );
+                      setAttachmentsToUpload((existing) => [
+                        ...existing,
+                        ...validFiles,
+                      ]);
+                      setAttachmentUploadError(
+                        validFiles.length < selectedFiles.length
+                          ? "Each attachment must be 10 MB or smaller."
+                          : "",
+                      );
+                      e.target.value = "";
+                    }}
                   />
-                  <small>
-                    {attachment
-                      ? `Selected: ${attachment.name}`
-                      : bug.imageUrl || bug.hasScreenshot
-                        ? "Choose a new image to replace the current attachment."
-                        : "Optional image attachment."}
-                  </small>
+                  <small>New attachments are added without replacing existing files.</small>
+                  {attachmentUploadError && (
+                    <small className="attachmentUploadError" role="alert">
+                      {attachmentUploadError}
+                    </small>
+                  )}
                 </label>
                 <button className="primary" type="submit" disabled={busy}>
                   {busy ? "Saving..." : "Save Defect"}
@@ -743,40 +764,69 @@ function Detail({
                 )}
               </div>
             )}
-            {bug.imageUrl ? (
-              <div className="attachment">
-                <div>Image</div>
-                <span>
-                  <b>Uploaded screenshot</b>
-                  <small>View attachment</small>
-                </span>
-                <button
-                  className="iconBtn"
-                  onClick={() => window.open(bug.imageUrl, "_blank")}
+            <div className="attachmentList">
+              {(bug.attachments || []).map((savedAttachment) => {
+              const downloadUrl =
+                savedAttachment.url ||
+                (savedAttachment.id === "legacy-screenshot"
+                  ? `${API}/tickets/${bug.rawId}/screenshot`
+                  : null);
+              const type = savedAttachment.contentType || "";
+              const AttachmentTypeIcon = type.startsWith("image/")
+                ? FileImage
+                : type.startsWith("video/")
+                  ? FileVideo
+                  : type.includes("pdf") || type.startsWith("text/")
+                    ? FileText
+                    : FileIcon;
+
+              return (
+                <div
+                  className="attachment"
+                  key={savedAttachment.id}
                 >
-                  <Download size={17} />
-                </button>
-              </div>
-            ) : bug.hasScreenshot ? (
-              <div className="attachment">
-                <div>PNG</div>
-                <span>
-                  <b>screenshot.png</b>
-                  <small>View attachment</small>
-                </span>
-                <button
-                  className="iconBtn"
-                  onClick={() =>
-                    window.open(
-                      `${API}/tickets/${bug.rawId}/screenshot`,
-                      "_blank",
-                    )
-                  }
-                >
-                  <Download size={17} />
-                </button>
-              </div>
-            ) : null}
+                  <AttachmentTypeIcon className="attachmentFileIcon" size={21} />
+                  <span>
+                    <b title={savedAttachment.fileName}>{savedAttachment.fileName}</b>
+                    <small>
+                      {type.split("/").pop()?.toUpperCase() || "FILE"}
+                    </small>
+                  </span>
+                  <div className="attachmentActions">
+                    {downloadUrl && (
+                      <button
+                        className="iconBtn"
+                        type="button"
+                        title="Download attachment"
+                        aria-label={`Download ${savedAttachment.fileName}`}
+                        onClick={() => window.open(downloadUrl, "_blank")}
+                      >
+                        <Download size={17} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+              })}
+              {attachmentsToUpload.map((file, index) => {
+              const AttachmentTypeIcon = file.type.startsWith("image/")
+                ? FileImage
+                : file.type.startsWith("video/")
+                  ? FileVideo
+                  : file.type.includes("pdf") || file.type.startsWith("text/")
+                    ? FileText
+                    : FileIcon;
+              return (
+                <div className="attachment attachmentPendingUpload" key={`${file.name}-${file.lastModified}-${index}`}>
+                  <AttachmentTypeIcon className="attachmentFileIcon" size={21} />
+                  <span>
+                    <b title={file.name}>{file.name}</b>
+                    <small>Will be added when changes are saved</small>
+                  </span>
+                </div>
+              );
+              })}
+            </div>
           </article>
           <article className="panel comments">
             <h3>History and Comments</h3>

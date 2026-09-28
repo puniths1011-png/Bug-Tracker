@@ -260,7 +260,9 @@ function App({ isAdminPage = false }) {
     formData.append("typeOfApplication", values.typeOfApplication || "");
     formData.append("browser", values.browser || "");
     formData.append("browserVersion", values.browserVersion || "");
-    if (values.attachment) formData.append("image", values.attachment);
+    values.attachmentsToUpload?.forEach((file) =>
+      formData.append("images", file),
+    );
 
     const data = await apiFetch(`/tickets/${rawId}`, {
       method: "PUT",
