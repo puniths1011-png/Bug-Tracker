@@ -2114,6 +2114,10 @@ select {
   margin-top: 7px;
 }
 
+.descriptionEditor {
+  padding: 8px 10px;
+}
+
 .projectModal {
   width: min(400px, calc(100vw - 32px));
   max-height: calc(100vh - 32px);
@@ -2148,6 +2152,53 @@ select {
   right: 0;
   top: 50%;
   transform: translateY(-50%);
+}
+
+.deleteConfirmOverlay {
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.deleteConfirmDialog {
+  width: min(420px, 100%);
+  padding: 26px;
+}
+
+.deleteConfirmDialog p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.deleteConfirmDialog p strong {
+  color: var(--text);
+}
+
+.deleteConfirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.deleteConfirmButton {
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: var(--red);
+  color: white;
+  font: 600 13.5px Manrope, sans-serif;
+}
+
+.deleteConfirmButton:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .auth {

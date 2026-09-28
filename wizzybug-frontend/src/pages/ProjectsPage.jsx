@@ -32,12 +32,13 @@ function ProjectsPage({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState("");
+  const [projectToDelete, setProjectToDelete] = useState(null);
   const [editingProject, setEditingProject] = useState(null);
   const [editDescription, setEditDescription] = useState("");
   const isAdmin = user?.role === "admin";
 
   useEffect(() => {
-    if (!showCreate && !editingProject) return undefined;
+    if (!showCreate && !editingProject && !projectToDelete) return undefined;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -45,7 +46,7 @@ function ProjectsPage({
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [showCreate, editingProject]);
+  }, [showCreate, editingProject, projectToDelete]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -64,11 +65,17 @@ function ProjectsPage({
   };
 
   const handleDelete = async (project) => {
-    if (!window.confirm(`Remove project "${project.name}" and all of its bugs?`)) return;
-    setDeletingId(project._id);
+    setProjectToDelete(project);
+    setError("");
+  };
+
+  const confirmDelete = async () => {
+    if (!projectToDelete) return;
+    setDeletingId(projectToDelete._id);
     setError("");
     try {
-      await deleteProject(project._id);
+      await deleteProject(projectToDelete._id);
+      setProjectToDelete(null);
     } catch (err) {
       setError(err.message || "Could not remove project");
     } finally {
@@ -187,7 +194,13 @@ function ProjectsPage({
             {error && <div className="formError">{error}</div>}
             <label>
               {editingProject.name}
-              <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={5} autoFocus />
+              <textarea
+                className="descriptionEditor"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                rows={5}
+                autoFocus
+              />
             </label>
             <div className="formActions" style={{ marginTop: 15 }}>
               <button className="primary" type="submit" disabled={saving} style={{ width: "100%" }}>
@@ -195,6 +208,68 @@ function ProjectsPage({
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {projectToDelete && (
+        <div
+          className="overlay deleteConfirmOverlay"
+          onClick={(event) => {
+            if (event.target === event.currentTarget && !deletingId) {
+              setProjectToDelete(null);
+              setError("");
+            }
+          }}
+        >
+          <section
+            className="panel deleteConfirmDialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-project-title"
+            aria-describedby="delete-project-message"
+          >
+            <div className="modalHeading">
+              <h3 id="delete-project-title">Remove project?</h3>
+              <button
+                type="button"
+                aria-label="Close delete confirmation"
+                disabled={Boolean(deletingId)}
+                onClick={() => {
+                  setProjectToDelete(null);
+                  setError("");
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p id="delete-project-message">
+              Remove <strong>{projectToDelete.name}</strong> and all of its bugs?
+              This action cannot be undone.
+            </p>
+            {error && <div className="formError">{error}</div>}
+            <div className="deleteConfirmActions">
+              <button
+                className="outline"
+                type="button"
+                disabled={Boolean(deletingId)}
+                onClick={() => {
+                  setProjectToDelete(null);
+                  setError("");
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="deleteConfirmButton"
+                type="button"
+                disabled={Boolean(deletingId)}
+                onClick={confirmDelete}
+              >
+                <Trash2 size={15} />
+                {deletingId ? "Removing..." : "Remove project"}
+              </button>
+            </div>
+          </section>
         </div>
       )}
 
