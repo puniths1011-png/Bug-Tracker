@@ -1068,7 +1068,7 @@ td {
   color: var(--text);
   font-size: 13.5px;
   font-weight: 400;
-  vertical-align: top;
+  vertical-align: middle;
   text-align: center;
 }
 
@@ -1247,6 +1247,10 @@ td:first-child small,
 .tableWrap td:nth-child(4) .person {
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+.tableWrap td.currentAssigneeCell {
+  text-align: left;
 }
 
 .date,
@@ -1639,7 +1643,7 @@ select {
 }
 
 .assignBugList td:nth-child(4) {
-  vertical-align: top;
+  vertical-align: middle;
   min-width: 170px;
 }
 
@@ -1744,11 +1748,11 @@ select {
   max-width: 190px;
   white-space: normal;
   overflow-wrap: anywhere;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .assignBugList td:nth-child(4) .person .avatar {
-  margin-top: 2px;
+  margin-top: 0;
 }
 
 .detailHead {

@@ -170,7 +170,7 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
                   <td>
                     <Status>{b.status}</Status>
                   </td>
-                  <td>
+                  <td className="currentAssigneeCell">
                     {b.assignee === "Unassigned" ? (
                       <span className="muted">Unassigned</span>
                     ) : (
