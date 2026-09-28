@@ -154,6 +154,7 @@ function ReportPage({
     }
   };
   const isAdmin = user?.role === "admin";
+  const goBack = () => setPage(selectedProjectId ? "projects" : "bugs");
 
   const submit = async (e) => {
     e.preventDefault();
@@ -231,6 +232,10 @@ function ReportPage({
 
   return (
     <div className="formPage">
+      <button className="back" type="button" onClick={goBack}>
+        <ArrowLeft size={16} />
+        Back
+      </button>
       <div className="pageIntro">
         <div>
           <h2>Report a Bug</h2>
@@ -649,7 +654,7 @@ function ReportPage({
           <button
             type="button"
             className="outline"
-            onClick={() => setPage("bugs")}
+            onClick={goBack}
           >
             Cancel
           </button>

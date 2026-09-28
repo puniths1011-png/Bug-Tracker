@@ -182,6 +182,31 @@ function App({ isAdminPage = false }) {
     );
   }, [logged]);
 
+  useEffect(() => {
+    if (!logged) return undefined;
+
+    let refreshInProgress = false;
+    const refreshWorkspaceData = () => {
+      if (document.visibilityState !== "visible" || refreshInProgress) return;
+      refreshInProgress = true;
+      Promise.all([refreshTickets(), refreshUsers(), refreshProjects()]).finally(() => {
+        refreshInProgress = false;
+      });
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") refreshWorkspaceData();
+    };
+    const intervalId = window.setInterval(refreshWorkspaceData, 5000);
+    window.addEventListener("focus", refreshWorkspaceData);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshWorkspaceData);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [logged]);
+
   if (!logged)
     return (
       <Login
@@ -455,6 +480,11 @@ function App({ isAdminPage = false }) {
           setGlobalSearch={setGlobalSearch}
           theme={theme}
           toggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
+          bugs={bugs}
+          projects={projects}
+          user={user}
+          setSelected={setSelected}
+          openProject={openProject}
         />
         <div className="content">
           {loadingData && bugs.length === 0 ? (

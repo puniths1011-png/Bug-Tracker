@@ -270,7 +270,7 @@ function ProjectsPage({
                 autoFocus
               />
             </label>
-            <div className="formActions" style={{ marginTop: 15 }}>
+            <div className="projectDescriptionActions">
               <button
                 className="primary"
                 type="submit"

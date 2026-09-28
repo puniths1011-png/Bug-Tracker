@@ -18,8 +18,10 @@ function Header({
   theme,
   toggleTheme,
   bugs = [],
+  projects = [],
   user,
   setSelected,
+  openProject,
 }) {
   const [now, setNow] = useState(new Date());
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -43,12 +45,41 @@ function Header({
     return () => clearInterval(t);
   }, []);
 
-  const notifications = [...bugs]
+  const userId = user?._id ? String(user._id) : "";
+  const userEmail = user?.email?.toLowerCase() || "";
+  const projectNotifications = projects
+    .filter((project) =>
+      (project.members || []).some((member) => {
+        const memberId = String(member?._id || member || "");
+        const memberEmail = member?.email?.toLowerCase() || "";
+        return (
+          (userId && memberId === userId) ||
+          (userEmail && memberEmail === userEmail)
+        );
+      }),
+    )
+    .map((project) => ({
+      type: "project",
+      id: `project-${project._id}`,
+      projectId: String(project._id),
+      title: project.name,
+      context: "Project assigned to you",
+      updatedAt: project.updatedAt || project.createdAt,
+    }));
+  const bugNotifications = bugs
     .filter((bug) => isAssignedToUser(bug, user))
+    .map((bug) => ({
+      type: "bug",
+      id: `bug-${bug.rawId || bug.id}`,
+      bug,
+      title: bug.title,
+      context: "Bug assigned to you",
+      project: bug.project,
+      updatedAt: bug.updatedAt || bug.createdAt,
+    }));
+  const notifications = [...bugNotifications, ...projectNotifications]
     .sort(
-      (a, b) =>
-        new Date(b.updatedAt || b.createdAt).getTime() -
-        new Date(a.updatedAt || a.createdAt).getTime(),
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
     )
     .slice(0, 8);
 
@@ -107,27 +138,44 @@ function Header({
               </div>
               {notifications.length ? (
                 <div className="notificationList">
-                  {notifications.map((bug) => (
+                  {notifications.map((notification) => (
                     <button
                       className={`notificationCard ${user?.role || "member"}`}
-                      key={bug.rawId || bug.id}
+                      key={notification.id}
                       type="button"
                       onClick={() => {
                         setNotificationsOpen(false);
-                        setSelected(bug);
+                        if (notification.type === "bug") {
+                          setSelected(notification.bug);
+                        } else {
+                          openProject(notification.projectId);
+                        }
                       }}
                     >
-                      <span className="notificationIcon"><Bell size={16} /></span>
+                      <span className="notificationIcon">
+                        {notification.type === "bug" ? (
+                          <Bug size={16} />
+                        ) : (
+                          <FolderKanban size={16} />
+                        )}
+                      </span>
                       <span className="notificationText">
-                        <b>Bug assigned to you</b>
-                        <span>{bug.title}</span>
-                        <small>{bug.project} · {timeAgoIST(bug.updatedAt || bug.createdAt)}</small>
+                        <b>{notification.context}</b>
+                        <span>{notification.title}</span>
+                        <small>
+                          {notification.project
+                            ? `${notification.project} · `
+                            : ""}
+                          {timeAgoIST(notification.updatedAt)}
+                        </small>
                       </span>
                     </button>
                   ))}
                 </div>
               ) : (
-                <p className="notificationEmpty">No bug assignments yet.</p>
+                <p className="notificationEmpty">
+                  No bug or project assignments yet.
+                </p>
               )}
             </div>
           )}

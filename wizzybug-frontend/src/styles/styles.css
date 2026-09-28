@@ -2158,8 +2158,12 @@ select {
 
 .projectDescriptionActions {
   display: flex;
-  justify-content: center;
   margin-top: 15px;
+}
+
+.projectDescriptionActions .primary {
+  width: 100%;
+  justify-content: center;
 }
 
 .projectModal {
