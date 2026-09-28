@@ -2749,11 +2749,27 @@ select {
   align-items: center;
 }
 
+.radioGroup label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-weight: normal;
+}
+
+.radioGroup input[type="radio"] {
+  width: auto;
+  margin: 0;
+  padding: 0;
+}
+
 .editRadioField {
+  grid-column: 1 / -1;
   border: 0;
   padding: 0;
   margin: 0;
   min-width: 0;
+  width: 100%;
 }
 
 .editRadioField legend {
@@ -2763,23 +2779,21 @@ select {
 
 .editDefectTypeRadioGroup {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 12px 20px;
   margin: 8px 0 12px;
   width: 100%;
 }
 
 .editDefectTypeRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 20px;
-  align-items: center;
+  display: contents;
 }
 
 .editDefectTypeRow label {
   display: inline-flex;
+  flex-direction: row-reverse;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   margin: 0;
   font-weight: normal;
   white-space: nowrap;
@@ -2791,8 +2805,9 @@ select {
 
 .editRadioField .radioGroup label {
   display: inline-flex;
+  flex-direction: row-reverse;
   align-items: center;
-  gap: 5px;
+  gap: 7px;
   margin: 0;
   font-weight: normal;
 }

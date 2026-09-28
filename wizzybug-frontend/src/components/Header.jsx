@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState, useEffect } from 'react';
+﻿import React, { useMemo, useState, useEffect, useRef } from 'react';
 import * as Icons from 'lucide-react';
 const {LayoutDashboard,Bug,Plus,Users,User,Settings,LogOut,Search,Bell,ChevronDown,ArrowUpRight,Clock3,CircleCheck,TriangleAlert,Filter,Download,Menu,X,ChevronRight,Paperclip,Send,CalendarDays,BarChart3,FolderKanban,Activity,ShieldCheck,Eye,EyeOff,Moon,Sun,UserCog,Mail,ClipboardList,RefreshCcw,FolderPlus,ArrowLeft} = Icons;
 import { jsPDF } from 'jspdf';
@@ -23,6 +23,21 @@ function Header({
 }) {
   const [now, setNow] = useState(new Date());
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const notificationWrapRef = useRef(null);
+
+  useEffect(() => {
+    if (!notificationsOpen) return undefined;
+
+    const closeOnOutsideClick = (event) => {
+      if (!notificationWrapRef.current?.contains(event.target)) {
+        setNotificationsOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    return () => document.removeEventListener("pointerdown", closeOnOutsideClick);
+  }, [notificationsOpen]);
+
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 30000);
     return () => clearInterval(t);
@@ -68,13 +83,16 @@ function Header({
             }}
           />
         </label>
-        <div className="notificationWrap">
+        <div className="notificationWrap" ref={notificationWrapRef}>
           <button
             className="iconBtn notificationButton"
             type="button"
-            aria-label={`Open notifications (${notifications.length})`}
+            aria-label={`${notificationsOpen ? "Close" : "Open"} notifications (${notifications.length})`}
             aria-expanded={notificationsOpen}
-            onClick={() => setNotificationsOpen((open) => !open)}
+            onClick={(event) => {
+              event.stopPropagation();
+              setNotificationsOpen((open) => !open);
+            }}
           >
             <Bell size={19} />
             {notifications.length > 0 && (
