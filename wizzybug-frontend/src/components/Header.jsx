@@ -23,9 +23,34 @@ function Header({
   setSelected,
   openProject,
 }) {
+  const userId = user?._id
+    ? String(user._id)
+    : user?.email?.toLowerCase() || "anonymous";
+  const notificationStorageKey = `wizzybug-read-notifications:${userId}`;
   const [now, setNow] = useState(new Date());
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [readNotificationIds, setReadNotificationIds] = useState(() => {
+    try {
+      const saved = JSON.parse(
+        localStorage.getItem(notificationStorageKey) || "[]",
+      );
+      return new Set(Array.isArray(saved) ? saved : []);
+    } catch {
+      return new Set();
+    }
+  });
   const notificationWrapRef = useRef(null);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(
+        localStorage.getItem(notificationStorageKey) || "[]",
+      );
+      setReadNotificationIds(new Set(Array.isArray(saved) ? saved : []));
+    } catch {
+      setReadNotificationIds(new Set());
+    }
+  }, [notificationStorageKey]);
 
   useEffect(() => {
     if (!notificationsOpen) return undefined;
@@ -45,7 +70,6 @@ function Header({
     return () => clearInterval(t);
   }, []);
 
-  const userId = user?._id ? String(user._id) : "";
   const userEmail = user?.email?.toLowerCase() || "";
   const projectNotifications = projects
     .filter((project) =>
@@ -58,30 +82,51 @@ function Header({
         );
       }),
     )
-    .map((project) => ({
-      type: "project",
-      id: `project-${project._id}`,
-      projectId: String(project._id),
-      title: project.name,
-      context: "Project assigned to you",
-      updatedAt: project.updatedAt || project.createdAt,
-    }));
+    .map((project) => {
+      const updatedAt = project.updatedAt || project.createdAt;
+      return {
+        type: "project",
+        id: `project-${project._id}-${updatedAt || ""}`,
+        projectId: String(project._id),
+        title: project.name,
+        context: "Project assigned to you",
+        updatedAt,
+      };
+    });
   const bugNotifications = bugs
     .filter((bug) => isAssignedToUser(bug, user))
-    .map((bug) => ({
-      type: "bug",
-      id: `bug-${bug.rawId || bug.id}`,
-      bug,
-      title: bug.title,
-      context: "Bug assigned to you",
-      project: bug.project,
-      updatedAt: bug.updatedAt || bug.createdAt,
-    }));
+    .map((bug) => {
+      const updatedAt = bug.updatedAt || bug.createdAt;
+      return {
+        type: "bug",
+        id: `bug-${bug.rawId || bug.id}-${updatedAt || ""}`,
+        bug,
+        title: bug.title,
+        context: "Bug assigned to you",
+        project: bug.project,
+        updatedAt,
+      };
+    });
   const notifications = [...bugNotifications, ...projectNotifications]
     .sort(
       (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
     )
+    .filter((notification) => !readNotificationIds.has(notification.id))
     .slice(0, 8);
+
+  const markNotificationRead = (notificationId) => {
+    setReadNotificationIds((current) => {
+      const updated = new Set(current);
+      updated.add(notificationId);
+      try {
+        localStorage.setItem(
+          notificationStorageKey,
+          JSON.stringify([...updated]),
+        );
+      } catch {}
+      return updated;
+    });
+  };
 
   return (
     <header>
@@ -144,6 +189,7 @@ function Header({
                       key={notification.id}
                       type="button"
                       onClick={() => {
+                        markNotificationRead(notification.id);
                         setNotificationsOpen(false);
                         if (notification.type === "bug") {
                           setSelected(notification.bug);
