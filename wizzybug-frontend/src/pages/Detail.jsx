@@ -71,7 +71,7 @@ const environmentOptions = [
   "Staging",
   "Production",
 ];
-const reproductionRateOptions = ["100%", "75%", "50%", "25%", "Random"];
+const reproductionRateOptions = ["100%", "75%", "50%", "25%"];
 const defectTypeOptions = [
   "Functional",
   "UI/UX",
@@ -478,6 +478,12 @@ function Detail({
                         {rate}
                       </option>
                     ))}
+                    {editForm.reproductionRate &&
+                      !reproductionRateOptions.includes(editForm.reproductionRate) && (
+                        <option value={editForm.reproductionRate}>
+                          {editForm.reproductionRate}
+                        </option>
+                      )}
                   </select>
                 </label>
                 <label>
