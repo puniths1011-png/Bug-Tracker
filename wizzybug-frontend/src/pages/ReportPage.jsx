@@ -514,10 +514,11 @@ function ReportPage({
               <option value="" disabled>
                 Select priority
               </option>
-              <option>P1-Immediate Fix</option>
-              <option>P2-High</option>
-              <option>P3-Medium</option>
-              <option>P4-Low</option>
+              {Object.entries(PRIORITY_LABELS).map(([priorityValue, label]) => (
+                <option key={priorityValue} value={priorityValue}>
+                  {label}
+                </option>
+              ))}
             </select>
           </label>
         </div>

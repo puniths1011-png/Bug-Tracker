@@ -11,10 +11,10 @@ export const STATUS_LABELS = {
 export const STATUS_VALUES = Object.keys(STATUS_LABELS);
 
 export const PRIORITY_LABELS = {
-  critical: "Critical",
-  high: "High",
-  medium: "Medium",
-  low: "Low",
+  critical: "P1-Immediate Fix",
+  high: "P2-High",
+  medium: "P3-Medium",
+  low: "P4-Low",
 };
 
 export const SEVERITY_TO_PRIORITY = {

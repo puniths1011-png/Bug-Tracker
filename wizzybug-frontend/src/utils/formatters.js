@@ -13,11 +13,26 @@ export const initialsOf = (name = "") =>
 
 export const statusLabel = (status) => STATUS_LABELS[status] || status;
 
-export const priorityLabel = (priority) =>
-  PRIORITY_LABELS[priority] ||
-  (priority
+export const priorityLabel = (priority) => {
+  const normalizedPriority = String(priority || "").trim().toLowerCase();
+  if (PRIORITY_LABELS[normalizedPriority]) {
+    return PRIORITY_LABELS[normalizedPriority];
+  }
+
+  const matchingPriority = Object.keys(PRIORITY_LABELS).find((key) => {
+    const label = PRIORITY_LABELS[key].toLowerCase().replace(/[^a-z]+/g, "");
+    const value = normalizedPriority.replace(/[^a-z]+/g, "");
+    return label === value;
+  });
+
+  if (matchingPriority) {
+    return PRIORITY_LABELS[matchingPriority];
+  }
+
+  return priority
     ? priority.charAt(0).toUpperCase() + priority.slice(1)
-    : "Medium");
+    : "P3-Medium";
+};
 
 const legacyPrioritySeverity = {
   critical: "Critical",

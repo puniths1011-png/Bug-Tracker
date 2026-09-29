@@ -650,18 +650,30 @@ function Detail({
                   </label>
                 </div>
                 <div className="twoCol">
-                  <label>
-                    Type of Application
-                    <input
-                      value={editForm.typeOfApplication}
-                      onChange={(e) =>
-                        setEditForm({
-                          ...editForm,
-                          typeOfApplication: e.target.value,
-                        })
-                      }
-                    />
-                  </label>
+                  <fieldset className="editRadioField">
+                    <legend>Type of Application</legend>
+                    <div className="radioGroup">
+                      {["Web Application", "Mobile App", "Mobile Browser"].map(
+                        (type) => (
+                          <label key={type}>
+                            <input
+                              type="radio"
+                              name="editTypeOfApplication"
+                              value={type}
+                              checked={editForm.typeOfApplication === type}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm,
+                                  typeOfApplication: e.target.value,
+                                })
+                              }
+                            />
+                            {type}
+                          </label>
+                        ),
+                      )}
+                    </div>
+                  </fieldset>
                   <label>
                     Browser
                     <input

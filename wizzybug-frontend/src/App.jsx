@@ -259,8 +259,18 @@ function App({ isAdminPage = false }) {
       />
     );
 
+  const normalizePriority = (priority) => {
+    const value = String(priority || "").trim().toLowerCase();
+    if (["critical", "high", "medium", "low"].includes(value)) return value;
+    if (value.startsWith("p1")) return "critical";
+    if (value.startsWith("p2")) return "high";
+    if (value.startsWith("p3")) return "medium";
+    if (value.startsWith("p4")) return "low";
+    return SEVERITY_TO_PRIORITY[priority] || "medium";
+  };
+
   const addBug = async (b) => {
-    const mappedPriority = SEVERITY_TO_PRIORITY[b.severity] || "medium";
+    const mappedPriority = normalizePriority(b.priority || SEVERITY_TO_PRIORITY[b.severity] || "medium");
     const formData = new FormData();
     formData.append("title", b.title);
     formData.append("description", b.desc);
@@ -311,7 +321,7 @@ function App({ isAdminPage = false }) {
     formData.append("title", values.title || "");
     formData.append("description", values.desc || "");
     formData.append("severity", values.severity || "Minor");
-    formData.append("priority", values.priority || "medium");
+    formData.append("priority", normalizePriority(values.priority || "medium"));
     formData.append("environment", values.environment || "");
     formData.append("moduleFeatureName", values.moduleFeatureName || "");
     formData.append("buildAppVersion", values.buildAppVersion || "");
