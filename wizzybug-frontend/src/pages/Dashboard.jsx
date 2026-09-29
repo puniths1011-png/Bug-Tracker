@@ -48,15 +48,16 @@ import {
   STATUS_VALUES,
   PRIORITY_LABELS,
   SEVERITY_TO_PRIORITY,
+  SEVERITY_LABELS,
 } from "../utils/constants";
 import { Avatar, Logo, RoleBadge, Status } from "../components/Ui";
 import {
   initialsOf,
   isAssignedToUser,
-  priorityLabel,
   statusLabel,
   buildTimeline,
   pdfText,
+  severityLabel,
 } from "../utils/formatters";
 import BugTable from "../components/BugTable";
 import Stats from "../components/Stats";
@@ -121,17 +122,18 @@ function Trend({ bugs = [] }) {
 // Severity distribution donut, using the same pre-built .donut CSS.
 
 function Distribution({ bugs = [] }) {
-  const counts = { critical: 0, high: 0, medium: 0, low: 0, cosmetic: 0 };
+  const counts = Object.fromEntries(SEVERITY_LABELS.map((severity) => [severity, 0]));
   bugs.forEach((b) => {
-    if (counts[b.priority] !== undefined) counts[b.priority]++;
+    const severity = severityLabel(b.severity, b.priority);
+    if (counts[severity] !== undefined) counts[severity]++;
   });
   const total = bugs.length || 1;
   const colors = {
-    critical: "#ff7d87",
-    high: "#f0a456",
-    medium: "#80aaff",
-    low: "#9b99a4",
-    cosmetic: "#9b99a4",
+    "Blocker(System Crash/Data Loss)": "#c94251",
+    Critical: "#ff7d87",
+    Major: "#f0a456",
+    Minor: "#80aaff",
+    Cosmetic: "#9b99a4",
   };
 
   let cumulative = 0;
@@ -157,7 +159,7 @@ function Distribution({ bugs = [] }) {
       <div className="panelHead">
         <div>
           <h3>Severity Distribution</h3>
-          <p>Breakdown of open work by severity</p>
+          <p>Breakdown of all bugs by severity</p>
         </div>
       </div>
       <div className="donutWrap">
@@ -178,7 +180,7 @@ function Distribution({ bugs = [] }) {
           {Object.entries(counts).map(([key, count]) => (
             <li key={key}>
               <span style={{ background: colors[key] }} />
-              {priorityLabel(key)}
+              {key === "Blocker(System Crash/Data Loss)" ? "Blocker" : key}
               <b>{count}</b>
             </li>
           ))}
@@ -214,6 +216,17 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
     formatIST(b.createdAt),
   ]);
 
+  const bugSummary = [
+    ["Total Bugs", bugs.length],
+    ["In Progress", bugs.filter((b) => b.status === "in_progress").length],
+    ["Open Bugs", bugs.filter((b) => b.status === "open").length],
+    [
+      "Closed",
+      bugs.filter((b) => b.status === "closed" || b.status === "resolved")
+        .length,
+    ],
+  ];
+
   const downloadBlob = (content, type, filename) => {
     const url = URL.createObjectURL(new Blob([content], { type }));
     const link = document.createElement("a");
@@ -239,12 +252,34 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
       align: "center",
     });
 
-    const tableRows = reportRows.map((row) => row.map(pdfText));
+    autoTable(doc, {
+      head: [bugSummary.map(([label]) => label.toUpperCase())],
+      body: [bugSummary.map(([, count]) => String(count))],
+      startY: 31,
+      theme: "grid",
+      margin: { left: margin, right: margin },
+      headStyles: {
+        fillColor: [91, 70, 190],
+        textColor: 255,
+        fontStyle: "bold",
+        fontSize: 8,
+        halign: "center",
+      },
+      bodyStyles: {
+        fontStyle: "bold",
+        fontSize: 13,
+        halign: "center",
+        textColor: [35, 35, 45],
+        cellPadding: 4,
+      },
+      alternateRowStyles: { fillColor: [245, 243, 252] },
+    });
 
+    const tableRows = reportRows.map((row) => row.map(pdfText));
     autoTable(doc, {
       head: [reportHeaders],
       body: tableRows,
-      startY: 31,
+      startY: doc.lastAutoTable.finalY + 8,
       theme: "grid",
       margin: { left: margin, right: margin },
       headStyles: {
@@ -293,7 +328,17 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
   const exportToDelimited = (format) => {
     if (format === "excel") {
       const workbook = XLSX.utils.book_new();
-      const worksheet = XLSX.utils.aoa_to_sheet([reportHeaders, ...reportRows]);
+      const summaryRow = bugSummary.flatMap(([label, count]) => [label, count]);
+      const worksheet = XLSX.utils.aoa_to_sheet([
+        ["BUG SUMMARY", "", "", "", "", "", "", ""],
+        summaryRow,
+        ["", "", "", "", "", "", "", ""],
+        reportHeaders,
+        ...reportRows,
+      ]);
+      worksheet["!merges"] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: reportHeaders.length - 1 } },
+      ];
       const headerStyle = {
         fill: { fgColor: { rgb: "5B46BE" } },
         font: { bold: true, color: { rgb: "FFFFFF" } },
@@ -316,12 +361,24 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
         },
       });
 
+      worksheet["A1"].s = {
+        fill: { fgColor: { rgb: "40328C" } },
+        font: { bold: true, color: { rgb: "FFFFFF" }, sz: 14 },
+      };
+      bugSummary.forEach(([label], index) => {
+        const labelCell = XLSX.utils.encode_cell({ r: 1, c: index * 2 });
+        const valueCell = XLSX.utils.encode_cell({ r: 1, c: index * 2 + 1 });
+        worksheet[labelCell].s = { font: { bold: true } };
+        worksheet[valueCell].s = {
+          font: { bold: true, sz: 14, color: { rgb: "40328C" } },
+        };
+      });
       reportHeaders.forEach((_, columnIndex) => {
-        worksheet[XLSX.utils.encode_cell({ r: 0, c: columnIndex })].s =
+        worksheet[XLSX.utils.encode_cell({ r: 3, c: columnIndex })].s =
           headerStyle;
-        for (let rowIndex = 1; rowIndex <= reportRows.length; rowIndex += 1) {
+        for (let rowIndex = 4; rowIndex < reportRows.length + 4; rowIndex += 1) {
           worksheet[XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex })].s =
-            dataStyle(rowIndex);
+            dataStyle(rowIndex - 3);
         }
       });
       worksheet["!cols"] = [
@@ -335,7 +392,7 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
         { wch: 24 },
       ];
       worksheet["!autofilter"] = {
-        ref: `A1:${XLSX.utils.encode_col(reportHeaders.length - 1)}${reportRows.length + 1}`,
+        ref: `A4:${XLSX.utils.encode_col(reportHeaders.length - 1)}${reportRows.length + 4}`,
       };
       XLSX.utils.book_append_sheet(workbook, worksheet, "Bug Report");
       XLSX.writeFile(workbook, "wizzybug_bugs_report.xlsx", {
@@ -346,7 +403,14 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
 
     const escapeCell = (value) =>
       `"${String(value ?? "").replace(/"/g, '""')}"`;
-    const content = [reportHeaders, ...reportRows]
+    const content = [
+      ["BUG SUMMARY"],
+      bugSummary.map(([label]) => label),
+      bugSummary.map(([, count]) => count),
+      [],
+      reportHeaders,
+      ...reportRows,
+    ]
       .map((row) => row.map(escapeCell).join(","))
       .join("\r\n");
     downloadBlob(`\uFEFF${content}`, "text/csv;charset=utf-8", "wizzybug_bugs_report.csv");

@@ -181,6 +181,9 @@ function Detail({
 
   const canReassign = true;
   const timeline = buildTimeline(bug);
+  const updateEditField = (field, value) => {
+    setEditForm((current) => ({ ...current, [field]: value }));
+  };
 
   const handleSend = async () => {
     if (!commentText.trim()) return;
@@ -432,7 +435,7 @@ function Detail({
                   <input
                     value={editForm.title}
                     onChange={(e) =>
-                      setEditForm({ ...editForm, title: e.target.value })
+                      updateEditField("title", e.target.value)
                     }
                     required
                   />
@@ -441,8 +444,9 @@ function Detail({
                   Steps to reproduce *<b></b>
                   <textarea
                     value={editForm.desc}
+                    required
                     onChange={(e) =>
-                      setEditForm({ ...editForm, desc: e.target.value })
+                      updateEditField("desc", e.target.value)
                     }
                   />
                 </label>
@@ -451,7 +455,7 @@ function Detail({
                   <select
                     value={editForm.priority}
                     onChange={(e) =>
-                      setEditForm({ ...editForm, priority: e.target.value })
+                      updateEditField("priority", e.target.value)
                     }
                   >
                     {Object.keys(PRIORITY_LABELS).map((priority) => (
@@ -466,10 +470,7 @@ function Detail({
                   <select
                     value={editForm.reproductionRate}
                     onChange={(e) =>
-                      setEditForm({
-                        ...editForm,
-                        reproductionRate: e.target.value,
-                      })
+                      updateEditField("reproductionRate", e.target.value)
                     }
                   >
                     <option value="">Select reproduction rate</option>
@@ -485,7 +486,7 @@ function Detail({
                   <select
                     value={editForm.severity}
                     onChange={(e) =>
-                      setEditForm({ ...editForm, severity: e.target.value })
+                      updateEditField("severity", e.target.value)
                     }
                   >
                     {SEVERITY_LABELS.map((severity) => (
@@ -501,10 +502,7 @@ function Detail({
                     <input
                       value={editForm.moduleFeatureName}
                       onChange={(e) =>
-                        setEditForm({
-                          ...editForm,
-                          moduleFeatureName: e.target.value,
-                        })
+                        updateEditField("moduleFeatureName", e.target.value)
                       }
                     />
                   </label>
@@ -519,10 +517,7 @@ function Detail({
                             value={environment}
                             checked={editForm.environment === environment}
                             onChange={(e) =>
-                              setEditForm({
-                                ...editForm,
-                                environment: e.target.value,
-                              })
+                              updateEditField("environment", e.target.value)
                             }
                           />
                           {environment}
@@ -537,10 +532,7 @@ function Detail({
                     <input
                       value={editForm.buildAppVersion}
                       onChange={(e) =>
-                        setEditForm({
-                          ...editForm,
-                          buildAppVersion: e.target.value,
-                        })
+                        updateEditField("buildAppVersion", e.target.value)
                       }
                     />
                   </label>
@@ -549,10 +541,7 @@ function Detail({
                     <input
                       value={editForm.releaseVersion}
                       onChange={(e) =>
-                        setEditForm({
-                          ...editForm,
-                          releaseVersion: e.target.value,
-                        })
+                        updateEditField("releaseVersion", e.target.value)
                       }
                     />
                   </label>
@@ -570,10 +559,7 @@ function Detail({
                               value={type}
                               checked={editForm.defectType === type}
                               onChange={(e) =>
-                                setEditForm({
-                                  ...editForm,
-                                  defectType: e.target.value,
-                                })
+                                updateEditField("defectType", e.target.value)
                               }
                             />
                             {type}
@@ -589,10 +575,7 @@ function Detail({
                               value={type}
                               checked={editForm.defectType === type}
                               onChange={(e) =>
-                                setEditForm({
-                                  ...editForm,
-                                  defectType: e.target.value,
-                                })
+                                updateEditField("defectType", e.target.value)
                               }
                             />
                             {type}
@@ -617,10 +600,7 @@ function Detail({
                     <textarea
                       value={editForm.expectedResult}
                       onChange={(e) =>
-                        setEditForm({
-                          ...editForm,
-                          expectedResult: e.target.value,
-                        })
+                        updateEditField("expectedResult", e.target.value)
                       }
                     />
                   </label>
@@ -629,10 +609,7 @@ function Detail({
                     <textarea
                       value={editForm.actualResult}
                       onChange={(e) =>
-                        setEditForm({
-                          ...editForm,
-                          actualResult: e.target.value,
-                        })
+                        updateEditField("actualResult", e.target.value)
                       }
                     />
                   </label>
@@ -650,10 +627,7 @@ function Detail({
                               value={type}
                               checked={editForm.typeOfApplication === type}
                               onChange={(e) =>
-                                setEditForm({
-                                  ...editForm,
-                                  typeOfApplication: e.target.value,
-                                })
+                                updateEditField("typeOfApplication", e.target.value)
                               }
                             />
                             {type}
@@ -667,7 +641,7 @@ function Detail({
                     <input
                       value={editForm.browser}
                       onChange={(e) =>
-                        setEditForm({ ...editForm, browser: e.target.value })
+                        updateEditField("browser", e.target.value)
                       }
                     />
                   </label>
@@ -677,10 +651,7 @@ function Detail({
                   <input
                     value={editForm.browserVersion}
                     onChange={(e) =>
-                      setEditForm({
-                        ...editForm,
-                        browserVersion: e.target.value,
-                      })
+                      updateEditField("browserVersion", e.target.value)
                     }
                   />
                 </label>
