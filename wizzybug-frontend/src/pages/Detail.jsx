@@ -478,12 +478,6 @@ function Detail({
                         {rate}
                       </option>
                     ))}
-                    {editForm.reproductionRate &&
-                      !reproductionRateOptions.includes(editForm.reproductionRate) && (
-                        <option value={editForm.reproductionRate}>
-                          {editForm.reproductionRate}
-                        </option>
-                      )}
                   </select>
                 </label>
                 <label>
