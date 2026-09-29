@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
 import { Response } from "express";
-import Ticket from "../models/Ticket";
+import Ticket, { ITicket } from "../models/Ticket";
 import Project from "../models/Project";
 import User from "../models/User";
 import { AuthRequest } from "../middleware/authMiddleware";
-import { sendMail } from "../utils/mailer";
+import { sendBugAssignmentEmail } from "../utils/mailer";
 import { uploadToCloudinary, deleteFromCloudinary } from "../config/cloudinary";
 
 const normalizeAssigneeIds = (value: unknown): mongoose.Types.ObjectId[] => {
@@ -20,6 +20,65 @@ const normalizeAssigneeIds = (value: unknown): mongoose.Types.ObjectId[] => {
       : [];
 
   return ids.map((id) => new mongoose.Types.ObjectId(id));
+};
+
+const getTicketAssigneeIds = (ticket: ITicket): string[] =>
+  [...new Set([
+    ...(ticket.assignees || []).map(String),
+    ...(ticket.assignee ? [String(ticket.assignee)] : []),
+  ])];
+
+const notifyAssignees = async (
+  ticket: ITicket,
+  assignedIds: mongoose.Types.ObjectId[],
+  previouslyAssignedIds: string[],
+  assignedBy: string,
+  knownProject?: { name: string; key?: string },
+  event: "assigned" | "updated" = "assigned",
+  changedFields: string[] = [],
+): Promise<void> => {
+  const previousIds = new Set(previouslyAssignedIds);
+  const newlyAssignedIds = [...new Set(assignedIds.map(String))]
+    .filter((id) => !previousIds.has(id));
+  if (!newlyAssignedIds.length) return;
+
+  const [assignees, project] = await Promise.all([
+    User.find({ _id: { $in: newlyAssignedIds } }).select("name email"),
+    knownProject || Project.findById(ticket.project).select("name key"),
+  ]);
+  if (!project) {
+    console.error(`[assignment email] Project not found for bug ${ticket.defectId || ticket._id}`);
+    return;
+  }
+
+  const appUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL || process.env.VITE_APP_URL || "http://localhost:5173";
+  await Promise.all(assignees.filter((assignee) => assignee.email).map(async (assignee) => {
+    try {
+      const delivery = await sendBugAssignmentEmail({
+        to: assignee.email,
+        assigneeName: assignee.name,
+        assignedBy,
+        bugId: ticket.defectId || String(ticket._id),
+        title: ticket.title,
+        description: ticket.description,
+        projectName: project.name,
+        projectKey: project.key,
+        priority: ticket.priority,
+        severity: ticket.severity,
+        appUrl,
+        event,
+        changedFields,
+      });
+      console.info(
+        `[assignment email] Sent ${event} notification for ${ticket.defectId || ticket._id} to ${assignee.email} via ${delivery.message}`,
+      );
+    } catch (error) {
+      console.error(
+        `[assignment email] Failed for ${ticket.defectId || ticket._id} to ${assignee.email}:`,
+        error,
+      );
+    }
+  }));
 };
 
 export const getTickets = async (
@@ -170,24 +229,13 @@ export const createTicket = async (
       ],
     });
 
-    // Notify each assignee by email if the reporter assigned it right away.
-    if (normalizedAssignees.length) {
-      const assigneeDocs = await User.find({
-        _id: { $in: normalizedAssignees },
-      });
-      for (const assigneeDoc of assigneeDocs) {
-        if (assigneeDoc?.email) {
-          sendMail({
-            to: assigneeDoc.email,
-            subject: `New bug assigned to you: ${title}`,
-            text: `Hi ${assigneeDoc.name},\n\nA new bug "${title}" has been assigned to you on WizzyBug.\n\nPriority: ${ticket.priority}\n\nLog in to WizzyBug to view the details.`,
-            html: `<p>Hi ${assigneeDoc.name},</p><p>A new bug <b>${title}</b> has been assigned to you on WizzyBug.</p><p>Priority: <b>${ticket.priority}</b></p><p>Log in to WizzyBug to view the full details.</p>`,
-          }).catch((err) =>
-            console.error("[createTicket] assignment email failed:", err),
-          );
-        }
-      }
-    }
+    await notifyAssignees(
+      ticket,
+      normalizedAssignees,
+      [],
+      creatorDoc?.name || "A team member",
+      { name: projectDoc.name, key: projectDoc.key },
+    );
 
     const populatedTicket = await Ticket.findById(ticket._id)
       .populate("project", "name key")
@@ -229,6 +277,31 @@ export const updateTicket = async (
       res.status(404).json({ message: "Ticket not found" });
       return;
     }
+    const previouslyAssignedIds = getTicketAssigneeIds(ticket);
+    const originalFieldValues: Record<string, string> = {
+      Title: String(ticket.title ?? ""),
+      Description: String(ticket.description ?? ""),
+      Severity: String(ticket.severity ?? ""),
+      Priority: String(ticket.priority ?? ""),
+      Project: String(ticket.project ?? ""),
+      Environment: String(ticket.environment ?? ""),
+      "Module / Feature": String(ticket.moduleFeatureName ?? ""),
+      "Build / App Version": String(ticket.buildAppVersion ?? ""),
+      "Release Version": String(ticket.releaseVersion ?? ""),
+      "Reproduction Rate": String(ticket.reproductionRate ?? ""),
+      "Expected Result": String(ticket.expectedResult ?? ""),
+      "Actual Result": String(ticket.actualResult ?? ""),
+      "Defect Type": String(ticket.defectType ?? ""),
+      "Type of Application": String(ticket.typeOfApplication ?? ""),
+      Browser: String(ticket.browser ?? ""),
+      "Browser Version": String(ticket.browserVersion ?? ""),
+      Assignees: previouslyAssignedIds.slice().sort().join(","),
+    };
+    const originalAttachmentState = [
+      ...ticket.attachments.map((attachment) => String(attachment._id)),
+      ticket.imageUrl ? "legacy-image" : "",
+      ticket.screenshot ? "legacy-screenshot" : "",
+    ].sort().join(",");
 
     const {
       title,
@@ -354,6 +427,62 @@ export const updateTicket = async (
 
     await ticket.save();
 
+    const currentFieldValues: Record<string, string> = {
+      Title: String(ticket.title ?? ""),
+      Description: String(ticket.description ?? ""),
+      Severity: String(ticket.severity ?? ""),
+      Priority: String(ticket.priority ?? ""),
+      Project: String(ticket.project ?? ""),
+      Environment: String(ticket.environment ?? ""),
+      "Module / Feature": String(ticket.moduleFeatureName ?? ""),
+      "Build / App Version": String(ticket.buildAppVersion ?? ""),
+      "Release Version": String(ticket.releaseVersion ?? ""),
+      "Reproduction Rate": String(ticket.reproductionRate ?? ""),
+      "Expected Result": String(ticket.expectedResult ?? ""),
+      "Actual Result": String(ticket.actualResult ?? ""),
+      "Defect Type": String(ticket.defectType ?? ""),
+      "Type of Application": String(ticket.typeOfApplication ?? ""),
+      Browser: String(ticket.browser ?? ""),
+      "Browser Version": String(ticket.browserVersion ?? ""),
+      Assignees: getTicketAssigneeIds(ticket).sort().join(","),
+    };
+    const changedFields = Object.keys(originalFieldValues).filter(
+      (field) => originalFieldValues[field] !== currentFieldValues[field],
+    );
+    const currentAttachmentState = [
+      ...ticket.attachments.map((attachment) => String(attachment._id)),
+      ticket.imageUrl ? "legacy-image" : "",
+      ticket.screenshot ? "legacy-screenshot" : "",
+    ].sort().join(",");
+    if (originalAttachmentState !== currentAttachmentState) {
+      changedFields.push("Attachments");
+    }
+
+    if (normalizedAssignees) {
+      await notifyAssignees(
+        ticket,
+        normalizedAssignees,
+        previouslyAssignedIds,
+        req.user?.name || "A team member",
+      );
+    }
+
+    if (changedFields.length) {
+      const previouslyAssigned = new Set(previouslyAssignedIds);
+      const retainedAssignees = getTicketAssigneeIds(ticket)
+        .filter((id) => previouslyAssigned.has(id))
+        .map((id) => new mongoose.Types.ObjectId(id));
+      await notifyAssignees(
+        ticket,
+        retainedAssignees,
+        [],
+        req.user?.name || "A team member",
+        undefined,
+        "updated",
+        changedFields,
+      );
+    }
+
     const populated = await ticket.populate([
       { path: "project", select: "name key" },
       { path: "creator", select: "name email" },
@@ -439,6 +568,7 @@ export const assignTicket = async (
       res.status(404).json({ message: "Ticket not found" });
       return;
     }
+    const previouslyAssignedIds = getTicketAssigneeIds(ticket);
 
     // Assignment is independent from the workflow status.
     const currentStatus = ticket.status;
@@ -472,16 +602,12 @@ export const assignTicket = async (
     });
     await ticket.save();
 
-    for (const assigneeDoc of assigneeDocs) {
-      if (assigneeDoc.email) {
-        sendMail({
-          to: assigneeDoc.email,
-          subject: `Bug assigned to you: ${ticket.title}`,
-          text: `Hi ${assigneeDoc.name},\n\n${req.user?.name || "An admin"} assigned the bug "${ticket.title}" to you on WizzyBug.\n\nPriority: ${ticket.priority}\n\nLog in to WizzyBug to view the details and start working on it.`,
-          html: `<p>Hi ${assigneeDoc.name},</p><p><b>${req.user?.name || "An admin"}</b> assigned the bug <b>${ticket.title}</b> to you on WizzyBug.</p><p>Priority: <b>${ticket.priority}</b></p><p>Log in to WizzyBug to view the details and start working on it.</p>`,
-        }).catch((err) => console.error("[assignTicket] email failed:", err));
-      }
-    }
+    await notifyAssignees(
+      ticket,
+      normalizedAssignees,
+      previouslyAssignedIds,
+      req.user?.name || "A team member",
+    );
 
     const populated = await ticket.populate([
       { path: "project", select: "name key" },

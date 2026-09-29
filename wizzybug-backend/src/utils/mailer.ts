@@ -230,6 +230,107 @@ export const sendPasswordResetViaMail = async (opts: {
   throw new Error("Password reset email could not be sent.");
 };
 
+const escapeHtml = (value: string): string =>
+  value.replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[character] || character);
+
+export const sendBugAssignmentEmail = async (opts: {
+  to: string;
+  assigneeName: string;
+  assignedBy: string;
+  bugId: string;
+  title: string;
+  description: string;
+  projectName: string;
+  projectKey?: string;
+  priority: string;
+  severity: string;
+  appUrl: string;
+  event?: "assigned" | "updated";
+  changedFields?: string[];
+}): Promise<{ success: boolean; message: string }> => {
+  const mailServiceUrl = resolveMailServiceUrl();
+  const smtpTransport = getSmtpTransport();
+  if (!mailServiceUrl && !smtpTransport) {
+    throw new Error("MAIL_SERVICE_URL is not configured. Set it in your environment variables.");
+  }
+
+  const project = opts.projectKey
+    ? `${opts.projectName} (${opts.projectKey})`
+    : opts.projectName;
+  const isUpdate = opts.event === "updated";
+  const subject = `${isUpdate ? "Bug updated" : "Bug assigned to you"}: ${opts.bugId} - ${opts.title}`;
+  const changeSummary = isUpdate && opts.changedFields?.length
+    ? `\nChanged details: ${opts.changedFields.join(", ")}\n`
+    : "";
+  const actionMessage = isUpdate
+    ? `${opts.assignedBy} updated a bug assigned to you in WizzyBug.`
+    : `${opts.assignedBy} assigned a bug to you in WizzyBug.`;
+  const body = `Hi ${opts.assigneeName},
+
+${actionMessage}
+
+Bug: ${opts.bugId} - ${opts.title}
+Project: ${project}
+Priority: ${opts.priority}
+Severity: ${opts.severity}
+${changeSummary}
+
+Description:
+${opts.description || "No description provided."}
+
+Open WizzyBug: ${opts.appUrl}`;
+  const changesHtml = isUpdate && opts.changedFields?.length
+    ? `<p><b>Changed details:</b> ${opts.changedFields.map(escapeHtml).join(", ")}</p>`
+    : "";
+  const html = `<h2>${isUpdate ? "Bug updated" : "Bug assigned to you"}</h2><p>Hi ${escapeHtml(opts.assigneeName)},</p><p><b>${escapeHtml(opts.assignedBy)}</b> ${isUpdate ? "updated a bug assigned to you" : "assigned a bug to you"} in WizzyBug.</p><table><tr><td><b>Bug</b></td><td>${escapeHtml(opts.bugId)} - ${escapeHtml(opts.title)}</td></tr><tr><td><b>Project</b></td><td>${escapeHtml(project)}</td></tr><tr><td><b>Priority</b></td><td>${escapeHtml(opts.priority)}</td></tr><tr><td><b>Severity</b></td><td>${escapeHtml(opts.severity)}</td></tr></table>${changesHtml}<h3>Description</h3><p>${escapeHtml(opts.description || "No description provided.").replace(/\n/g, "<br>")}</p><p><a href="${escapeHtml(opts.appUrl)}">Open WizzyBug</a></p>`;
+
+  if (smtpTransport) {
+    try {
+      await smtpTransport.sendMail({
+        from: getMailFrom(),
+        replyTo: getMailFrom(),
+        to: opts.to,
+        subject,
+        text: body,
+        html,
+      });
+      return { success: true, message: "Bug assignment email sent via Gmail SMTP" };
+    } catch (error) {
+      console.error("[mailer] Bug assignment SMTP delivery failed:", error);
+    }
+  }
+
+  if (mailServiceUrl) {
+    const response = await fetch(mailServiceUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to: opts.to,
+        subject,
+        body,
+        html,
+        from: getMailFrom(),
+        replyTo: getMailFrom(),
+      }),
+    });
+    if (response.ok) {
+      return { success: true, message: "Bug assignment email sent" };
+    }
+    const responseBody = (await response.text()).slice(0, 1000);
+    throw new Error(
+      `Mail Service returned ${response.status}: ${response.statusText}${responseBody ? ` - ${responseBody}` : ""}`,
+    );
+  }
+
+  throw new Error("Bug assignment email could not be sent.");
+};
+
 /**
  * Legacy sendMail function (kept for backwards compatibility)
  * Use sendInviteViaMail for sending invitations instead

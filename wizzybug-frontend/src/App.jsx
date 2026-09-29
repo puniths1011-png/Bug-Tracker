@@ -484,7 +484,14 @@ function App({ isAdminPage = false }) {
       />
     );
   } else {
-    content = <Profile user={user} setUser={setUser} bugs={bugs} />;
+    content = (
+      <Profile
+        user={user}
+        setUser={setUser}
+        bugs={bugs}
+        refreshTickets={refreshTickets}
+      />
+    );
   }
 
   return (

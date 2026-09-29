@@ -56,20 +56,30 @@ import {
   statusLabel,
   buildTimeline,
 } from "../utils/formatters";
+import { updateCurrentUser } from "../services/userService";
 
-function Profile({ user, setUser, bugs = [] }) {
+function Profile({ user, setUser, bugs = [], refreshTickets }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const bugsReported = bugs.filter((b) => b.reporter === user?.name).length;
+  const bugsReported = bugs.filter(
+    (b) =>
+      (user?._id && String(b.reporterId) === String(user._id)) ||
+      (!b.reporterId && b.reporter === user?.name),
+  ).length;
   const bugsResolved = bugs.filter(
     (b) =>
-      b.assignee === user?.name &&
+      ((user?._id && (b.assigneeIds || []).some((id) => String(id) === String(user._id))) ||
+        (!b.assigneeIds?.length && b.assignee === user?.name)) &&
       (b.status === "resolved" || b.status === "closed"),
   ).length;
-  const bugsAssigned = bugs.filter((b) => b.assignee === user?.name).length;
+  const bugsAssigned = bugs.filter(
+    (b) =>
+      (user?._id && (b.assigneeIds || []).some((id) => String(id) === String(user._id))) ||
+      (!b.assigneeIds?.length && b.assignee === user?.name),
+  ).length;
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
 
@@ -81,20 +91,23 @@ function Profile({ user, setUser, bugs = [] }) {
     if (!namePattern.test(firstName) || !namePattern.test(lastName)) {
       e.target.firstName.reportValidity();
       e.target.lastName.reportValidity();
+      setSaving(false);
       return;
     }
 
     const updatedName = `${firstName} ${lastName}`.trim();
 
-    if (setUser) {
-      setUser({ ...user, name: updatedName, email });
-    }
-
-    setTimeout(() => {
-      setSaving(false);
+    try {
+      const updatedUser = await updateCurrentUser({ name: updatedName, email });
+      setUser?.(updatedUser);
+      await refreshTickets?.();
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    }, 600);
+    } catch (error) {
+      alert(error.message || "Could not update profile");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const firstName = user?.name ? user.name.split(" ")[0] : "";
@@ -168,10 +181,10 @@ function Profile({ user, setUser, bugs = [] }) {
             Email address
             <input
               name="email"
-              type="text"
+              type="email"
               defaultValue={user?.email || ""}
               required
-              maxLength={40}
+              maxLength={254}
             />
           </label>
           <label>
