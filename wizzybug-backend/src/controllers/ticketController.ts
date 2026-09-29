@@ -318,11 +318,11 @@ export const updateTicket = async (
       });
     }
 
-    if (title) ticket.title = title;
-    if (description) ticket.description = description;
-    if (severity) ticket.severity = severity;
-    if (priority) ticket.priority = priority.toLowerCase();
-    if (project) ticket.project = project;
+    if (title !== undefined) ticket.title = title;
+    if (description !== undefined) ticket.description = description;
+    if (severity !== undefined) ticket.severity = severity;
+    if (priority !== undefined) ticket.priority = priority.toLowerCase();
+    if (project !== undefined) ticket.project = project;
     if (normalizedAssignees) {
       if (normalizedAssignees) {
         ticket.assignees = normalizedAssignees;

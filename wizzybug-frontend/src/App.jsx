@@ -388,6 +388,7 @@ function App({ isAdminPage = false }) {
   if (selected) {
     content = (
       <Detail
+        key={selected.rawId}
         bug={selected}
         setSelected={setSelected}
         updateStatus={updateStatus}

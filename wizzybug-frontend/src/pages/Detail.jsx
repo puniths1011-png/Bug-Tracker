@@ -154,6 +154,8 @@ function Detail({
   });
 
   useEffect(() => {
+    if (editing) return;
+
     setNext(bug.status);
     setFixDescription(bug.fixDescription || "");
     setEditForm({
@@ -178,7 +180,7 @@ function Detail({
     );
     setAttachmentsToUpload([]);
     setAttachmentUploadError("");
-  }, [bug]);
+  }, [bug, editing]);
 
   const canReassign = true;
   const timeline = buildTimeline(bug);
