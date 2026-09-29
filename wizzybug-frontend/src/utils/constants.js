@@ -1,4 +1,5 @@
 export const STATUS_LABELS = {
+  reopened: "Reopened",
   open: "Open / New",
   in_progress: "In Progress",
   resolved: "Resolved",

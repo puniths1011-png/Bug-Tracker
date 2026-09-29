@@ -610,18 +610,6 @@ function Detail({
                       />
                     )}
                   </fieldset>
-                  <label>
-                    Reproduction Rate
-                    <input
-                      value={editForm.reproductionRate}
-                      onChange={(e) =>
-                        setEditForm({
-                          ...editForm,
-                          reproductionRate: e.target.value,
-                        })
-                      }
-                    />
-                  </label>
                 </div>
                 <div className="twoCol">
                   <label>
