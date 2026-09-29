@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { isValidUserName, normalizeUserName } from '../utils/userName';
 
 export interface IUser extends Document {
   name: string;
@@ -12,8 +13,14 @@ export interface IUser extends Document {
 }
 
 const UserSchema: Schema = new Schema({
-  name: { type: String, required: true, maxlength: 40 },
-  email: { type: String, required: true, unique: true, maxlength: 40 },
+  name: {
+    type: String,
+    required: true,
+    maxlength: 40,
+    set: normalizeUserName,
+    validate: { validator: isValidUserName, message: 'Name must contain letters only' },
+  },
+  email: { type: String, required: true, unique: true, maxlength: 254 },
   password: { type: String },
   role: { type: String, enum: ['admin', 'developer', 'tester'], default: 'developer' },
   status: { type: String, enum: ['pending', 'active'], default: 'active' },

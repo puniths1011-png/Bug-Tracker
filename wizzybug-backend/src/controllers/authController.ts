@@ -4,10 +4,24 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import User from '../models/User';
 import { isRealMailerConfigured, sendInviteViaMail, sendPasswordResetViaMail } from '../utils/mailer';
+import { isValidUserName, normalizeUserName } from '../utils/userName';
 
 const ALLOWED_ROLES = ['admin', 'developer', 'tester'];
 
-const normalizeEmail = (value: string): string => value.trim().toLowerCase();
+const normalizeEmail = (value: unknown): string => typeof value === 'string' ? value.trim().toLowerCase() : '';
+
+const isGmailAddress = (email: string): boolean => {
+  const [localPart, domain] = email.split('@');
+  return email.length <= 254 && domain === 'gmail.com' && localPart.length <= 64 &&
+    !localPart.includes('..') && /^[a-z0-9](?:[a-z0-9._%+-]*[a-z0-9])?$/.test(localPart);
+};
+
+const findUserByEmail = (email: string) =>
+  User.findOne({ email: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') });
+
+const isStrongPassword = (password: unknown): password is string =>
+  typeof password === 'string' && password.length >= 6 && password.length <= 40 &&
+  /[a-z]/.test(password) && /[A-Z]/.test(password) && /\d/.test(password) && /[^A-Za-z0-9]/.test(password);
 
 const exceedsUserFieldLimit = (value: unknown): boolean =>
   typeof value !== 'string' || value.trim().length > 40;
@@ -22,14 +36,27 @@ const generateToken = (id: string) => {
 
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, password, confirmPassword, role } = req.body;
+    const normalizedEmail = normalizeEmail(req.body.email);
+    const normalizedName = normalizeUserName(name);
 
-    if (
-      exceedsUserFieldLimit(name) ||
-      exceedsUserFieldLimit(email) ||
-      exceedsUserFieldLimit(password)
-    ) {
-      res.status(400).json({ message: 'Name, email, and password must be 40 characters or fewer' });
+    if (!isValidUserName(normalizedName)) {
+      res.status(400).json({ message: 'Name must be 2 to 40 characters and contain letters only' });
+      return;
+    }
+
+    if (!isGmailAddress(normalizedEmail)) {
+      res.status(400).json({ message: 'Enter a valid @gmail.com email address' });
+      return;
+    }
+
+    if (!isStrongPassword(password)) {
+      res.status(400).json({ message: 'Password must be 6 to 40 characters and include uppercase, lowercase, number, and special character' });
+      return;
+    }
+
+    if (confirmPassword !== password) {
+      res.status(400).json({ message: 'Confirm password must match password' });
       return;
     }
 
@@ -38,42 +65,40 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    const userExists = await User.findOne({ email });
+    const userExists = await findUserByEmail(normalizedEmail);
     if (userExists) {
-      res.status(400).json({ message: 'User already exists' });
+      res.status(409).json({ message: 'An account with this Gmail address already exists' });
       return;
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const user = await User.create({
-      name,
-      email,
+    const hashedPassword = await bcrypt.hash(password, await bcrypt.genSalt(10));
+    await User.create({
+      name: normalizedName,
+      email: normalizedEmail,
       password: hashedPassword,
-      role: role || 'developer'
+      role: role || 'developer',
+      status: 'active',
     });
-
-    if (user) {
-      res.status(201).json({
-        _id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        token: generateToken(user.id),
-      });
-    } else {
-      res.status(400).json({ message: 'Invalid user data' });
-    }
+    res.status(201).json({ message: 'Account created successfully. Please sign in.' });
   } catch (error) {
+    if ((error as { code?: number })?.code === 11000) {
+      res.status(409).json({ message: 'An account with this Gmail address already exists' });
+      return;
+    }
+    console.error('[registerUser]', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    const email = normalizeEmail(req.body.email);
+    const password = req.body.password;
+    if (!isGmailAddress(email) || typeof password !== 'string' || password.length < 6) {
+      res.status(401).json({ message: 'Invalid email or password' });
+      return;
+    }
+    const user = await findUserByEmail(email);
 
     if (user && user.password && (await bcrypt.compare(password, user.password))) {
       res.json({
@@ -84,7 +109,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
         token: generateToken(user.id),
       });
     } else {
-      res.status(401).json({ message: 'Invalid credentials' });
+      res.status(401).json({ message: 'Invalid email or password' });
     }
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
@@ -145,9 +170,10 @@ export const inviteUser = async (req: Request, res: Response): Promise<void> => 
   try {
     const { name, email, role } = req.body;
     const normalizedEmail = normalizeEmail(email);
+    const normalizedName = normalizeUserName(name);
 
-    if (exceedsUserFieldLimit(name) || exceedsUserFieldLimit(normalizedEmail)) {
-      res.status(400).json({ message: 'Name and email must be 40 characters or fewer' });
+    if (!isValidUserName(normalizedName) || exceedsUserFieldLimit(normalizedEmail)) {
+      res.status(400).json({ message: 'Name must contain only letters; email must be 40 characters or fewer' });
       return;
     }
 
@@ -165,7 +191,7 @@ export const inviteUser = async (req: Request, res: Response): Promise<void> => 
     const inviteToken = uuidv4();
 
     const user = await User.create({
-      name,
+      name: normalizedName,
       email: normalizedEmail,
       role: role || 'developer',
       status: 'pending',
@@ -178,7 +204,7 @@ export const inviteUser = async (req: Request, res: Response): Promise<void> => 
     try {
       await sendInviteViaMail({
         email: normalizedEmail,
-        name: name,
+        name: normalizedName,
         inviteLink: inviteLink
       });
     } catch (mailErr) {

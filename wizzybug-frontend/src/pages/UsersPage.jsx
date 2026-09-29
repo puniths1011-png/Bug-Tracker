@@ -98,7 +98,17 @@ function InviteUserModal({ onClose, onInvited }) {
         {error && <div className="formError">{error}</div>}
         <label>
           Full Name
-          <input name="name" required maxLength={40} placeholder="Jane Doe" />
+          <input
+            name="name"
+            required
+            maxLength={40}
+            pattern="[A-Za-z]+( [A-Za-z]+)*"
+            title="Use letters only; spaces are allowed between names."
+            onInput={(event) => {
+              event.currentTarget.value = event.currentTarget.value.replace(/[^A-Za-z ]/g, "");
+            }}
+            placeholder="Jane Doe"
+          />
         </label>
         <label>
           Email Address

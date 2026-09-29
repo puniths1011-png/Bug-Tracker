@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState, useEffect } from 'react';
+﻿import React, { useMemo, useState, useEffect, useRef } from 'react';
 import * as Icons from 'lucide-react';
 const {LayoutDashboard,Bug,Plus,Users,User,Settings,LogOut,Search,Bell,ChevronDown,ArrowUpRight,Clock3,CircleCheck,TriangleAlert,Filter,Download,Menu,X,ChevronRight,Paperclip,Send,CalendarDays,BarChart3,FolderKanban,Activity,ShieldCheck,Eye,EyeOff,Moon,Sun,UserCog,Mail,ClipboardList,RefreshCcw,FolderPlus,ArrowLeft} = Icons;
 import { jsPDF } from 'jspdf';
@@ -8,6 +8,18 @@ import { formatIST, formatISTLong, timeAgoIST, IST_TZ } from '../utils/date';
 import { STATUS_LABELS, STATUS_VALUES, PRIORITY_LABELS, SEVERITY_TO_PRIORITY } from '../utils/constants';
 import { Avatar, Logo, RoleBadge, Status } from '../components/Ui';
 import { initialsOf, isAssignedToUser, priorityLabel, statusLabel, buildTimeline } from '../utils/formatters';
+
+const isValidGmail = (value) => {
+  const [localPart, domain] = value.split('@');
+  return value.length <= 254 && domain === 'gmail.com' && localPart.length <= 64 &&
+    !localPart.includes('..') && /^[a-z0-9](?:[a-z0-9._%+-]*[a-z0-9])?$/.test(localPart);
+};
+const isStrongPassword = (value) =>
+  value.length >= 6 && value.length <= 40 && /[a-z]/.test(value) && /[A-Z]/.test(value) &&
+  /\d/.test(value) && /[^A-Za-z0-9]/.test(value);
+const normalizeUserName = (value) => value.trim().replace(/\s+/g, " ");
+const isValidUserName = (value) =>
+  value.length >= 2 && value.length <= 40 && /^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value);
 
 function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
   const rememberedCredentials = (() => {
@@ -21,39 +33,67 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState(rememberedCredentials?.email || "");
   const [password, setPassword] = useState(rememberedCredentials?.password || "");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(Boolean(rememberedCredentials));
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [forgotSubmitting, setForgotSubmitting] = useState(false);
+  const submitLock = useRef(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setStatus("");
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const registrationName = isRegister ? normalizeUserName(e.target.name.value) : "";
+    setEmail(normalizedEmail);
+    if (!isValidGmail(normalizedEmail)) {
+      setError("Enter a valid @gmail.com email address.");
+      return;
+    }
+
+    if (isRegister) {
+      if (!isValidUserName(registrationName)) {
+        setError("Name must be 2 to 40 characters and contain letters only.");
+        return;
+      }
+      if (!isStrongPassword(password)) {
+        setError("Password must be at least 6 characters and include uppercase, lowercase, a number, and a special character.");
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError("Confirm password must match password.");
+        return;
+      }
+    }
+
+    if (submitLock.current) return;
+    submitLock.current = true;
     setSubmitting(true);
 
     try {
       let data;
       if (isRegister) {
-        const name = e.target.name.value;
         const role = e.target.role.value;
-        // Register the user but do NOT auto-login. Show success and return to login form.
         data = await apiFetch("/auth/register", {
           method: "POST",
-          body: JSON.stringify({ name, email, password, role }),
+          body: JSON.stringify({ name: registrationName, email: normalizedEmail, password, confirmPassword, role }),
         });
-        setStatus("Account created successfully. Please sign in.");
+        setStatus(data.message || "Account created successfully. Please sign in.");
         setIsRegister(false);
+        setPassword("");
+        setConfirmPassword("");
       } else {
         data = await apiFetch("/auth/login", {
           method: "POST",
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ email: normalizedEmail, password }),
         });
         if (rememberMe) {
           localStorage.setItem(
             "rememberedCredentials",
-            JSON.stringify({ email, password }),
+            JSON.stringify({ email: normalizedEmail, password }),
           );
         } else {
           localStorage.removeItem("rememberedCredentials");
@@ -71,6 +111,7 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
     } catch (err) {
       setError(err.message || "Something went wrong");
     } finally {
+      submitLock.current = false;
       setSubmitting(false);
     }
   };
@@ -157,7 +198,13 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
                 type="text"
                 placeholder="Enter your name"
                 required
+                minLength={2}
                 maxLength={40}
+                pattern="[A-Za-z]+( [A-Za-z]+)*"
+                title="Use letters only; spaces are allowed between names."
+                onInput={(event) => {
+                  event.currentTarget.value = event.currentTarget.value.replace(/[^A-Za-z ]/g, "");
+                }}
                 autoComplete="off"
               />
             </label>
@@ -171,7 +218,7 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
               onChange={(event) => setEmail(event.target.value)}
               placeholder="Enter your email"
               required
-              maxLength={40}
+              maxLength={254}
               autoComplete="username"
             />
           </label>
@@ -194,6 +241,22 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
               </button>
             </div>
           </label>
+          {isRegister && (
+            <label>
+              Confirm Password
+              <input
+                name="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                placeholder="Confirm your password"
+                required
+                minLength={6}
+                maxLength={40}
+                autoComplete="new-password"
+              />
+            </label>
+          )}
           {isRegister && (
             <label>
               My Role
@@ -242,7 +305,9 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
             className="signup"
             onClick={() => {
               setIsRegister(!isRegister);
+              setConfirmPassword("");
               setError("");
+              setStatus("");
             }}
             style={{ cursor: "pointer" }}
           >
