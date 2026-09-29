@@ -120,9 +120,7 @@ function Detail({
 }) {
   const [next, setNext] = useState(bug.status);
   const [commentText, setCommentText] = useState("");
-  const [fixDescription, setFixDescription] = useState(
-    bug.fixDescription || "",
-  );
+  const [fixDescription, setFixDescription] = useState("");
   const [savingFix, setSavingFix] = useState(false);
   const [savedFix, setSavedFix] = useState(false);
   const [reassignOpen, setReassignOpen] = useState(false);
@@ -157,7 +155,6 @@ function Detail({
     if (editing) return;
 
     setNext(bug.status);
-    setFixDescription(bug.fixDescription || "");
     setEditForm({
       title: bug.title || "",
       desc: bug.desc || "",
@@ -213,6 +210,7 @@ function Detail({
     setSavingFix(true);
     try {
       await saveFixNotes(bug.rawId, fixDescription);
+      setFixDescription("");
       setSavedFix(true);
       setTimeout(() => setSavedFix(false), 2000);
     } catch (e) {
