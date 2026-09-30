@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 import { AuthRequest } from "../middleware/authMiddleware";
 import User from "../models/User";
+import Project from "../models/Project";
+import Ticket from "../models/Ticket";
 import { isValidUserName, normalizeUserName } from "../utils/userName";
 
 const normalizeEmail = (value: unknown): string =>
@@ -74,5 +77,49 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
+  }
+};
+
+export const deleteUser = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      res.status(400).json({ message: "Invalid user ID" });
+      return;
+    }
+
+    if (String(req.user?._id) === id) {
+      res.status(400).json({ message: "You cannot delete your own account" });
+      return;
+    }
+
+    const user = await User.findById(id).select("role");
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    if (user.role === "admin") {
+      const adminCount = await User.countDocuments({ role: "admin" });
+      if (adminCount <= 1) {
+        res.status(400).json({ message: "The last admin account cannot be deleted" });
+        return;
+      }
+    }
+
+    await Promise.all([
+      Project.updateMany({ members: user._id }, { $pull: { members: user._id } }),
+      Ticket.updateMany({ assignees: user._id }, { $pull: { assignees: user._id } }),
+      Ticket.updateMany({ assignee: user._id }, { $unset: { assignee: "" } }),
+    ]);
+    await User.findByIdAndDelete(user._id);
+
+    res.json({ message: "User deleted" });
+  } catch (error) {
+    console.error("[deleteUser]", error);
+    res.status(500).json({ message: "Could not delete user" });
   }
 };

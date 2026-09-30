@@ -1,6 +1,6 @@
 ﻿import React, { useMemo, useState, useEffect } from 'react';
 import * as Icons from 'lucide-react';
-const {LayoutDashboard,Bug,Plus,Users,User,Settings,LogOut,Search,Bell,ChevronDown,ArrowUpRight,Clock3,CircleCheck,TriangleAlert,Filter,Download,Menu,X,ChevronRight,Paperclip,Send,CalendarDays,BarChart3,FolderKanban,Activity,ShieldCheck,Eye,EyeOff,Moon,Sun,UserCog,Mail,ClipboardList,RefreshCcw,FolderPlus,ArrowLeft} = Icons;
+const {LayoutDashboard,Bug,Plus,Users,User,Settings,LogOut,Search,Bell,ChevronDown,ArrowUpRight,Clock3,CircleCheck,TriangleAlert,Filter,Download,Menu,X,ChevronRight,Paperclip,Send,CalendarDays,BarChart3,FolderKanban,Activity,ShieldCheck,Eye,EyeOff,Moon,Sun,UserCog,Mail,ClipboardList,RefreshCcw,FolderPlus,ArrowLeft,Trash2} = Icons;
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { API, apiFetch, setToken } from '../config/api';
@@ -147,6 +147,9 @@ function UsersPage({ users, bugs = [], currentUser, refreshUsers }) {
   const [showInvite, setShowInvite] = useState(false);
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [deletingId, setDeletingId] = useState("");
+  const [deleteError, setDeleteError] = useState("");
   const [localUsers, setLocalUsers] = useState(
     Array.isArray(users) ? users : [],
   );
@@ -172,8 +175,88 @@ function UsersPage({ users, bugs = [], currentUser, refreshUsers }) {
         u.email.toLowerCase().includes(query.toLowerCase())),
   );
 
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    setDeletingId(userToDelete._id);
+    setDeleteError("");
+    try {
+      await apiFetch(`/users/${userToDelete._id}`, { method: "DELETE" });
+      setLocalUsers((current) =>
+        current.filter((user) => user._id !== userToDelete._id),
+      );
+      setUserToDelete(null);
+      refreshUsers && refreshUsers();
+    } catch (err) {
+      setDeleteError(err.message || "Could not delete user");
+    } finally {
+      setDeletingId("");
+    }
+  };
+
   return (
     <>
+      {userToDelete && (
+        <div
+          className="overlay deleteConfirmOverlay"
+          onClick={(event) => {
+            if (event.target === event.currentTarget && !deletingId) {
+              setUserToDelete(null);
+              setDeleteError("");
+            }
+          }}
+        >
+          <section
+            className="panel deleteConfirmDialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-user-title"
+            aria-describedby="delete-user-message"
+          >
+            <div className="modalHeading">
+              <h3 id="delete-user-title">Delete user?</h3>
+              <button
+                type="button"
+                aria-label="Close delete confirmation"
+                disabled={Boolean(deletingId)}
+                onClick={() => {
+                  setUserToDelete(null);
+                  setDeleteError("");
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p id="delete-user-message">
+              Delete <strong>{userToDelete.name}</strong>? They will be removed
+              from project memberships and ticket assignments. This cannot be
+              undone.
+            </p>
+            {deleteError && <div className="formError">{deleteError}</div>}
+            <div className="deleteConfirmActions">
+              <button
+                className="outline"
+                type="button"
+                disabled={Boolean(deletingId)}
+                onClick={() => {
+                  setUserToDelete(null);
+                  setDeleteError("");
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="deleteConfirmButton"
+                type="button"
+                disabled={Boolean(deletingId)}
+                onClick={confirmDelete}
+              >
+                <Trash2 size={15} />
+                {deletingId ? "Deleting..." : "Delete user"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
       <div className="pageIntro">
         <div>
           <h2>User Management</h2>
@@ -254,6 +337,7 @@ function UsersPage({ users, bugs = [], currentUser, refreshUsers }) {
               <th>ASSIGNED BUGS</th>
               <th>STATUS</th>
               <th>MEMBER SINCE (IST)</th>
+              <th>ACTIONS</th>
             </tr>
           </thead>
           <tbody>
@@ -290,12 +374,31 @@ function UsersPage({ users, bugs = [], currentUser, refreshUsers }) {
                 <td className="date">
                   {formatIST(u.createdAt, { withTime: false })}
                 </td>
+                <td>
+                  {String(u._id) === String(currentUser?._id) ? (
+                    <span className="muted">Current user</span>
+                  ) : (
+                    <button
+                      className="deleteConfirmButton"
+                      type="button"
+                      aria-label={`Delete ${u.name}`}
+                      disabled={Boolean(deletingId)}
+                      onClick={() => {
+                        setUserToDelete(u);
+                        setDeleteError("");
+                      }}
+                    >
+                      <Trash2 size={15} />
+                      Delete
+                    </button>
+                  )}
+                </td>
               </tr>
             ))}
             {rows.length === 0 && (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="muted"
                   style={{ textAlign: "center", padding: "30px 0" }}
                 >

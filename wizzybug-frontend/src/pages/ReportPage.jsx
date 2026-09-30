@@ -93,6 +93,7 @@ function ReportPage({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [defectTypeMessage, setDefectTypeMessage] = useState("");
+  const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false);
 
   const compressImageUpload = async (selectedFile) => {
     if (!selectedFile || !selectedFile.type?.startsWith("image/")) {
@@ -156,6 +157,17 @@ function ReportPage({
     }
   };
   const isAdmin = user?.role === "admin";
+  const canAssign = ["admin", "developer", "tester"].includes(
+    String(user?.role || "").toLowerCase(),
+  );
+  const assignableUsers = users.filter((candidate) =>
+    ["admin", "developer", "tester"].includes(
+      String(candidate.role || "").toLowerCase(),
+    ),
+  );
+  const selectedAssigneeNames = assignableUsers
+    .filter((candidate) => form.assignees.includes(candidate._id))
+    .map((candidate) => candidate.name);
   const goBack = () => setPage(selectedProjectId ? "projects" : "bugs");
 
   const submit = async (e) => {
@@ -308,39 +320,68 @@ function ReportPage({
           )}
         </label>
 
-        {isAdmin && (
+        {canAssign && (
           <label>
             Assign to (optional)
-            <select
-              multiple
-              value={form.assignees}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  assignees: Array.from(
-                    e.target.selectedOptions,
-                    (opt) => opt.value,
-                  ),
-                })
-              }
-              style={{ minHeight: "110px" }}
-            >
-              <option value="">Leave unassigned</option>
-              {users
-                .filter((u) =>
-                  ["admin", "developer", "tester"].includes(
-                    String(u.role || "").toLowerCase(),
-                  ),
-                )
-                .map((u) => (
-                  <option key={u._id} value={u._id}>
-                    {u.name} - {String(u.role || "").toLowerCase()}
-                  </option>
-                ))}
-            </select>
-            <small className="muted">
-              Hold Ctrl/Cmd to select multiple developers.
-            </small>
+            <div className="assignDropdown reportAssigneeDropdown">
+              <button
+                type="button"
+                className="assignSelectButton"
+                aria-haspopup="listbox"
+                aria-expanded={assigneeDropdownOpen}
+                onClick={() => setAssigneeDropdownOpen((open) => !open)}
+              >
+                <span>
+                  {selectedAssigneeNames.length
+                    ? selectedAssigneeNames.join(", ")
+                    : "Select assignees"}
+                </span>
+                <ChevronDown size={16} />
+              </button>
+              {assigneeDropdownOpen && (
+                <div
+                  className="assignOptions"
+                  role="listbox"
+                  aria-label="Assign to"
+                  aria-multiselectable="true"
+                >
+                  {assignableUsers.map((candidate) => {
+                    const selected = form.assignees.includes(candidate._id);
+                    return (
+                      <button
+                        key={candidate._id}
+                        type="button"
+                        role="option"
+                        aria-selected={selected}
+                        className="assignOptionItem"
+                        onClick={() =>
+                          setForm((current) => ({
+                            ...current,
+                            assignees: selected
+                              ? current.assignees.filter(
+                                  (id) => id !== candidate._id,
+                                )
+                              : [...current.assignees, candidate._id],
+                          }))
+                        }
+                      >
+                        <span className="assignOptionLine">
+                          <span className="assignOptionName">
+                            {candidate.name}
+                          </span>
+                          <span className="assignOptionRole">
+                            <RoleBadge role={candidate.role} />
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                  {assignableUsers.length === 0 && (
+                    <div className="assignOptionName">No assignees available</div>
+                  )}
+                </div>
+              )}
+            </div>
           </label>
         )}
 

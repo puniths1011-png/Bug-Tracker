@@ -1696,6 +1696,10 @@ select {
   max-width: 100%;
 }
 
+.reportAssigneeDropdown {
+  width: 100%;
+}
+
 .assignSelectButton {
   width: 100%;
   min-height: 36px;
