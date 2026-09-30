@@ -21,14 +21,13 @@ function BugTable({ bugs, setSelected, compact = false }) {
       <table>
         <thead>
           <tr>
-            <th>BUG</th>
             <th>BUG ID</th>
+            <th>BUG TITLE</th>
             <th>SEVERITY</th>
             <th>PRIORITY</th>
             <th>STATUS</th>
             <th>ASSIGNEE</th>
-            <th>CREATED (IST)</th>
-            <th></th>
+            <th>CREATED DATE</th>
           </tr>
         </thead>
         <tbody>
@@ -38,13 +37,13 @@ function BugTable({ bugs, setSelected, compact = false }) {
               onClick={() => setSelected(b)}
               style={{ cursor: "pointer" }}
             >
-              <td>
+              <td className="bugIdCell">{b.id}</td>
+              <td className="bugTitleCell">
                 <b>{b.title}</b>
                 <small>
                   {b.project}
                 </small>
               </td>
-              <td>{b.id}</td>
               <td>
                 <span className={"severity " + severityClass(b.severity)}>
                   {b.severity}
@@ -68,14 +67,13 @@ function BugTable({ bugs, setSelected, compact = false }) {
                   </span>
                 )}
               </td>
-              <td className="date">{formatIST(b.createdAt)}</td>
-              <td />
+              <td className="date bugDateCell">{formatIST(b.createdAt)}</td>
             </tr>
           ))}
           {displayBugs.length === 0 && (
             <tr>
               <td
-                colSpan={8}
+                colSpan={7}
                 className="muted"
                 style={{ textAlign: "center", padding: "30px 0" }}
               >

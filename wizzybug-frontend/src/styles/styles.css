@@ -1006,44 +1006,67 @@ table {
   min-width: 780px;
 }
 
-.bugTable table {
-  min-width: 1180px;
+.tableWrap.bugTable table,
+.tableWrap.compact table {
+  min-width: 1100px;
   table-layout: fixed;
 }
 
-.bugTable th:first-child,
-.bugTable td:first-child {
-  width: 38%;
+.tableWrap.bugTable th,
+.tableWrap.bugTable td,
+.tableWrap.compact th,
+.tableWrap.compact td {
+  padding-right: 12px;
+  padding-left: 12px;
 }
 
-.bugTable th:nth-child(2),
-.bugTable td:nth-child(2) {
+.tableWrap.bugTable th:nth-child(1),
+.tableWrap.bugTable td:nth-child(1),
+.tableWrap.compact th:nth-child(1),
+.tableWrap.compact td:nth-child(1) {
+  width: 16%;
+}
+
+.tableWrap.bugTable th:nth-child(2),
+.tableWrap.bugTable td:nth-child(2),
+.tableWrap.compact th:nth-child(2),
+.tableWrap.compact td:nth-child(2) {
+  width: 25%;
+}
+
+.tableWrap.bugTable th:nth-child(3),
+.tableWrap.bugTable td:nth-child(3),
+.tableWrap.compact th:nth-child(3),
+.tableWrap.compact td:nth-child(3) {
+  width: 10%;
+}
+
+.tableWrap.bugTable th:nth-child(4),
+.tableWrap.bugTable td:nth-child(4),
+.tableWrap.compact th:nth-child(4),
+.tableWrap.compact td:nth-child(4) {
+  width: 10%;
+}
+
+.tableWrap.bugTable th:nth-child(5),
+.tableWrap.bugTable td:nth-child(5),
+.tableWrap.compact th:nth-child(5),
+.tableWrap.compact td:nth-child(5) {
   width: 12%;
 }
 
-.bugTable th:nth-child(3),
-.bugTable td:nth-child(3) {
-  width: 12%;
+.tableWrap.bugTable th:nth-child(6),
+.tableWrap.bugTable td:nth-child(6),
+.tableWrap.compact th:nth-child(6),
+.tableWrap.compact td:nth-child(6) {
+  width: 13%;
 }
 
-.bugTable th:nth-child(4),
-.bugTable td:nth-child(4) {
+.tableWrap.bugTable th:nth-child(7),
+.tableWrap.bugTable td:nth-child(7),
+.tableWrap.compact th:nth-child(7),
+.tableWrap.compact td:nth-child(7) {
   width: 14%;
-}
-
-.bugTable th:nth-child(5),
-.bugTable td:nth-child(5) {
-  width: 14%;
-}
-
-.bugTable th:nth-child(6),
-.bugTable td:nth-child(6) {
-  width: 9%;
-}
-
-.bugTable th:nth-child(7),
-.bugTable td:nth-child(7) {
-  width: 1%;
 }
 
 th {
@@ -1082,47 +1105,31 @@ td {
   text-align: center;
 }
 
-.tableWrap th:nth-child(5),
-.tableWrap td:nth-child(5) {
+.tableWrap.bugTable th:nth-child(2),
+.tableWrap.bugTable td:nth-child(2),
+.tableWrap.compact th:nth-child(2),
+.tableWrap.compact td:nth-child(2),
+.tableWrap.bugTable th:nth-child(6),
+.tableWrap.bugTable td:nth-child(6),
+.tableWrap.compact th:nth-child(6),
+.tableWrap.compact td:nth-child(6) {
   text-align: left;
 }
 
-.tableWrap td:nth-child(5) .person {
+.tableWrap.bugTable td:nth-child(1),
+.tableWrap.compact td:nth-child(1),
+.tableWrap.bugTable th:nth-child(7),
+.tableWrap.compact th:nth-child(7),
+.tableWrap.bugTable td:nth-child(7),
+.tableWrap.compact td:nth-child(7) {
+  white-space: nowrap;
+}
+
+.tableWrap.bugTable td:nth-child(6) .person,
+.tableWrap.compact td:nth-child(6) .person {
   justify-content: flex-start;
-}
-
-.tableWrap.compact th:first-child,
-.tableWrap.compact td:first-child {
-  width: 38%;
-}
-
-.tableWrap.compact table {
-  min-width: 1180px;
-}
-
-.tableWrap.compact th:nth-child(2),
-.tableWrap.compact td:nth-child(2) {
-  width: 12%;
-}
-
-.tableWrap.compact th:nth-child(3),
-.tableWrap.compact td:nth-child(3) {
-  width: 12%;
-}
-
-.tableWrap.compact th:nth-child(4),
-.tableWrap.compact td:nth-child(4) {
-  width: 14%;
-}
-
-.tableWrap.compact th:nth-child(5),
-.tableWrap.compact td:nth-child(5) {
-  width: 20%;
-}
-
-.tableWrap.compact th:nth-child(6),
-.tableWrap.compact td:nth-child(6) {
-  width: 17%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 tr:last-child td {
@@ -1141,7 +1148,8 @@ tbody tr:hover {
   );
 }
 
-td:first-child b {
+.tableWrap.bugTable td:nth-child(2) b,
+.tableWrap.compact td:nth-child(2) b {
   display: block;
   color: var(--text);
   font-size: 13.5px;
@@ -1154,12 +1162,14 @@ td:first-child b {
   text-align: left;
 }
 
-.tableWrap td:first-child {
+.tableWrap.bugTable td:nth-child(2),
+.tableWrap.compact td:nth-child(2) {
   max-width: 90ch;
   text-align: left;
 }
 
-td:first-child small,
+.tableWrap.bugTable td:nth-child(2) small,
+.tableWrap.compact td:nth-child(2) small,
 .userTable td small {
   display: block;
   color: var(--muted);
