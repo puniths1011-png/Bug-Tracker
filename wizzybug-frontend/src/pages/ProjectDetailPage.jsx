@@ -1,9 +1,7 @@
-import React, { useState } from "react";
 import { ArrowLeft, Bug, Users } from "lucide-react";
 import BugTable from "../components/BugTable";
 
 function ProjectDetailPage({ project, bugs, users = [], onBack, setSelected }) {
-  const [selectedMemberId, setSelectedMemberId] = useState("");
   const projectBugs = bugs.filter(
     (bug) => String(bug.projectId) === String(project._id),
   );
@@ -56,26 +54,32 @@ function ProjectDetailPage({ project, bugs, users = [], onBack, setSelected }) {
           <Bug size={16} />
           {openBugs} open bugs
         </span>
-        <label className="projectMemberSelect">
+        <div
+          className="projectMemberSelect"
+          tabIndex={0}
+          aria-label="Project members"
+        >
           <Users size={16} />
-          <span className="srOnly">Project members</span>
-          <select
-            value={selectedMemberId}
-            onChange={(event) => setSelectedMemberId(event.target.value)}
-            disabled={!projectMembers.length}
-          >
-            <option value="">
-              {projectMembers.length
-                ? `${projectMembers.length} members`
-                : "No members"}
-            </option>
-            {projectMembers.map((member) => (
-              <option key={member._id} value={member._id}>
-                {member.name || "Unnamed member"} - {member.role || "Member"}
-              </option>
-            ))}
-          </select>
-        </label>
+          <span className="projectMemberCount">
+            {projectMembers.length
+              ? `${projectMembers.length} members`
+              : "No members"}
+          </span>
+          <div className="projectMemberPopover" role="list" aria-label="Project members">
+            {projectMembers.length ? (
+              projectMembers.map((member) => (
+                <div className="projectMemberItem" key={member._id} role="listitem">
+                  <span>{member.name || "Unnamed member"}</span>
+                  <small>{member.role || "Member"}</small>
+                </div>
+              ))
+            ) : (
+              <div className="projectMemberItem" role="listitem">
+                No members assigned
+              </div>
+            )}
+          </div>
+        </div>
       </div>
       <article className="panel projectBugList">
         <div className="projectBugListHeader">

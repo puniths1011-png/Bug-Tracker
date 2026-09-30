@@ -54,6 +54,7 @@ import { Avatar, Logo, RoleBadge, Status } from "../components/Ui";
 import {
   initialsOf,
   isAssignedToUser,
+  priorityLabel,
   statusLabel,
   buildTimeline,
   pdfText,
@@ -62,24 +63,35 @@ import {
 import BugTable from "../components/BugTable";
 import Stats from "../components/Stats";
 
-function Trend({ bugs = [] }) {
-  const days = useMemo(() => {
-    const arr = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      arr.push(d);
-    }
-    return arr;
-  }, [bugs]);
-
-  const counts = days.map(
-    (d) =>
-      bugs.filter((b) => {
-        const bd = new Date(b.createdAt);
-        return bd.toDateString() === d.toDateString();
+function buildTrendData(bugs = []) {
+  const days = [];
+  for (let offset = 6; offset >= 0; offset -= 1) {
+    const date = new Date();
+    date.setDate(date.getDate() - offset);
+    days.push({
+      date,
+      count: bugs.filter((bug) => {
+        const createdAt = new Date(bug.createdAt);
+        return createdAt.toDateString() === date.toDateString();
       }).length,
+    });
+  }
+  return days;
+}
+
+function buildSeverityCounts(bugs = []) {
+  const counts = Object.fromEntries(
+    SEVERITY_LABELS.map((severity) => [severity, 0]),
   );
+  bugs.forEach((bug) => {
+    const severity = severityLabel(bug.severity, bug.priority);
+    if (counts[severity] !== undefined) counts[severity] += 1;
+  });
+  return counts;
+}
+
+function Trend({ trendData = [] }) {
+  const counts = trendData.map(({ count }) => count);
 
   const max = Math.max(1, ...counts);
   const points = counts
@@ -105,9 +117,9 @@ function Trend({ bugs = [] }) {
           <polyline className="line" points={points} />
         </svg>
         <div className="months">
-          {days.map((d, i) => (
+          {trendData.map(({ date }, i) => (
             <span key={i}>
-              {d.toLocaleDateString("en-IN", {
+              {date.toLocaleDateString("en-IN", {
                 timeZone: IST_TZ,
                 weekday: "short",
               })}
@@ -121,12 +133,7 @@ function Trend({ bugs = [] }) {
 
 // Severity distribution donut, using the same pre-built .donut CSS.
 
-function Distribution({ bugs = [] }) {
-  const counts = Object.fromEntries(SEVERITY_LABELS.map((severity) => [severity, 0]));
-  bugs.forEach((b) => {
-    const severity = severityLabel(b.severity, b.priority);
-    if (counts[severity] !== undefined) counts[severity]++;
-  });
+function Distribution({ bugs = [], counts = buildSeverityCounts(bugs) }) {
   const total = bugs.length || 1;
   const colors = {
     "Blocker(System Crash/Data Loss)": "#c94251",
@@ -193,11 +200,27 @@ function Distribution({ bugs = [] }) {
 function Dashboard({ bugs, setSelected, setPage, user }) {
   const [exportFormat, setExportFormat] = useState("pdf");
   const [exportOpen, setExportOpen] = useState(false);
+  const trendData = useMemo(() => buildTrendData(bugs), [bugs]);
+  const severityCounts = useMemo(() => buildSeverityCounts(bugs), [bugs]);
+  const severityRows = Object.entries(severityCounts).map(([severity, count]) => [
+    severity === "Blocker(System Crash/Data Loss)" ? "Blocker" : severity,
+    count,
+  ]);
+  const trendRows = trendData.map(({ date, count }) => [
+    date.toLocaleDateString("en-IN", {
+      timeZone: IST_TZ,
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }),
+    count,
+  ]);
 
   const reportHeaders = [
     "BUG ID",
     "TITLE",
     "SEVERITY",
+    "PRIORITY",
     "STATUS",
     "PROJECT",
     "REPORTER",
@@ -209,6 +232,7 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
     b.id,
     b.title,
     b.severity,
+    priorityLabel(b.priority),
     statusLabel(b.status),
     b.project,
     b.reporter,
@@ -275,6 +299,34 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
       alternateRowStyles: { fillColor: [245, 243, 252] },
     });
 
+    autoTable(doc, {
+      head: [["SEVERITY DISTRIBUTION", "COUNT"]],
+      body: severityRows.map(([severity, count]) => [pdfText(severity), count]),
+      startY: doc.lastAutoTable.finalY + 8,
+      theme: "grid",
+      margin: { left: margin, right: margin },
+      headStyles: {
+        fillColor: [91, 70, 190],
+        textColor: 255,
+        fontStyle: "bold",
+      },
+      alternateRowStyles: { fillColor: [245, 243, 252] },
+    });
+
+    autoTable(doc, {
+      head: [["BUG TREND - LAST 7 DAYS", "NEW BUGS"]],
+      body: trendRows.map(([date, count]) => [date, count]),
+      startY: doc.lastAutoTable.finalY + 8,
+      theme: "grid",
+      margin: { left: margin, right: margin },
+      headStyles: {
+        fillColor: [91, 70, 190],
+        textColor: 255,
+        fontStyle: "bold",
+      },
+      alternateRowStyles: { fillColor: [245, 243, 252] },
+    });
+
     const tableRows = reportRows.map((row) => row.map(pdfText));
     autoTable(doc, {
       head: [reportHeaders],
@@ -302,13 +354,14 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
       },
       columnStyles: {
         0: { cellWidth: 14, halign: "center" },
-        1: { cellWidth: 42 },
-        2: { cellWidth: 24, halign: "center" },
-        3: { cellWidth: 21, halign: "center" },
-        4: { cellWidth: 21 },
+        1: { cellWidth: 36 },
+        2: { cellWidth: 20, halign: "center" },
+        3: { cellWidth: 18, halign: "center" },
+        4: { cellWidth: 18, halign: "center" },
         5: { cellWidth: 20 },
-        6: { cellWidth: 20 },
-        7: { cellWidth: 20, halign: "center" },
+        6: { cellWidth: 18 },
+        7: { cellWidth: 18 },
+        8: { cellWidth: 20, halign: "center" },
       },
     });
 
@@ -328,17 +381,6 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
   const exportToDelimited = (format) => {
     if (format === "excel") {
       const workbook = XLSX.utils.book_new();
-      const summaryRow = bugSummary.flatMap(([label, count]) => [label, count]);
-      const worksheet = XLSX.utils.aoa_to_sheet([
-        ["BUG SUMMARY", "", "", "", "", "", "", ""],
-        summaryRow,
-        ["", "", "", "", "", "", "", ""],
-        reportHeaders,
-        ...reportRows,
-      ]);
-      worksheet["!merges"] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: reportHeaders.length - 1 } },
-      ];
       const headerStyle = {
         fill: { fgColor: { rgb: "5B46BE" } },
         font: { bold: true, color: { rgb: "FFFFFF" } },
@@ -360,30 +402,85 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
           right: { style: "thin", color: { rgb: "D9C9F2" } },
         },
       });
-
-      worksheet["A1"].s = {
+      const dashboardRows = [["WIZZYBUG DASHBOARD REPORT"], []];
+      const sections = [
+        {
+          title: "BUG SUMMARY",
+          headers: ["Metric", "Count"],
+          rows: bugSummary,
+        },
+        {
+          title: "SEVERITY DISTRIBUTION",
+          headers: ["Severity", "Count"],
+          rows: severityRows,
+        },
+        {
+          title: "BUG TREND - LAST 7 DAYS",
+          headers: ["Date", "New Bugs"],
+          rows: trendRows,
+        },
+      ];
+      const sectionRanges = sections.map((section) => {
+        const titleRow = dashboardRows.length;
+        dashboardRows.push([section.title]);
+        const headerRow = dashboardRows.length;
+        dashboardRows.push(section.headers);
+        const dataStartRow = dashboardRows.length;
+        dashboardRows.push(...section.rows, []);
+        return {
+          titleRow,
+          headerRow,
+          dataStartRow,
+          dataEndRow: dataStartRow + section.rows.length,
+        };
+      });
+      const dashboardWorksheet = XLSX.utils.aoa_to_sheet(dashboardRows);
+      dashboardWorksheet["!merges"] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } },
+        ...sectionRanges.map(({ titleRow }) => ({
+          s: { r: titleRow, c: 0 },
+          e: { r: titleRow, c: 1 },
+        })),
+      ];
+      dashboardWorksheet["!cols"] = [{ wch: 34 }, { wch: 18 }];
+      dashboardWorksheet["A1"].s = {
         fill: { fgColor: { rgb: "40328C" } },
         font: { bold: true, color: { rgb: "FFFFFF" }, sz: 14 },
       };
-      bugSummary.forEach(([label], index) => {
-        const labelCell = XLSX.utils.encode_cell({ r: 1, c: index * 2 });
-        const valueCell = XLSX.utils.encode_cell({ r: 1, c: index * 2 + 1 });
-        worksheet[labelCell].s = { font: { bold: true } };
-        worksheet[valueCell].s = {
-          font: { bold: true, sz: 14, color: { rgb: "40328C" } },
+      sectionRanges.forEach(({ titleRow, headerRow, dataStartRow, dataEndRow }) => {
+        dashboardWorksheet[XLSX.utils.encode_cell({ r: titleRow, c: 0 })].s = {
+          fill: { fgColor: { rgb: "40328C" } },
+          font: { bold: true, color: { rgb: "FFFFFF" } },
         };
+        for (let column = 0; column < 2; column += 1) {
+          dashboardWorksheet[XLSX.utils.encode_cell({ r: headerRow, c: column })].s =
+            headerStyle;
+        }
+        for (let row = dataStartRow; row < dataEndRow; row += 1) {
+          for (let column = 0; column < 2; column += 1) {
+            dashboardWorksheet[XLSX.utils.encode_cell({ r: row, c: column })].s =
+              dataStyle(row);
+          }
+        }
       });
+      XLSX.utils.book_append_sheet(workbook, dashboardWorksheet, "Dashboard Summary");
+
+      const worksheet = XLSX.utils.aoa_to_sheet([
+        reportHeaders,
+        ...reportRows,
+      ]);
       reportHeaders.forEach((_, columnIndex) => {
-        worksheet[XLSX.utils.encode_cell({ r: 3, c: columnIndex })].s =
+        worksheet[XLSX.utils.encode_cell({ r: 0, c: columnIndex })].s =
           headerStyle;
-        for (let rowIndex = 4; rowIndex < reportRows.length + 4; rowIndex += 1) {
+        for (let rowIndex = 1; rowIndex < reportRows.length + 1; rowIndex += 1) {
           worksheet[XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex })].s =
-            dataStyle(rowIndex - 3);
+            dataStyle(rowIndex);
         }
       });
       worksheet["!cols"] = [
         { wch: 14 },
-        { wch: 48 },
+        { wch: 42 },
+        { wch: 16 },
         { wch: 16 },
         { wch: 20 },
         { wch: 24 },
@@ -392,7 +489,7 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
         { wch: 24 },
       ];
       worksheet["!autofilter"] = {
-        ref: `A4:${XLSX.utils.encode_col(reportHeaders.length - 1)}${reportRows.length + 4}`,
+        ref: `A1:${XLSX.utils.encode_col(reportHeaders.length - 1)}${reportRows.length + 1}`,
       };
       XLSX.utils.book_append_sheet(workbook, worksheet, "Bug Report");
       XLSX.writeFile(workbook, "wizzybug_bugs_report.xlsx", {
@@ -404,10 +501,21 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
     const escapeCell = (value) =>
       `"${String(value ?? "").replace(/"/g, '""')}"`;
     const content = [
-      ["BUG SUMMARY"],
-      bugSummary.map(([label]) => label),
-      bugSummary.map(([, count]) => count),
+      ["WIZZYBUG DASHBOARD REPORT"],
       [],
+      ["BUG SUMMARY"],
+      ["METRIC", "COUNT"],
+      ...bugSummary,
+      [],
+      ["SEVERITY DISTRIBUTION"],
+      ["SEVERITY", "COUNT"],
+      ...severityRows,
+      [],
+      ["BUG TREND - LAST 7 DAYS"],
+      ["DATE", "NEW BUGS"],
+      ...trendRows,
+      [],
+      ["BUG DETAILS"],
       reportHeaders,
       ...reportRows,
     ]
@@ -468,8 +576,8 @@ function Dashboard({ bugs, setSelected, setPage, user }) {
       </div>
       <Stats bugs={bugs} admin={isAdmin} user={user} />
       <div className="analytics">
-        <Trend bugs={bugs} />
-        <Distribution bugs={bugs} />
+        <Trend trendData={trendData} />
+        <Distribution bugs={bugs} counts={severityCounts} />
       </div>
       <article className="panel recent">
         <div className="panelHead">
