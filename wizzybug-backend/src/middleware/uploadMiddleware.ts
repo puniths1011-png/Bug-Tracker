@@ -2,11 +2,12 @@ import multer from 'multer';
 import { Request, Response, NextFunction } from 'express';
 
 const storage = multer.memoryStorage();
+const MAX_ATTACHMENT_SIZE_BYTES = 50 * 1024 * 1024;
 
 export const upload = multer({
   storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
+    fileSize: MAX_ATTACHMENT_SIZE_BYTES,
   },
 });
 
@@ -22,7 +23,7 @@ export const optionalUpload = (req: Request, res: Response, next: NextFunction):
           error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE';
         res.status(isFileTooLarge ? 413 : 400).json({
           message: isFileTooLarge
-            ? 'Each attachment must be 10 MB or smaller.'
+            ? 'Each attachment must be 50 MB or smaller.'
             : 'Could not read the uploaded attachment.',
         });
         return;

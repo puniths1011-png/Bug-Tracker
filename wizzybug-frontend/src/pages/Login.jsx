@@ -30,6 +30,7 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
     }
   })();
   const [show, setShow] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState(rememberedCredentials?.email || "");
   const [password, setPassword] = useState(rememberedCredentials?.password || "");
@@ -244,17 +245,26 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
           {isRegister && (
             <label>
               Confirm Password
-              <input
-                name="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-                placeholder="Confirm your password"
-                required
-                minLength={6}
-                maxLength={40}
-                autoComplete="new-password"
-              />
+              <div className="password">
+                <input
+                  name="confirmPassword"
+                  type={showConfirm ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  placeholder="Confirm your password"
+                  required
+                  minLength={6}
+                  maxLength={40}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
+                  onClick={() => setShowConfirm((visible) => !visible)}
+                >
+                  {showConfirm ? <EyeOff /> : <Eye />}
+                </button>
+              </div>
             </label>
           )}
           {isRegister && (

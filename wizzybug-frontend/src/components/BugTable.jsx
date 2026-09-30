@@ -10,6 +10,12 @@ import { Avatar, Logo, RoleBadge, Status } from '../components/Ui';
 import { initialsOf, isAssignedToUser, priorityLabel, statusLabel, buildTimeline, severityClass } from '../utils/formatters';
 
 function BugTable({ bugs, setSelected, compact = false }) {
+  const displayBugs = [...bugs].sort((left, right) => {
+    const leftCreatedAt = new Date(left.createdAt || 0).getTime();
+    const rightCreatedAt = new Date(right.createdAt || 0).getTime();
+    return rightCreatedAt - leftCreatedAt;
+  });
+
   return (
     <div className={compact ? "tableWrap compact" : "tableWrap bugTable"}>
       <table>
@@ -26,7 +32,7 @@ function BugTable({ bugs, setSelected, compact = false }) {
           </tr>
         </thead>
         <tbody>
-          {bugs.map((b) => (
+          {displayBugs.map((b) => (
             <tr
               key={b.id}
               onClick={() => setSelected(b)}
@@ -66,7 +72,7 @@ function BugTable({ bugs, setSelected, compact = false }) {
               <td />
             </tr>
           ))}
-          {bugs.length === 0 && (
+          {displayBugs.length === 0 && (
             <tr>
               <td
                 colSpan={8}

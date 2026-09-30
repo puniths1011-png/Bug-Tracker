@@ -664,7 +664,7 @@ function Detail({
                     onChange={(e) => {
                       const selectedFiles = Array.from(e.target.files || []);
                       const validFiles = selectedFiles.filter(
-                        (file) => file.size <= 10 * 1024 * 1024,
+                        (file) => file.size <= 50 * 1024 * 1024,
                       );
                       setAttachmentsToUpload((existing) => [
                         ...existing,
@@ -672,7 +672,7 @@ function Detail({
                       ]);
                       setAttachmentUploadError(
                         validFiles.length < selectedFiles.length
-                          ? "Each attachment must be 10 MB or smaller."
+                          ? "Each attachment must be 50 MB or smaller."
                           : "",
                       );
                       e.target.value = "";

@@ -57,6 +57,8 @@ import {
   buildTimeline,
 } from "../utils/formatters";
 
+const MAX_ATTACHMENT_SIZE = 50 * 1024 * 1024;
+
 function ReportPage({
   addBug,
   setPage,
@@ -589,12 +591,26 @@ function ReportPage({
             )}
           </strong>
           <b>*</b>
-          <small>PNG, JPG, GIF or MP4 - Max 10MB</small>
+          <small>PNG, JPG, GIF or MP4 - Max 50MB</small>
           <input
             type="file"
             accept="image/*,video/mp4"
             aria-required="true"
-            onChange={(e) => setFile(e.target.files[0] || null)}
+            onChange={(e) => {
+              const selectedFile = e.target.files[0] || null;
+              if (selectedFile && selectedFile.size > MAX_ATTACHMENT_SIZE) {
+                setFile(null);
+                setError("Attachment must be 50 MB or smaller.");
+                e.target.value = "";
+                return;
+              }
+              setError((currentError) =>
+                currentError === "Attachment must be 50 MB or smaller."
+                  ? ""
+                  : currentError,
+              );
+              setFile(selectedFile);
+            }}
           />
         </label>
 

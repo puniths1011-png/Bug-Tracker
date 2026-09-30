@@ -274,6 +274,7 @@ function App({ isAdminPage = false }) {
     const formData = new FormData();
     formData.append("title", b.title);
     formData.append("description", b.desc);
+    formData.append("severity", b.severity || "Minor");
     formData.append("priority", mappedPriority);
     formData.append("project", b.project);
     if (b.assignee) formData.append("assignee", b.assignee);
@@ -296,6 +297,7 @@ function App({ isAdminPage = false }) {
     formData.append("reproductionRate", b.reproductionRate || "");
     formData.append("expectedResult", b.expectedResult || "");
     formData.append("actualResult", b.actualResult || "");
+    formData.append("defectType", b.defectType || "");
     formData.append("typeOfApplication", b.typeOfApplication || "");
     formData.append("browser", b.browser || "");
     formData.append("browserVersion", b.browserVersion || "");
@@ -393,6 +395,22 @@ function App({ isAdminPage = false }) {
     setProjects((x) => [data, ...x]);
   };
 
+  const deleteProject = async (projectId) => {
+    await apiFetch(`/projects/${projectId}`, { method: "DELETE" });
+    setProjects((current) =>
+      current.filter((project) => String(project._id) !== String(projectId)),
+    );
+    setBugs((current) =>
+      current.filter((bug) => String(bug.projectId) !== String(projectId)),
+    );
+    setProjectFilter((current) =>
+      String(current) === String(projectId) ? null : current,
+    );
+    setSelectedProjectId((current) =>
+      String(current) === String(projectId) ? null : current,
+    );
+  };
+
   const isAdmin = user?.role === "admin";
   let content;
   if (selected) {
@@ -478,6 +496,7 @@ function App({ isAdminPage = false }) {
         bugs={bugs}
         user={user}
         createProject={createProject}
+        deleteProject={deleteProject}
         openProject={openProject}
         setPage={navigatePage}
         setProjectFilter={setProjectFilter}

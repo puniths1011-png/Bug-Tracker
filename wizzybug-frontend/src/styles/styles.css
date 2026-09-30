@@ -2426,13 +2426,17 @@ select {
   width: 100%;
 }
 
+.password input::-ms-reveal {
+  display: none;
+}
+
 .password button {
   position: absolute;
   right: 8px;
   top: 10px;
   background: none;
   border: 0;
-  color: #777580;
+  color: var(--field-muted);
 }
 
 .remember {
