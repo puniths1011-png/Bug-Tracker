@@ -3,6 +3,7 @@
  * Prefer authenticated Gmail SMTP when configured, then fall back to the deployed mail service.
  */
 import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 export const resolveMailServiceUrl = (): string => {
   const configuredUrl = process.env.MAIL_SERVICE_URL?.trim().replace(
@@ -40,7 +41,9 @@ const getMailFrom = (): string | undefined =>
   process.env.MAIL_FROM || process.env.MAIL_USER || process.env.GMAIL_USER;
 
 export const isRealMailerConfigured = (): boolean =>
-  Boolean(resolveMailServiceUrl()) || Boolean(getSmtpTransport());
+  Boolean(
+    process.env.RESEND_API_KEY?.trim() && process.env.MAIL_FROM?.trim(),
+  ) || Boolean(resolveMailServiceUrl()) || Boolean(getSmtpTransport());
 
 export const sendInviteViaMail = async (opts: {
   email: string;
@@ -49,10 +52,11 @@ export const sendInviteViaMail = async (opts: {
 }): Promise<{ success: boolean; message: string }> => {
   const mailServiceUrl = resolveMailServiceUrl();
   const smtpTransport = getSmtpTransport();
+  const resendApiKey = process.env.RESEND_API_KEY?.trim();
 
-  if (!mailServiceUrl && !smtpTransport) {
+  if (!mailServiceUrl && !smtpTransport && !resendApiKey) {
     const msg =
-      "MAIL_SERVICE_URL is not configured. Set it in your environment variables.";
+      "No email provider is configured. Set RESEND_API_KEY and MAIL_FROM, MAIL_SERVICE_URL, or Gmail SMTP credentials.";
     console.error("[mailer] Error:", msg);
     throw new Error(msg);
   }
@@ -70,16 +74,41 @@ Thank you,
 WizzyBug Team`;
 
   const html = `
-    <h2>Hello ${opts.name},</h2>
+    <h2>Hello ${escapeHtml(opts.name)},</h2>
     <p>You have been invited to join <strong>WizzyBug</strong>.</p>
     <p>Please click the link below to accept your invitation:</p>
     <p>
-      <a href="${opts.inviteLink}">
+      <a href="${escapeHtml(opts.inviteLink)}">
         Accept Invitation
       </a>
     </p>
     <p>Thank you,<br>WizzyBug Team</p>
   `;
+
+  if (resendApiKey) {
+    const from = process.env.MAIL_FROM?.trim();
+    if (!from) {
+      throw new Error(
+        "MAIL_FROM must be set to an address on a verified Resend domain.",
+      );
+    }
+
+    const { error } = await new Resend(resendApiKey).emails.send({
+      from,
+      to: opts.email,
+      replyTo: from,
+      subject,
+      text: body,
+      html,
+    });
+    if (error) {
+      throw new Error(`Resend could not send the invite: ${error.message}`);
+    }
+    return {
+      success: true,
+      message: "Invite sent via Resend",
+    };
+  }
 
   console.log("[mailer] Configuration check:");
   console.log(`  - MAIL_SERVICE_URL: ${mailServiceUrl}`);

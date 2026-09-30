@@ -1162,15 +1162,7 @@ tr:last-child td {
 }
 
 tbody tr {
-  cursor: pointer;
-}
-
-tbody tr:hover {
-  background: linear-gradient(
-    90deg,
-    rgba(107, 75, 255, 0.1),
-    rgba(31, 127, 120, 0.08)
-  );
+  cursor: default;
 }
 
 .tableWrap.bugTable td:nth-child(2) b,
