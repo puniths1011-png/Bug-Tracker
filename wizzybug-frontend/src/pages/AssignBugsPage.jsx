@@ -139,12 +139,14 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
             Only Unassigned
           </label>
         </div>
-        <div className="tableWrap">
+        <div className="tableWrap bugTable assignBugsTable">
           <table>
             <thead>
               <tr>
-                <th>BUG</th>
+                <th>BUG ID</th>
+                <th>BUG TITLE</th>
                 <th>SEVERITY</th>
+                <th>PRIORITY</th>
                 <th>STATUS</th>
                 <th>CURRENT ASSIGNEE</th>
                 <th>ASSIGN TO</th>
@@ -156,15 +158,28 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
                   <td
                     onClick={() => setSelected(b)}
                     style={{ cursor: "pointer" }}
+                    className="bugIdCell"
+                  >
+                    {b.id}
+                  </td>
+                  <td
+                    onClick={() => setSelected(b)}
+                    style={{ cursor: "pointer" }}
+                    className="bugTitleCell"
                   >
                     <b>{b.title}</b>
                     <small>
-                      {b.id} - {b.project}
+                      {b.project}
                     </small>
                   </td>
                   <td>
                     <span className={"severity " + severityClass(b.severity)}>
                       {b.severity}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={"severity " + severityClass(b.priority)}>
+                      {priorityLabel(b.priority)}
                     </span>
                   </td>
                   <td>
@@ -230,7 +245,7 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
               {rows.length === 0 && (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={7}
                     className="muted"
                     style={{ textAlign: "center", padding: "30px 0" }}
                   >
@@ -241,7 +256,7 @@ function AssignBugsPage({ bugs, users, assignBug, setSelected }) {
               {assignableUsers.length === 0 && (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={7}
                     className="muted"
                     style={{ textAlign: "center", padding: "10px 0" }}
                   >

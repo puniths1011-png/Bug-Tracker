@@ -99,11 +99,21 @@ function BugsPage({
               : "Track, prioritize, and resolve issues across every project."}
           </p>
         </div>
-        {activeProject && (
-          <button className="outline" onClick={() => setProjectFilter(null)}>
-            <X size={15} />
-            Clear Project Filter
-          </button>
+        {(activeProject || status !== "All") && (
+          <div className="pageIntroActions">
+            {status !== "All" && (
+              <button className="outline" onClick={() => setStatus("All")}>
+                <X size={15} />
+                Clear Status Filter
+              </button>
+            )}
+            {activeProject && (
+              <button className="outline" onClick={() => setProjectFilter(null)}>
+                <X size={15} />
+                Clear Project Filter
+              </button>
+            )}
+          </div>
         )}
       </div>
       <div className="tabs">

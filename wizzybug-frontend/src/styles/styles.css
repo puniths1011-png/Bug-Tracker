@@ -1120,18 +1120,23 @@ td {
   text-align: center;
 }
 
-.tableWrap.bugTable td,
-.tableWrap.compact td {
+.tableWrap.bugTable th:nth-child(2),
+.tableWrap.bugTable th:nth-child(6),
+.tableWrap.compact th:nth-child(2),
+.tableWrap.compact th:nth-child(6) {
+  text-align: left;
+}
+.tableWrap.bugTable td.bugIdCell,
+.tableWrap.compact td.bugIdCell {
   text-align: left;
 }
 
-.tableWrap.bugTable th:nth-child(2),
 .tableWrap.bugTable td:nth-child(2),
-.tableWrap.compact th:nth-child(2),
-.tableWrap.compact td:nth-child(2),
-.tableWrap.bugTable th:nth-child(6),
+.tableWrap.compact td:nth-child(2) {
+  text-align: left;
+}
+
 .tableWrap.bugTable td:nth-child(6),
-.tableWrap.compact th:nth-child(6),
 .tableWrap.compact td:nth-child(6) {
   text-align: left;
 }
@@ -1191,6 +1196,32 @@ tbody tr:hover {
 .tableWrap.bugTable td:nth-child(2) small,
 .tableWrap.compact td:nth-child(2) small,
 .userTable td small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.assignBugList .bugIdCell {
+  white-space: nowrap;
+  text-align: left;
+}
+
+.assignBugList .bugTitleCell {
+  max-width: 90ch;
+  text-align: left;
+}
+
+.assignBugList .bugTitleCell b {
+  display: block;
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 700;
+  margin-bottom: 3px;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.assignBugList .bugTitleCell small {
   display: block;
   color: var(--muted);
   font-size: 11px;
@@ -1281,6 +1312,7 @@ tbody tr:hover {
 
 .tableWrap td.currentAssigneeCell {
   text-align: left;
+  white-space: nowrap;
 }
 
 .date,
