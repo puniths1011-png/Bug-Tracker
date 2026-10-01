@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import User from '../models/User';
-import { isRealMailerConfigured, sendInviteViaMail, sendPasswordResetViaMail } from '../utils/mailer';
+import { isRealMailerConfigured, sendInviteViaMail, sendPasswordResetViaMail, sendVerificationEmailViaMail } from '../utils/mailer';
 import { isValidUserName, normalizeUserName } from '../utils/userName';
 
 const ALLOWED_ROLES = ['admin', 'developer', 'tester'];
@@ -72,14 +72,33 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     }
 
     const hashedPassword = await bcrypt.hash(password, await bcrypt.genSalt(10));
-    await User.create({
+    const verificationToken = uuidv4();
+    const user = await User.create({
       name: normalizedName,
       email: normalizedEmail,
       password: hashedPassword,
       role: role || 'developer',
       status: 'active',
+      emailVerified: false,
+      emailVerificationToken: verificationToken,
+      emailVerificationExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     });
-    res.status(201).json({ message: 'Account created successfully. Please sign in.' });
+
+    const verificationLink = `${getFrontendUrl()}/verify-email?token=${encodeURIComponent(verificationToken)}`;
+    try {
+      await sendVerificationEmailViaMail({
+        email: user.email,
+        name: user.name,
+        verificationLink,
+      });
+    } catch (mailError) {
+      await User.deleteOne({ _id: user._id });
+      console.error('[registerUser] Verification email could not be sent:', mailError);
+      res.status(502).json({ message: 'Verification email could not be sent. Please try signing up again.' });
+      return;
+    }
+
+    res.status(201).json({ message: 'Account created. Please check your email to verify your account before signing in.' });
   } catch (error) {
     if ((error as { code?: number })?.code === 11000) {
       res.status(409).json({ message: 'An account with this Gmail address already exists' });
@@ -100,6 +119,11 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     }
     const user = await findUserByEmail(email);
 
+    if (user && user.emailVerified === false) {
+      res.status(403).json({ message: 'Please verify your email before signing in.' });
+      return;
+    }
+
     if (user && user.password && (await bcrypt.compare(password, user.password))) {
       res.json({
         _id: user.id,
@@ -113,6 +137,35 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     }
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const token = req.body.token;
+    if (typeof token !== 'string' || !token) {
+      res.status(400).json({ message: 'This verification link is invalid or has expired.' });
+      return;
+    }
+
+    const user = await User.findOne({
+      emailVerificationToken: token,
+      emailVerificationExpiresAt: { $gt: new Date() },
+      emailVerified: false,
+    });
+    if (!user) {
+      res.status(400).json({ message: 'This verification link is invalid or has expired.' });
+      return;
+    }
+
+    user.emailVerified = true;
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpiresAt = undefined;
+    await user.save();
+    res.json({ message: 'Email verified successfully. You can now log in.' });
+  } catch (error) {
+    console.error('[verifyEmail]', error);
+    res.status(500).json({ message: 'Unable to verify your email. Please try again.' });
   }
 };
 
@@ -262,6 +315,7 @@ export const acceptInvite = async (req: Request, res: Response): Promise<void> =
 
     user.password = hashedPassword;
     user.status = 'active';
+    user.emailVerified = true;
     user.inviteToken = undefined;
     await user.save();
 

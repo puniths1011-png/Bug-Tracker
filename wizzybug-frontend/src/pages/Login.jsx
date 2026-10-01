@@ -22,6 +22,7 @@ const isValidUserName = (value) =>
   value.length >= 2 && value.length <= 40 && /^[A-Za-z]+(?: [A-Za-z]+)*$/.test(value);
 
 function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
+  const verificationResult = new URLSearchParams(window.location.search).get("email-verification");
   const rememberedCredentials = (() => {
     try {
       return JSON.parse(localStorage.getItem("rememberedCredentials") || "null");
@@ -31,13 +32,17 @@ function Login({ onLogin, isAdminPage, theme, toggleTheme }) {
   })();
   const [show, setShow] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [isRegister, setIsRegister] = useState(false);
+  const [isRegister, setIsRegister] = useState(verificationResult !== null);
   const [email, setEmail] = useState(rememberedCredentials?.email || "");
   const [password, setPassword] = useState(rememberedCredentials?.password || "");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(Boolean(rememberedCredentials));
-  const [error, setError] = useState("");
-  const [status, setStatus] = useState("");
+  const [error, setError] = useState(
+    verificationResult === "error" ? "This verification link is invalid or has expired." : "",
+  );
+  const [status, setStatus] = useState(
+    verificationResult === "success" ? "Email verified successfully. You can now log in." : "",
+  );
   const [submitting, setSubmitting] = useState(false);
   const [forgotSubmitting, setForgotSubmitting] = useState(false);
   const submitLock = useRef(false);

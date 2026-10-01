@@ -19,26 +19,66 @@ export const resolveMailServiceUrl = (): string => {
 };
 
 const getSmtpTransport = () => {
+  const smtpHost = process.env.SMTP_HOST?.trim();
+  const smtpPort = Number(process.env.SMTP_PORT || 587);
   const mailUser = (process.env.MAIL_USER || process.env.GMAIL_USER)?.trim();
   const mailPassword = (
     process.env.MAIL_PASS || process.env.GMAIL_APP_PASSWORD
   )?.trim();
+  const smtpUser = (process.env.SMTP_USER || mailUser)?.trim();
+  const smtpPassword = (process.env.SMTP_PASS || mailPassword)?.trim();
 
-  if (!mailUser || !mailPassword) {
+  if (smtpHost) {
+    if (!Number.isInteger(smtpPort) || smtpPort < 1 || smtpPort > 65535) {
+      throw new Error("SMTP_PORT must be a valid TCP port number.");
+    }
+    if (!smtpUser || !smtpPassword) {
+      throw new Error("SMTP_USER and SMTP_PASS are required when SMTP_HOST is set.");
+    }
+
+    const secureSetting = process.env.SMTP_SECURE?.trim().toLowerCase();
+    const secure = secureSetting
+      ? secureSetting === "true"
+      : smtpPort === 465;
+
+    return nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure,
+      requireTLS: !secure,
+      auth: {
+        user: smtpUser,
+        pass: smtpPassword,
+      },
+    });
+  }
+
+  if (!smtpUser || !smtpPassword) {
     return null;
   }
 
   return nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: mailUser,
-      pass: mailPassword,
+      user: smtpUser,
+      pass: smtpPassword,
     },
   });
 };
 
 const getMailFrom = (): string | undefined =>
-  process.env.MAIL_FROM || process.env.MAIL_USER || process.env.GMAIL_USER;
+  process.env.MAIL_FROM?.trim() ||
+  process.env.SMTP_USER?.trim() ||
+  process.env.MAIL_USER?.trim() ||
+  process.env.GMAIL_USER?.trim();
+
+const getReplyTo = (): string | undefined =>
+  process.env.MAIL_REPLY_TO?.trim() || getMailFrom();
+
+const automatedMailHeaders = {
+  "Auto-Submitted": "auto-generated",
+  "X-Auto-Response-Suppress": "All",
+};
 
 export const isRealMailerConfigured = (): boolean =>
   Boolean(
@@ -61,45 +101,69 @@ export const sendInviteViaMail = async (opts: {
     throw new Error(msg);
   }
 
-  const subject = "You are invited to WizzyBug";
+  const subject = "Invitation to join WizzyBug";
   const body = `Hello ${opts.name},
 
-You have been invited to join WizzyBug.
+You have been invited to join WizzyBug by your workspace administrator.
 
-Please accept your invitation using the link below:
+To accept your invitation, open this link:
 
 ${opts.inviteLink}
 
-Thank you,
-WizzyBug Team`;
+If you were not expecting this invitation, you can ignore this email.
+
+WizzyBug`;
 
   const html = `
-    <h2>Hello ${escapeHtml(opts.name)},</h2>
-    <p>You have been invited to join <strong>WizzyBug</strong>.</p>
-    <p>Please click the link below to accept your invitation:</p>
-    <p>
-      <a href="${escapeHtml(opts.inviteLink)}">
-        Accept Invitation
-      </a>
-    </p>
-    <p>Thank you,<br>WizzyBug Team</p>
+    <html>
+      <body>
+        <p>Hello ${escapeHtml(opts.name)},</p>
+        <p>You have been invited to join <strong>WizzyBug</strong> by your workspace administrator.</p>
+        <p><a href="${escapeHtml(opts.inviteLink)}">Accept your invitation</a></p>
+        <p>If the link does not open, copy and paste this address into your browser:<br>
+          <a href="${escapeHtml(opts.inviteLink)}">${escapeHtml(opts.inviteLink)}</a>
+        </p>
+        <p>If you were not expecting this invitation, you can ignore this email.</p>
+        <p>WizzyBug</p>
+      </body>
+    </html>
   `;
 
+  const from = getMailFrom();
+  const replyTo = getReplyTo();
+
+  if (smtpTransport) {
+    const info = await smtpTransport.sendMail({
+      from,
+      replyTo,
+      to: opts.email,
+      subject,
+      text: body,
+      html,
+      headers: automatedMailHeaders,
+    });
+    console.log("[mailer] Authenticated SMTP invitation sent:", info.messageId);
+    return {
+      success: true,
+      message: "Invite sent successfully via SMTP",
+    };
+  }
+
   if (resendApiKey) {
-    const from = process.env.MAIL_FROM?.trim();
     if (!from) {
       throw new Error(
-        "MAIL_FROM must be set to an address on a verified Resend domain.",
+        "MAIL_FROM must be set to an address on a verified sending domain.",
       );
     }
 
     const { error } = await new Resend(resendApiKey).emails.send({
       from,
       to: opts.email,
-      replyTo: from,
+      replyTo,
       subject,
       text: body,
       html,
+      headers: automatedMailHeaders,
     });
     if (error) {
       throw new Error(`Resend could not send the invite: ${error.message}`);
@@ -117,33 +181,6 @@ WizzyBug Team`;
 
   let mailServiceError: Error | null = null;
 
-  if (smtpTransport) {
-    try {
-      const info = await smtpTransport.sendMail({
-        from: getMailFrom(),
-        replyTo: getMailFrom(),
-        to: opts.email,
-        subject,
-        text: body,
-        html,
-      });
-
-      console.log(
-        "[mailer] ✅ SMTP fallback invitation sent successfully:",
-        info.messageId,
-      );
-      return {
-        success: true,
-        message: "Invite sent successfully via Gmail SMTP",
-      };
-    } catch (smtpError) {
-      console.error(
-        "[mailer] ❌ Gmail SMTP invitation send failed:",
-        smtpError,
-      );
-    }
-  }
-
   try {
     if (mailServiceUrl) {
       const response = await fetch(mailServiceUrl, {
@@ -156,8 +193,9 @@ WizzyBug Team`;
           subject,
           body,
           html,
-          from: getMailFrom(),
-          replyTo: getMailFrom(),
+          from,
+          replyTo,
+          headers: automatedMailHeaders,
         }),
       });
 
@@ -208,6 +246,64 @@ WizzyBug Team`;
   }
 
   throw new Error("No mail transport is configured.");
+};
+
+export const sendVerificationEmailViaMail = async (opts: {
+  email: string;
+  name: string;
+  verificationLink: string;
+}): Promise<{ success: boolean; message: string }> => {
+  const mailServiceUrl = resolveMailServiceUrl();
+  const smtpTransport = getSmtpTransport();
+  const resendApiKey = process.env.RESEND_API_KEY?.trim();
+
+  if (!mailServiceUrl && !smtpTransport && !resendApiKey) {
+    throw new Error('No email provider is configured for verification emails.');
+  }
+
+  const subject = 'Verify your WizzyBug email';
+  const body = `Hello ${opts.name},\n\nPlease verify your WizzyBug email address using this link:\n\n${opts.verificationLink}\n\nThis link expires in 24 hours.`;
+  const html = `<h2>Hello ${escapeHtml(opts.name)},</h2><p>Please verify your WizzyBug email address:</p><p><a href="${escapeHtml(opts.verificationLink)}">Verify Email</a></p><p>This link expires in 24 hours.</p>`;
+  const from = getMailFrom();
+
+  if (resendApiKey) {
+    if (!process.env.MAIL_FROM?.trim()) {
+      throw new Error('MAIL_FROM must be set to an address on a verified Resend domain.');
+    }
+    const { error } = await new Resend(resendApiKey).emails.send({
+      from: process.env.MAIL_FROM.trim(),
+      to: opts.email,
+      replyTo: from,
+      subject,
+      text: body,
+      html,
+    });
+    if (error) throw new Error(`Resend could not send the verification email: ${error.message}`);
+    return { success: true, message: 'Verification email sent via Resend' };
+  }
+
+  if (smtpTransport) {
+    try {
+      await smtpTransport.sendMail({ from, replyTo: from, to: opts.email, subject, text: body, html });
+      return { success: true, message: 'Verification email sent via Gmail SMTP' };
+    } catch (error) {
+      if (!mailServiceUrl) throw error;
+      console.error('[mailer] Gmail SMTP verification email failed:', error);
+    }
+  }
+
+  if (mailServiceUrl) {
+    const response = await fetch(mailServiceUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: opts.email, subject, body, html, from, replyTo: from }),
+    });
+    if (response.ok) return { success: true, message: 'Verification email sent' };
+    const responseBody = await response.text();
+    throw new Error(`Mail Service returned ${response.status}: ${response.statusText} - ${responseBody}`);
+  }
+
+  throw new Error('Verification email could not be sent.');
 };
 
 export const sendPasswordResetViaMail = async (opts: {

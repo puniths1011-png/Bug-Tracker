@@ -7,6 +7,9 @@ export interface IUser extends Document {
   password?: string;
   role: 'admin' | 'developer' | 'tester';
   status: 'pending' | 'active';
+  emailVerified?: boolean;
+  emailVerificationToken?: string;
+  emailVerificationExpiresAt?: Date;
   inviteToken?: string;
   resetToken?: string;
   resetTokenExpiresAt?: Date;
@@ -24,6 +27,9 @@ const UserSchema: Schema = new Schema({
   password: { type: String },
   role: { type: String, enum: ['admin', 'developer', 'tester'], default: 'developer' },
   status: { type: String, enum: ['pending', 'active'], default: 'active' },
+  emailVerified: { type: Boolean },
+  emailVerificationToken: { type: String },
+  emailVerificationExpiresAt: { type: Date },
   inviteToken: { type: String },
   resetToken: { type: String },
   resetTokenExpiresAt: { type: Date }

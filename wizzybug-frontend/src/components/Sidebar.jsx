@@ -35,7 +35,6 @@ function Sidebar({
   ];
   if (isAdmin) items.push(["assign", UserCog, "Assign Bugs"]);
   if (isAdmin) items.push(["users", Users, "User Management"]);
-  items.push(["profile", User, "My Profile"]);
 
   return (
     <aside className={`sidebar ${open ? "open" : ""}`}>
@@ -109,7 +108,14 @@ function Sidebar({
         )}
       </nav>
       <div className="sideFoot">
-        <div className="profileMini">
+        <button
+          type="button"
+          className={`profileMini ${page === "profile" ? "active" : ""}`}
+          onClick={() => {
+            setPage("profile");
+            setOpen(false);
+          }}
+        >
           <Avatar text={initialsOf(user?.name)} />
           <div>
             <b>{user?.name || ""}</b>
@@ -119,7 +125,7 @@ function Sidebar({
                 : ""}
             </small>
           </div>
-        </div>
+        </button>
         <button className="logout" onClick={onLogout}>
           <LogOut size={17} />
           Log out
