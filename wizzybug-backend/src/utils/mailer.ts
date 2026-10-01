@@ -19,66 +19,26 @@ export const resolveMailServiceUrl = (): string => {
 };
 
 const getSmtpTransport = () => {
-  const smtpHost = process.env.SMTP_HOST?.trim();
-  const smtpPort = Number(process.env.SMTP_PORT || 587);
   const mailUser = (process.env.MAIL_USER || process.env.GMAIL_USER)?.trim();
   const mailPassword = (
     process.env.MAIL_PASS || process.env.GMAIL_APP_PASSWORD
   )?.trim();
-  const smtpUser = (process.env.SMTP_USER || mailUser)?.trim();
-  const smtpPassword = (process.env.SMTP_PASS || mailPassword)?.trim();
 
-  if (smtpHost) {
-    if (!Number.isInteger(smtpPort) || smtpPort < 1 || smtpPort > 65535) {
-      throw new Error("SMTP_PORT must be a valid TCP port number.");
-    }
-    if (!smtpUser || !smtpPassword) {
-      throw new Error("SMTP_USER and SMTP_PASS are required when SMTP_HOST is set.");
-    }
-
-    const secureSetting = process.env.SMTP_SECURE?.trim().toLowerCase();
-    const secure = secureSetting
-      ? secureSetting === "true"
-      : smtpPort === 465;
-
-    return nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure,
-      requireTLS: !secure,
-      auth: {
-        user: smtpUser,
-        pass: smtpPassword,
-      },
-    });
-  }
-
-  if (!smtpUser || !smtpPassword) {
+  if (!mailUser || !mailPassword) {
     return null;
   }
 
   return nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: smtpUser,
-      pass: smtpPassword,
+      user: mailUser,
+      pass: mailPassword,
     },
   });
 };
 
 const getMailFrom = (): string | undefined =>
-  process.env.MAIL_FROM?.trim() ||
-  process.env.SMTP_USER?.trim() ||
-  process.env.MAIL_USER?.trim() ||
-  process.env.GMAIL_USER?.trim();
-
-const getReplyTo = (): string | undefined =>
-  process.env.MAIL_REPLY_TO?.trim() || getMailFrom();
-
-const automatedMailHeaders = {
-  "Auto-Submitted": "auto-generated",
-  "X-Auto-Response-Suppress": "All",
-};
+  process.env.MAIL_FROM || process.env.MAIL_USER || process.env.GMAIL_USER;
 
 export const isRealMailerConfigured = (): boolean =>
   Boolean(
@@ -101,69 +61,45 @@ export const sendInviteViaMail = async (opts: {
     throw new Error(msg);
   }
 
-  const subject = "Invitation to join WizzyBug";
+  const subject = "You are invited to WizzyBug";
   const body = `Hello ${opts.name},
 
-You have been invited to join WizzyBug by your workspace administrator.
+You have been invited to join WizzyBug.
 
-To accept your invitation, open this link:
+Please accept your invitation using the link below:
 
 ${opts.inviteLink}
 
-If you were not expecting this invitation, you can ignore this email.
-
-WizzyBug`;
+Thank you,
+WizzyBug Team`;
 
   const html = `
-    <html>
-      <body>
-        <p>Hello ${escapeHtml(opts.name)},</p>
-        <p>You have been invited to join <strong>WizzyBug</strong> by your workspace administrator.</p>
-        <p><a href="${escapeHtml(opts.inviteLink)}">Accept your invitation</a></p>
-        <p>If the link does not open, copy and paste this address into your browser:<br>
-          <a href="${escapeHtml(opts.inviteLink)}">${escapeHtml(opts.inviteLink)}</a>
-        </p>
-        <p>If you were not expecting this invitation, you can ignore this email.</p>
-        <p>WizzyBug</p>
-      </body>
-    </html>
+    <h2>Hello ${escapeHtml(opts.name)},</h2>
+    <p>You have been invited to join <strong>WizzyBug</strong>.</p>
+    <p>Please click the link below to accept your invitation:</p>
+    <p>
+      <a href="${escapeHtml(opts.inviteLink)}">
+        Accept Invitation
+      </a>
+    </p>
+    <p>Thank you,<br>WizzyBug Team</p>
   `;
 
-  const from = getMailFrom();
-  const replyTo = getReplyTo();
-
-  if (smtpTransport) {
-    const info = await smtpTransport.sendMail({
-      from,
-      replyTo,
-      to: opts.email,
-      subject,
-      text: body,
-      html,
-      headers: automatedMailHeaders,
-    });
-    console.log("[mailer] Authenticated SMTP invitation sent:", info.messageId);
-    return {
-      success: true,
-      message: "Invite sent successfully via SMTP",
-    };
-  }
-
   if (resendApiKey) {
+    const from = process.env.MAIL_FROM?.trim();
     if (!from) {
       throw new Error(
-        "MAIL_FROM must be set to an address on a verified sending domain.",
+        "MAIL_FROM must be set to an address on a verified Resend domain.",
       );
     }
 
     const { error } = await new Resend(resendApiKey).emails.send({
       from,
       to: opts.email,
-      replyTo,
+      replyTo: from,
       subject,
       text: body,
       html,
-      headers: automatedMailHeaders,
     });
     if (error) {
       throw new Error(`Resend could not send the invite: ${error.message}`);
@@ -181,6 +117,33 @@ WizzyBug`;
 
   let mailServiceError: Error | null = null;
 
+  if (smtpTransport) {
+    try {
+      const info = await smtpTransport.sendMail({
+        from: getMailFrom(),
+        replyTo: getMailFrom(),
+        to: opts.email,
+        subject,
+        text: body,
+        html,
+      });
+
+      console.log(
+        "[mailer] ✅ SMTP fallback invitation sent successfully:",
+        info.messageId,
+      );
+      return {
+        success: true,
+        message: "Invite sent successfully via Gmail SMTP",
+      };
+    } catch (smtpError) {
+      console.error(
+        "[mailer] ❌ Gmail SMTP invitation send failed:",
+        smtpError,
+      );
+    }
+  }
+
   try {
     if (mailServiceUrl) {
       const response = await fetch(mailServiceUrl, {
@@ -193,9 +156,8 @@ WizzyBug`;
           subject,
           body,
           html,
-          from,
-          replyTo,
-          headers: automatedMailHeaders,
+          from: getMailFrom(),
+          replyTo: getMailFrom(),
         }),
       });
 
@@ -382,7 +344,9 @@ export const sendBugAssignmentEmail = async (opts: {
   const mailServiceUrl = resolveMailServiceUrl();
   const smtpTransport = getSmtpTransport();
   if (!mailServiceUrl && !smtpTransport) {
-    throw new Error("MAIL_SERVICE_URL is not configured. Set it in your environment variables.");
+    throw new Error(
+      "MAIL_SERVICE_URL is not configured. Set it in your environment variables.",
+    );
   }
 
   const project = opts.projectKey
@@ -390,9 +354,10 @@ export const sendBugAssignmentEmail = async (opts: {
     : opts.projectName;
   const isUpdate = opts.event === "updated";
   const subject = `${isUpdate ? "Bug updated" : "Bug assigned to you"}: ${opts.bugId} - ${opts.title}`;
-  const changeSummary = isUpdate && opts.changedFields?.length
-    ? `\nChanged details: ${opts.changedFields.join(", ")}\n`
-    : "";
+  const changeSummary =
+    isUpdate && opts.changedFields?.length
+      ? `\nChanged details: ${opts.changedFields.join(", ")}\n`
+      : "";
   const actionMessage = isUpdate
     ? `${opts.assignedBy} updated a bug assigned to you in WizzyBug.`
     : `${opts.assignedBy} assigned a bug to you in WizzyBug.`;
@@ -410,9 +375,10 @@ Description:
 ${opts.description || "No description provided."}
 
 Open WizzyBug: ${opts.appUrl}`;
-  const changesHtml = isUpdate && opts.changedFields?.length
-    ? `<p><b>Changed details:</b> ${opts.changedFields.map(escapeHtml).join(", ")}</p>`
-    : "";
+  const changesHtml =
+    isUpdate && opts.changedFields?.length
+      ? `<p><b>Changed details:</b> ${opts.changedFields.map(escapeHtml).join(", ")}</p>`
+      : "";
   const html = `<h2>${isUpdate ? "Bug updated" : "Bug assigned to you"}</h2><p>Hi ${escapeHtml(opts.assigneeName)},</p><p><b>${escapeHtml(opts.assignedBy)}</b> ${isUpdate ? "updated a bug assigned to you" : "assigned a bug to you"} in WizzyBug.</p><table><tr><td><b>Bug</b></td><td>${escapeHtml(opts.bugId)} - ${escapeHtml(opts.title)}</td></tr><tr><td><b>Project</b></td><td>${escapeHtml(project)}</td></tr><tr><td><b>Priority</b></td><td>${escapeHtml(opts.priority)}</td></tr><tr><td><b>Severity</b></td><td>${escapeHtml(opts.severity)}</td></tr></table>${changesHtml}<h3>Description</h3><p>${escapeHtml(opts.description || "No description provided.").replace(/\n/g, "<br>")}</p><p><a href="${escapeHtml(opts.appUrl)}">Open WizzyBug</a></p>`;
 
   if (smtpTransport) {
@@ -425,7 +391,10 @@ Open WizzyBug: ${opts.appUrl}`;
         text: body,
         html,
       });
-      return { success: true, message: "Bug assignment email sent via Gmail SMTP" };
+      return {
+        success: true,
+        message: "Bug assignment email sent via Gmail SMTP",
+      };
     } catch (error) {
       console.error("[mailer] Bug assignment SMTP delivery failed:", error);
     }
