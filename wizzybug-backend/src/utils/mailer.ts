@@ -61,29 +61,46 @@ export const sendInviteViaMail = async (opts: {
     throw new Error(msg);
   }
 
-  const subject = "You are invited to WizzyBug";
+  const subject = "Welcome to WizzyBug";
   const body = `Hello ${opts.name},
 
-You have been invited to join WizzyBug.
+Welcome to WizzyBug!
 
-Please accept your invitation using the link below:
+You’ve been invited to join your team on WizzyBug and start collaborating on bug tracking and project management.
 
+Click below to accept your invitation and get started:
+
+Accept Invitation
 ${opts.inviteLink}
 
-Thank you,
-WizzyBug Team`;
-
-  const html = `
-    <h2>Hello ${escapeHtml(opts.name)},</h2>
-    <p>You have been invited to join <strong>WizzyBug</strong>.</p>
-    <p>Please click the link below to accept your invitation:</p>
-    <p>
-      <a href="${escapeHtml(opts.inviteLink)}">
-        Accept Invitation
-      </a>
-    </p>
-    <p>Thank you,<br>WizzyBug Team</p>
-  `;
+Thanks,
+The WizzyBug Team`;
+  const inviteLink = escapeHtml(opts.inviteLink);
+  const html = `<!doctype html>
+<html lang="en">
+  <body style="margin:0;padding:0;background-color:#f4f6f8;font-family:Arial,Helvetica,sans-serif;color:#202124;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f4f6f8;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background-color:#ffffff;border:1px solid #e5e7eb;border-radius:8px;">
+            <tr>
+              <td style="padding:32px;">
+                <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">Hi ${escapeHtml(opts.name)},</p>
+                <h1 style="margin:0 0 24px;font-size:24px;line-height:1.3;color:#202124;">Welcome to <strong>WizzyBug!</strong></h1>
+                <p style="margin:0 0 16px;font-size:16px;line-height:1.5;">You’ve been invited to join your team on WizzyBug and start collaborating on bug tracking and project management.</p>
+                <p style="margin:0 0 24px;font-size:16px;line-height:1.5;">Click below to accept your invitation and get started:</p>
+                <p style="margin:0 0 24px;">
+                  <a href="${inviteLink}" style="display:inline-block;padding:12px 20px;background-color:#2563eb;border-radius:6px;color:#ffffff;font-size:16px;font-weight:bold;text-decoration:none;">Accept Invitation</a>
+                </p>
+                <p style="margin:24px 0 0;font-size:14px;line-height:1.5;color:#5f6368;">Thanks,<br><strong>The WizzyBug Team</strong></p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
 
   if (resendApiKey) {
     const from = process.env.MAIL_FROM?.trim();

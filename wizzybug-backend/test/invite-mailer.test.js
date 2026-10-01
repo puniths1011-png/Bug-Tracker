@@ -73,8 +73,15 @@ test('sends invites with Resend using the configured sender and multipart conten
     assert.equal(payload.from, process.env.MAIL_FROM);
     assert.equal(payload.to, invite.email);
     assert.equal(payload.reply_to, process.env.MAIL_FROM);
-    assert.match(payload.text, /You have been invited to join WizzyBug/);
+    assert.equal(payload.subject, 'Welcome to WizzyBug');
+    assert.match(payload.text, /Hello Jane Doe,\n\nWelcome to WizzyBug!/);
+    assert.match(payload.text, /You’ve been invited to join your team on WizzyBug and start collaborating on bug tracking and project management/);
+    assert.match(payload.text, /Click below to accept your invitation and get started/);
+    assert.ok(payload.text.includes(invite.inviteLink));
+    assert.match(payload.html, /Hi Jane Doe,/);
+    assert.match(payload.html, /Welcome to <strong>WizzyBug!<\/strong>/);
     assert.match(payload.html, /Accept Invitation/);
+    assert.match(payload.html, /<strong>The WizzyBug Team<\/strong>/);
   } finally {
     global.fetch = originalFetch;
     restoreEnvironment(saved);
