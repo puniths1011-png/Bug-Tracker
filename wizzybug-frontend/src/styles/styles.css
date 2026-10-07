@@ -1012,6 +1012,43 @@ header p {
   color: #fff;
 }
 
+.inviteSuccessCard {
+  max-width: 440px;
+}
+
+.inviteSuccessBrand {
+  margin-bottom: 20px;
+  color: var(--muted);
+  font: 700 12px Manrope, sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.inviteSuccessRecipient {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin: -4px 0 22px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--panel2);
+  color: var(--text);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.inviteSuccessRecipient svg {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+.inviteSuccessCard > button {
+  width: 100%;
+  justify-content: center;
+}
+
 .assignmentCard h3 {
   margin: 0 0 8px;
 }

@@ -12,6 +12,7 @@ import { initialsOf, isAssignedToUser, priorityLabel, statusLabel, buildTimeline
 function InviteUserModal({ onClose, onInvited }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [inviteResult, setInviteResult] = useState(null);
 
   const handleInvite = async (e) => {
     e.preventDefault();
@@ -27,15 +28,6 @@ function InviteUserModal({ onClose, onInvited }) {
         method: "POST",
         body: JSON.stringify({ name, email, role }),
       });
-      if (data?.mailMode === "preview") {
-        alert(
-          `Invite created for ${email}, but the backend is not configured for real email delivery yet. Check the server console for the preview link.`,
-        );
-      } else {
-        alert(
-          `Invite sent to ${email}! An email with a sign-up link has been sent to their inbox.`,
-        );
-      }
       onInvited &&
         onInvited({
           _id: email,
@@ -45,9 +37,13 @@ function InviteUserModal({ onClose, onInvited }) {
           status: "pending",
           createdAt: new Date().toISOString(),
         });
-      onClose();
+      setInviteResult({
+        email,
+        preview: data?.mailMode === "preview" || data?.mailMode === "unconfigured",
+      });
     } catch (err) {
       setError(err.message || "Error inviting user");
+    } finally {
       setLoading(false);
     }
   };
@@ -61,6 +57,29 @@ function InviteUserModal({ onClose, onInvited }) {
         justifyContent: "center",
       }}
     >
+      {inviteResult ? (
+        <section className="assignmentCard inviteSuccessCard" role="dialog" aria-modal="true" aria-labelledby="invite-success-title">
+          <div className="inviteSuccessBrand">WizzyBug</div>
+          <div className="assignmentCardIcon">
+            <CircleCheck size={24} />
+          </div>
+          <h3 id="invite-success-title">
+            {inviteResult.preview ? "Invitation Created" : "Invitation Sent"}
+          </h3>
+          <p>
+            {inviteResult.preview
+              ? "The invitation was created, but email delivery is not configured yet."
+              : "An invitation email has been sent. The user can follow the link in their inbox to join your team."}
+          </p>
+          <div className="inviteSuccessRecipient">
+            <Mail size={16} />
+            <span>{inviteResult.email}</span>
+          </div>
+          <button className="primary" type="button" onClick={onClose}>
+            Done
+          </button>
+        </section>
+      ) : (
       <form
         className="panel profileForm"
         onSubmit={handleInvite}
@@ -139,6 +158,7 @@ function InviteUserModal({ onClose, onInvited }) {
           </button>
         </div>
       </form>
+      )}
     </div>
   );
 }
@@ -414,4 +434,3 @@ function UsersPage({ users, bugs = [], currentUser, refreshUsers }) {
 }
 
 export default UsersPage;
-

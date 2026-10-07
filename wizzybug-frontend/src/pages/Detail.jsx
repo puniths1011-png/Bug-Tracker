@@ -128,7 +128,9 @@ function Detail({
   const [editing, setEditing] = useState(false);
   const [attachmentsToUpload, setAttachmentsToUpload] = useState([]);
   const [attachmentUploadError, setAttachmentUploadError] = useState("");
-  const [otherDefectType, setOtherDefectType] = useState("");
+  const [otherDefectType, setOtherDefectType] = useState(
+    defectTypeOptions.includes(bug.defectType) ? "" : bug.defectType || "",
+  );
   const [editForm, setEditForm] = useState({
     title: bug.title || "",
     desc: bug.desc || "",
@@ -181,6 +183,28 @@ function Detail({
 
   const canReassign = true;
   const timeline = buildTimeline(bug);
+  const currentDefectType =
+    editForm.defectType === "Other"
+      ? otherDefectType.trim() || "Other"
+      : editForm.defectType;
+  const editFormHasChanges =
+    attachmentsToUpload.length > 0 ||
+    editForm.title !== (bug.title || "") ||
+    editForm.desc !== (bug.desc || "") ||
+    editForm.severity !== (bug.severity || "Minor") ||
+    editForm.priority !==
+      (bug.priority || SEVERITY_TO_PRIORITY[bug.severity] || "medium") ||
+    editForm.moduleFeatureName !== (bug.moduleFeatureName || "") ||
+    editForm.environment !== (bug.environment || "") ||
+    editForm.buildAppVersion !== (bug.buildAppVersion || "") ||
+    editForm.releaseVersion !== (bug.releaseVersion || "") ||
+    currentDefectType !== (bug.defectType || "") ||
+    editForm.reproductionRate !== (bug.reproductionRate || "") ||
+    editForm.expectedResult !== (bug.expectedResult || "") ||
+    editForm.actualResult !== (bug.actualResult || "") ||
+    editForm.typeOfApplication !== (bug.typeOfApplication || "") ||
+    editForm.browser !== (bug.browser || "") ||
+    editForm.browserVersion !== (bug.browserVersion || "");
   const updateEditField = (field, value) => {
     setEditForm((current) => ({ ...current, [field]: value }));
   };
@@ -224,7 +248,7 @@ function Detail({
 
   const handleSaveEdit = async (event) => {
     event.preventDefault();
-    if (!editForm.title.trim()) return;
+    if (!editFormHasChanges || !editForm.title.trim()) return;
     setBusy(true);
     try {
       await updateBug(bug.rawId, {
@@ -685,7 +709,11 @@ function Detail({
                     </small>
                   )}
                 </label>
-                <button className="primary" type="submit" disabled={busy}>
+                <button
+                  className="primary"
+                  type="submit"
+                  disabled={busy || !editFormHasChanges}
+                >
                   {busy ? "Saving..." : "Save Defect"}
                 </button>
               </form>
