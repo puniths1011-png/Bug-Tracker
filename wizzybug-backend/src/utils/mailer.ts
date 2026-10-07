@@ -343,6 +343,18 @@ const escapeHtml = (value: string): string =>
     "'": "&#39;",
   })[character] || character);
 
+const formatPriorityLabel = (priority: string): string => {
+  const normalizedPriority = String(priority || "").trim().toLowerCase();
+  const compactPriority = normalizedPriority.replace(/[^a-z0-9]+/g, "");
+
+  if (normalizedPriority === "critical" || compactPriority === "p1" || normalizedPriority === "p1-immediatefix") return "P1-Immediate Fix";
+  if (normalizedPriority === "high" || compactPriority === "p2" || normalizedPriority === "p2-high") return "P2-High";
+  if (normalizedPriority === "medium" || compactPriority === "p3" || normalizedPriority === "p3-medium") return "P3-Medium";
+  if (normalizedPriority === "low" || compactPriority === "p4" || normalizedPriority === "p4-low") return "P4-Low";
+
+  return priority || "P3-Medium";
+};
+
 export const sendBugAssignmentEmail = async (opts: {
   to: string;
   assigneeName: string;
@@ -370,6 +382,7 @@ export const sendBugAssignmentEmail = async (opts: {
     ? `${opts.projectName} (${opts.projectKey})`
     : opts.projectName;
   const isUpdate = opts.event === "updated";
+  const priorityLabel = formatPriorityLabel(opts.priority);
   const subject = `${isUpdate ? "Bug updated" : "Bug assigned to you"}: ${opts.bugId} - ${opts.title}`;
   const changeSummary =
     isUpdate && opts.changedFields?.length
@@ -384,7 +397,7 @@ ${actionMessage}
 
 Bug: ${opts.bugId} - ${opts.title}
 Project: ${project}
-Priority: ${opts.priority}
+Priority: ${priorityLabel}
 Severity: ${opts.severity}
 ${changeSummary}
 
@@ -396,7 +409,7 @@ Open WizzyBug: ${opts.appUrl}`;
     isUpdate && opts.changedFields?.length
       ? `<p><b>Changed details:</b> ${opts.changedFields.map(escapeHtml).join(", ")}</p>`
       : "";
-  const html = `<h2>${isUpdate ? "Bug updated" : "Bug assigned to you"}</h2><p>Hi ${escapeHtml(opts.assigneeName)},</p><p><b>${escapeHtml(opts.assignedBy)}</b> ${isUpdate ? "updated a bug assigned to you" : "assigned a bug to you"} in WizzyBug.</p><table><tr><td><b>Bug</b></td><td>${escapeHtml(opts.bugId)} - ${escapeHtml(opts.title)}</td></tr><tr><td><b>Project</b></td><td>${escapeHtml(project)}</td></tr><tr><td><b>Priority</b></td><td>${escapeHtml(opts.priority)}</td></tr><tr><td><b>Severity</b></td><td>${escapeHtml(opts.severity)}</td></tr></table>${changesHtml}<h3>Description</h3><p>${escapeHtml(opts.description || "No description provided.").replace(/\n/g, "<br>")}</p><p><a href="${escapeHtml(opts.appUrl)}">Open WizzyBug</a></p>`;
+  const html = `<h2>${isUpdate ? "Bug updated" : "Bug assigned to you"}</h2><p>Hi ${escapeHtml(opts.assigneeName)},</p><p><b>${escapeHtml(opts.assignedBy)}</b> ${isUpdate ? "updated a bug assigned to you" : "assigned a bug to you"} in WizzyBug.</p><table><tr><td><b>Bug</b></td><td>${escapeHtml(opts.bugId)} - ${escapeHtml(opts.title)}</td></tr><tr><td><b>Project</b></td><td>${escapeHtml(project)}</td></tr><tr><td><b>Priority</b></td><td>${escapeHtml(priorityLabel)}</td></tr><tr><td><b>Severity</b></td><td>${escapeHtml(opts.severity)}</td></tr></table>${changesHtml}<h3>Description</h3><p>${escapeHtml(opts.description || "No description provided.").replace(/\n/g, "<br>")}</p><p><a href="${escapeHtml(opts.appUrl)}">Open WizzyBug</a></p>`;
 
   if (smtpTransport) {
     try {
