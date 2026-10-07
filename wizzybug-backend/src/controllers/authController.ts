@@ -27,7 +27,12 @@ const exceedsUserFieldLimit = (value: unknown): boolean =>
   typeof value !== 'string' || value.trim().length > 40;
 
 const getFrontendUrl = (): string => {
-  return process.env.FRONTEND_URL || process.env.CLIENT_URL || process.env.VITE_APP_URL || 'http://localhost:5173';
+  const frontendUrl =
+    process.env.FRONTEND_URL ||
+    process.env.CLIENT_URL ||
+    process.env.VITE_APP_URL ||
+    'http://localhost:5173';
+  return frontendUrl.trim().replace(/\/+$/, '');
 };
 
 const generateToken = (id: string) => {
@@ -252,7 +257,7 @@ export const inviteUser = async (req: Request, res: Response): Promise<void> => 
     });
 
     const frontendUrl = getFrontendUrl();
-    const inviteLink = `${frontendUrl}/accept-invite?token=${inviteToken}`;
+    const inviteLink = `${frontendUrl}/accept-invite?token=${encodeURIComponent(inviteToken)}`;
 
     try {
       await sendInviteViaMail({
